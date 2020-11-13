@@ -1,0 +1,9 @@
+version: "3.5"
+services:
+  main:
+    tty: true
+    stdin_open: true
+    build:
+      context: .
+    volumes: 
+      - ./results:/app/figures
