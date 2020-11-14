@@ -3,9 +3,9 @@ from models.ute import UTE
 from models.general_data import GeneralData
 from models.discrete_state import DiscreteState
 from models.discrete_state import StateResult
-from models.scenario import ScenarioUHEResult
-from models.scenario import ScenarioUTEResult
-from models.scenario import ScenarioResult
+from models.realization import UHEResult
+from models.realization import UTEResult
+from models.realization import Realization
 from itertools import product
 import numpy as np  # type: ignore
 from typing import List, Dict
@@ -24,7 +24,7 @@ class System:
         self.uhes = uhes
         self.utes = utes
 
-    def generateScenarios(self):
+    def generateStates(self, scenario: int):
         step = 100 / (self.data.discretizationCount - 1)
         uhe_volumes = np.arange(0, 100 + step, step)
         discs = list(product(uhe_volumes, repeat=len(self.uhes)))
@@ -35,28 +35,21 @@ class System:
                 for i, u in enumerate(self.uhes):
                     vi = u.minVolume + (u.maxVolume - u.minVolume) * d[i] / 100
                     vis.append(vi)
-                scen_afls: List[List[float]] = []
-                for scen in np.arange(0, self.data.scenarioCount):
-                    afls: List[float] = []
-                    for i, u in enumerate(self.uhes):
-                        afl = u.affluents[s-1][scen]
-                        afls.append(afl)
-                    scen_afls.append(afls)
-                self.states.append(DiscreteState(s, vis, scen_afls))
+                afls: List[float] = []
+                for i, u in enumerate(self.uhes):
+                    afl = u.affluents[s-1][scenario]
+                    afls.append(afl)
+                self.states.append(DiscreteState(s, vis, afls))
 
     def optConfig(self,
-                  stage: int,
-                  initialVolumes: List[float],
-                  affluences: List[float],
-                  future_constraints: List[StateResult]):
+                  state: DiscreteState,
+                  future_state: DiscreteState):
 
         # Variables
-        self.vf = variable(len(self.uhes), "Volume final na usina")
         self.vt = variable(len(self.uhes), "Volume turbinado na usina")
         self.vv = variable(len(self.uhes), "Volume vertido na usina")
         self.gt = variable(len(self.utes), "Geração na usina térmica")
         self.deficit = variable(1, "Déficit de energia no sistema")
-        self.alpha = variable(1, "Custo Futuro")
 
         # Obj function
         self.obj_f: _function = 0
@@ -68,16 +61,15 @@ class System:
         for i in range(len(self.uhes)):
             self.obj_f += 0.01 * self.vv[i]
 
-        self.obj_f += 1.0 * self.alpha[0]
-
         # Constraints
         self.cons = []
 
         for i, uh in enumerate(self.uhes):
-            vi = float(initialVolumes[i])
-            afl = float(affluences[i])
+            vi = float(state.volumes[i])
+            afl = float(state.affluences[i])
+            vf = float(future_state.volumes[i])
             self.cons.append(
-                self.vf[i] == vi + afl - self.vt[i] - self.vv[i])
+                vf == vi + afl - self.vt[i] - self.vv[i])
 
         balance = 0
         for i, uh in enumerate(self.uhes):
@@ -85,11 +77,9 @@ class System:
         for i, ut in enumerate(self.utes):
             balance += self.gt[i]
         balance += self.deficit[0]
-        self.cons.append(balance == self.data.loads[stage-1])
+        self.cons.append(balance == self.data.loads[state.stage-1])
 
         for i, uh in enumerate(self.uhes):
-            self.cons.append(self.vf[i] >= uh.minVolume)
-            self.cons.append(self.vf[i] <= uh.maxVolume)
             self.cons.append(self.vt[i] >= 0)
             self.cons.append(self.vt[i] <= uh.swallowing)
             self.cons.append(self.vv[i] >= 0)
@@ -100,40 +90,37 @@ class System:
 
         self.cons.append(self.deficit[0] >= 0)
 
-        self.cons.append(self.alpha[0] >= 0)
-        for con in future_constraints:
-            eq = 0.
-            for i in range(len(self.uhes)):
-                eq += float(con.averageWaterValues[i]) * self.vf[i]
-            eq += float(con.offset)
-            self.cons.append(self.alpha[0] >= eq)
-
-    def optSolve(self, log: bool = True) -> ScenarioResult:
+    def optSolve(self, log: bool = True) -> Realization:
         self.prob = op(self.obj_f, self.cons)
         self.prob.solve('dense', 'glpk')
         # The results
-        uhe_res: List[ScenarioUHEResult] = []
-        for i, u in enumerate(self.uhes):
-            r = ScenarioUHEResult(self.vf[i].value()[0],
-                                  self.vt[i].value()[0],
-                                  self.vv[i].value()[0],
-                                  self.cons[i].multiplier.value[0])
-            uhe_res.append(r)
-        ute_res: List[ScenarioUTEResult] = []
-        for i, u in enumerate(self.uhes):
-            ute_res.append(ScenarioUTEResult(self.gt[i].value()[0]))
-        res = ScenarioResult(self.obj_f.value()[0],
-                             self.cons[len(self.uhes)].multiplier.value[0],
-                             self.deficit[0].value()[0],
-                             self.alpha[0].value()[0],
-                             uhe_res,
-                             ute_res)
-        if not log:
+        if self.prob.status == 'optimal':
+            uhe_res: List[UHEResult] = []
+            for i, u in enumerate(self.uhes):
+                r = UHEResult(self.vt[i].value()[0],
+                              self.vv[i].value()[0],
+                              self.cons[i].multiplier.value[0])
+                uhe_res.append(r)
+            ute_res: List[UTEResult] = []
+            for i, u in enumerate(self.uhes):
+                ute_res.append(UTEResult(self.gt[i].value()[0]))
+            res = Realization(self.obj_f.value()[0],
+                              self.cons[len(self.uhes)].multiplier.value[0],
+                              self.deficit[0].value()[0],
+                              uhe_res,
+                              ute_res)
+        else:
+            res = Realization(np.inf,
+                              np.inf,
+                              0,
+                              [],
+                              [])
+
+        if (not log) or self.prob.status != 'optimal':
             return res
         # Report
         print("Custo total: ", self.obj_f.value())
         for i, uh in enumerate(self.uhes):
-            print(self.vf.name, i, "é", self.vf[i].value()[0], "hm3")
             print(self.vt.name, i, "é", self.vt[i].value()[0], "hm3")
             print(self.vv.name, i, "é", self.vv[i].value()[0], "hm3")
 
@@ -153,18 +140,23 @@ class System:
 
     def dispatch(self):
         state_results: Dict[int, List[StateResult]] = {}
+        # Virtual end-of-world state
+        eow_state = DiscreteState(self.data.stageCount + 1,
+                                  [0] * 10,
+                                  [0] * 10)
+        # Backward loop
         for i, state in enumerate(self.states):
-            scen_results: List[ScenarioResult] = []
-            for scen in state.scenarios:
-                future_cons: List[StateResult] = []
-                if state.stage + 1 in state_results:
-                    future_cons = state_results[state.stage + 1]
-                self.optConfig(state.stage,
-                               state.volumes,
-                               scen.affluences,
-                               future_cons)
-                scen_results.append(self.optSolve(False))
-            state_res = StateResult(state, scen_results)
+            results: List[Realization] = []
+            future_states: List[DiscreteState] = []
+            for j, s in enumerate(self.states):
+                if s.stage == state.stage + 1:
+                    future_states.append(s)
+            if len(future_states) == 0:
+                future_states.append(eow_state)
+            for s in future_states:
+                self.optConfig(state, s)
+                results.append(self.optSolve(False))
+            state_res = StateResult(state, future_states, results)
             if state.stage not in state_results:
                 state_results[state.stage] = []
             state_results[state.stage].append(state_res)
@@ -179,7 +171,7 @@ class System:
                 costs = []
                 vols = []
                 for r in s:
-                    costs.append(r.averageCost)
+                    costs.append(r.totalCost)
                     vols.append(r.state.volumes[0])
                 plt.plot(vols, costs, marker='o')
                 plt.savefig('figures/custo_est{}.png'.format(i))

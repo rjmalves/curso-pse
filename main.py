@@ -18,16 +18,16 @@ def main():
                              [19., 14.],
                              [15., 11.]
                          ]))
-    lista_uhe.append(UHE("UHE DO VASCAO",
-                         200.,
-                         40.,
-                         0.85,
-                         100.,
-                         [
-                             [46., 32.],
-                             [38., 28.],
-                             [30., 22.]
-                         ]))
+    # lista_uhe.append(UHE("UHE DO VASCAO",
+    #                      200.,
+    #                      40.,
+    #                      0.85,
+    #                      100.,
+    #                      [
+    #                          [46., 32.],
+    #                          [38., 28.],
+    #                          [30., 22.]
+    #                      ]))
 
     lista_ute: List[UTE] = []
     lista_ute.append(UTE("GT_1",
@@ -37,10 +37,10 @@ def main():
                          10.,
                          25.))
 
-    dgerais = GeneralData(500., [100., 100., 100.], 15, 3, 2)
+    dgerais = GeneralData(500., [50., 50., 50.], 15, 3, 2)
 
     s = System(dgerais, lista_uhe, lista_ute)
-    s.generateScenarios()
+    s.generateStates(0)
     s.dispatch()
 
 
