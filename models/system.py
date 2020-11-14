@@ -7,11 +7,11 @@ from models.scenario import ScenarioUHEResult
 from models.scenario import ScenarioUTEResult
 from models.scenario import ScenarioResult
 from itertools import product
-import numpy as np
+import numpy as np  # type: ignore
 from typing import List, Dict
-import matplotlib.pyplot as plt
-from matplotlib import cm
-from cvxopt.modeling import variable, op, solvers
+import matplotlib.pyplot as plt  # type: ignore
+from matplotlib import cm  # type: ignore
+from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
 
 
@@ -59,7 +59,7 @@ class System:
         self.alpha = variable(1, "Custo Futuro")
 
         # Obj function
-        self.obj_f = 0
+        self.obj_f: _function = 0
         for i, u in enumerate(self.utes):
             self.obj_f += u.cost * self.gt[i]
 
@@ -73,30 +73,30 @@ class System:
         # Constraints
         self.cons = []
 
-        for i, u in enumerate(self.uhes):
+        for i, uh in enumerate(self.uhes):
             vi = float(initialVolumes[i])
             afl = float(affluences[i])
             self.cons.append(
                 self.vf[i] == vi + afl - self.vt[i] - self.vv[i])
 
         balance = 0
-        for i, u in enumerate(self.uhes):
-            balance += u.productivity * self.vt[i]
-        for i, u in enumerate(self.utes):
+        for i, uh in enumerate(self.uhes):
+            balance += uh.productivity * self.vt[i]
+        for i, ut in enumerate(self.utes):
             balance += self.gt[i]
         balance += self.deficit[0]
         self.cons.append(balance == self.data.loads[stage-1])
 
-        for i, u in enumerate(self.uhes):
-            self.cons.append(self.vf[i] >= u.minVolume)
-            self.cons.append(self.vf[i] <= u.maxVolume)
+        for i, uh in enumerate(self.uhes):
+            self.cons.append(self.vf[i] >= uh.minVolume)
+            self.cons.append(self.vf[i] <= uh.maxVolume)
             self.cons.append(self.vt[i] >= 0)
-            self.cons.append(self.vt[i] <= u.swallowing)
+            self.cons.append(self.vt[i] <= uh.swallowing)
             self.cons.append(self.vv[i] >= 0)
 
-        for i, u in enumerate(self.utes):
+        for i, ut in enumerate(self.utes):
             self.cons.append(self.gt[i] >= 0)
-            self.cons.append(self.gt[i] <= u.capacity)
+            self.cons.append(self.gt[i] <= ut.capacity)
 
         self.cons.append(self.deficit[0] >= 0)
 
@@ -121,8 +121,7 @@ class System:
             uhe_res.append(r)
         ute_res: List[ScenarioUTEResult] = []
         for i, u in enumerate(self.uhes):
-            r = ScenarioUTEResult(self.gt[i].value()[0])
-            ute_res.append(r)
+            ute_res.append(ScenarioUTEResult(self.gt[i].value()[0]))
         res = ScenarioResult(self.obj_f.value()[0],
                              self.cons[len(self.uhes)].multiplier.value[0],
                              self.deficit[0].value()[0],
@@ -133,12 +132,12 @@ class System:
             return res
         # Report
         print("Custo total: ", self.obj_f.value())
-        for i, u in enumerate(self.uhes):
+        for i, uh in enumerate(self.uhes):
             print(self.vf.name, i, "é", self.vf[i].value()[0], "hm3")
             print(self.vt.name, i, "é", self.vt[i].value()[0], "hm3")
             print(self.vv.name, i, "é", self.vv[i].value()[0], "hm3")
 
-        for i, u in enumerate(self.utes):
+        for i, ut in enumerate(self.utes):
             print(self.gt.name, i, "é", self.gt[i].value()[0], "MWmed")
 
         print(self.deficit.name, "é", self.deficit[0].value()[0], "MWmed")
