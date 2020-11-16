@@ -21,3 +21,9 @@ class GeneralConfigs:
                    json_dict["discretizationCount"],
                    json_dict["stageCount"],
                    json_dict["scenarioCount"])
+
+    def __str__(self):
+        to_str = ""
+        for k, v in self.__dict__.items():
+            to_str += "{}: {}\n".format(k, v)
+        return to_str

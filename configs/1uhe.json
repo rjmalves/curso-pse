@@ -13,10 +13,11 @@
     "UHES": [
         {
             "name": "UHE DO MARCATO",
-            "maxVolume": 20,
-            "minVolume": 100,
+            "initialVolume": 65.0,
+            "maxVolume": 100.0,
+            "minVolume": 20.0,
             "productivity": 0.95,
-            "swallowing": 60,
+            "swallowing": 60.0,
             "affluents": [
                 [
                     23.0,

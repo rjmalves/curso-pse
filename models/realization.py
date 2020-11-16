@@ -3,12 +3,20 @@ from typing import List
 
 class UHEResult:
     def __init__(self,
+                 finalVolume: float,
                  turbinatedVolume: float,
                  spilledVolume: float,
                  waterValue: float):
+        self.finalVolume = finalVolume
         self.turbinatedVolume = turbinatedVolume
         self.spilledVolume = spilledVolume
         self.waterValue = waterValue
+
+    def __str__(self):
+        to_str = ""
+        for k, v in self.__dict__.items():
+            to_str += "{}: {}\n".format(k, v)
+        return to_str
 
 
 class UTEResult:
@@ -20,11 +28,13 @@ class UTEResult:
 class Realization:
     def __init__(self,
                  totalCost: float,
+                 futureCost: float,
                  cmo: float,
                  deficit: float,
                  uhes: List[UHEResult],
                  utes: List[UTEResult]):
         self.totalCost = totalCost
+        self.futureCost = futureCost
         self.cmo = cmo
         self.deficit = deficit
         self.uhes = uhes
