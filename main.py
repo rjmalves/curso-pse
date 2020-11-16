@@ -1,45 +1,17 @@
-from typing import List
 import time
-from models.uhe import UHE
-from models.ute import UTE
-from models.general_data import GeneralData
+import json
+import os
 from models.system import System
 
 
 def main():
-    lista_uhe: List[UHE] = []
-    lista_uhe.append(UHE("UHE DO MARCATO",
-                         100.,
-                         20.,
-                         0.95,
-                         60.,
-                         [
-                             [23., 16.],
-                             [19., 14.],
-                             [15., 11.]
-                         ]))
-    # lista_uhe.append(UHE("UHE DO VASCAO",
-    #                      200.,
-    #                      40.,
-    #                      0.85,
-    #                      100.,
-    #                      [
-    #                          [46., 32.],
-    #                          [38., 28.],
-    #                          [30., 22.]
-    #                      ]))
-
-    lista_ute: List[UTE] = []
-    lista_ute.append(UTE("GT_1",
-                         15.,
-                         10.))
-    lista_ute.append(UTE("GT_2",
-                         10.,
-                         25.))
-
-    dgerais = GeneralData(500., [50., 50., 50.], 15, 3, 2)
-
-    s = System(dgerais, lista_uhe, lista_ute)
+    # Reads the config JSON
+    config_file = os.getenv("CONFIG_FILE")
+    json_file = open(config_file)
+    config_dict = json.load(json_file)
+    json_file.close()
+    # Runs the program
+    s = System.from_json(config_dict)
     s.generateStates(0)
     s.dispatch()
 

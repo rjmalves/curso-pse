@@ -7,3 +7,5 @@ services:
       context: .
     volumes: 
       - ./results:/app/figures
+    environment: 
+      - CONFIG_FILE=./configs/1uhe.json

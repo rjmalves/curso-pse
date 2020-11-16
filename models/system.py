@@ -1,6 +1,6 @@
 from models.uhe import UHE
 from models.ute import UTE
-from models.general_data import GeneralData
+from models.general_configs import GeneralConfigs
 from models.discrete_state import DiscreteState
 from models.discrete_state import StateResult
 from models.realization import UHEResult
@@ -17,23 +17,35 @@ solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
 
 class System:
     def __init__(self,
-                 data: GeneralData,
+                 configs: GeneralConfigs,
                  uhes: List[UHE],
                  utes: List[UTE]):
-        self.data = data
+        self.configs = configs
         self.uhes = uhes
         self.utes = utes
 
+    @classmethod
+    def from_json(cls, json_dict: dict):
+        configs = GeneralConfigs.from_json(json_dict["generalConfigs"])
+        uhes: List[UHE] = []
+        for d in json_dict["UHES"]:
+            uhes.append(UHE.from_json(d))
+        utes: List[UTE] = []
+        for d in json_dict["UTES"]:
+            utes.append(UTE.from_json(d))
+        return cls(configs, uhes, utes)
+
     def generateStates(self, scenario: int):
-        step = 100 / (self.data.discretizationCount - 1)
+        step = 100 / (self.configs.discretization_count - 1)
         uhe_volumes = np.arange(0, 100 + step, step)
         discs = list(product(uhe_volumes, repeat=len(self.uhes)))
         self.states: List[DiscreteState] = []
-        for s in np.arange(self.data.stageCount, 0, -1):
+        for s in np.arange(self.configs.stage_count, 0, -1):
             for d in discs:
                 vis: List[float] = []
                 for i, u in enumerate(self.uhes):
-                    vi = u.minVolume + (u.maxVolume - u.minVolume) * d[i] / 100
+                    vi = (u.min_volume +
+                          (u.max_volume - u.min_volume) * d[i] / 100)
                     vis.append(vi)
                 afls: List[float] = []
                 for i, u in enumerate(self.uhes):
@@ -56,7 +68,7 @@ class System:
         for i, u in enumerate(self.utes):
             self.obj_f += u.cost * self.gt[i]
 
-        self.obj_f += self.data.deficitCost * self.deficit[0]
+        self.obj_f += self.configs.deficit_cost * self.deficit[0]
 
         for i in range(len(self.uhes)):
             self.obj_f += 0.01 * self.vv[i]
@@ -77,7 +89,7 @@ class System:
         for i, ut in enumerate(self.utes):
             balance += self.gt[i]
         balance += self.deficit[0]
-        self.cons.append(balance == self.data.loads[state.stage-1])
+        self.cons.append(balance == self.configs.loads[state.stage-1])
 
         for i, uh in enumerate(self.uhes):
             self.cons.append(self.vt[i] >= 0)
@@ -141,7 +153,7 @@ class System:
     def dispatch(self):
         state_results: Dict[int, List[StateResult]] = {}
         # Virtual end-of-world state
-        eow_state = DiscreteState(self.data.stageCount + 1,
+        eow_state = DiscreteState(self.configs.stage_count + 1,
                                   [0] * 10,
                                   [0] * 10)
         # Backward loop
@@ -191,8 +203,8 @@ class System:
                 ax.set_xlabel("Volume Inicial UHE 1 (hm^3)")
                 ax.set_ylabel("Volume Inicial UHE 2 (hm^3)")
                 ax.set_zlabel("FCF ($)")
-                costs = np.zeros((self.data.discretizationCount,
-                                  self.data.discretizationCount))
+                costs = np.zeros((self.configs.discretization_count,
+                                  self.configs.discretization_count))
                 for r in s:
                     uhe0_v = r.state.volumes[0]
                     uhe1_v = r.state.volumes[1]
