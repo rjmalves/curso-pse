@@ -1,6 +1,5 @@
 from models.uhe import UHE
 from models.ute import UTE
-import time
 from models.general_configs import GeneralConfigs
 from models.realization import UHEResult
 from models.realization import UTEResult
@@ -8,7 +7,7 @@ from models.realization import Realization
 from models.benders_cut import BendersCut
 import numpy as np  # type: ignore
 from typing import List, Dict
-# import matplotlib.pyplot as plt  # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
 # from matplotlib import cm  # type: ignore
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
@@ -140,7 +139,6 @@ class System:
             else:
                 vi = float(forward_realizations[stage - 1].uhes[i].finalVolume)
             afl = float(uh.affluents[stage][scenario])
-            print("vi = {}".format(vi))
             self.cons.append(
                 self.vf[i] == vi + afl - self.vt[i] - self.vv[i])
 
@@ -230,14 +228,12 @@ class System:
         tol = 1e-2
         z_sup = [np.inf]
         z_inf = [0.]
-        realizations: List[Realization] = []
         # General loop
         while np.abs(z_sup[it] - z_inf[it]) > tol:
-            print("Iteração: {}".format(it))
             # Forward loop
             z_sup[it] = 0.
+            realizations: List[Realization] = []
             for s in range(self.configs.stage_count):
-                print("fw stg {}".format(s))
                 # Configures the forward problem
                 self.forward_config(s, scenario, cuts[s + 1])
                 # Solves and export results
@@ -254,16 +250,13 @@ class System:
                 break
             z_inf.append(z_inf[it])
             z_sup.append(z_sup[it])
-            print("z_inf = {}    z_sup = {}".format(z_inf[it], z_sup[it]))
             it += 1
             # Backward loop
             for s in np.arange(self.configs.stage_count - 1, -1, -1):
-                print("bkww stg {}".format(s))
                 # Configures the backward problem
                 self.backward_config(s, scenario, realizations, cuts[s + 1])
                 # Solves and export results
                 r = self.optSolve(False)
-                print(r.uhes[0])
                 # Generates a new cut
                 water_values: List[float] = []
                 offset = r.totalCost
@@ -272,76 +265,21 @@ class System:
                     if s == 0:
                         vi = self.uhes[i].initial_volume
                     else:
-                        vi = realizations[s].uhes[i].finalVolume
+                        vi = realizations[s - 1].uhes[i].finalVolume
                     offset -= vi * water_values[i]
                 bc = BendersCut(water_values, offset)
-                print("cut: {}".format(bc))
                 cuts[s].append(bc)
-            time.sleep(0.5)
-
-        # state_results: Dict[int, List[StateResult]] = {}
-        # # Virtual end-of-world state
-        # eow_state = DiscreteState(self.configs.stage_count + 1,
-        #                           [0] * 10,
-        #                           [0] * 10)
-        # # Backward loop
-        # for i, state in enumerate(self.states):
-        #     results: List[Realization] = []
-        #     future_states: List[DiscreteState] = []
-        #     for j, s in enumerate(self.states):
-        #         if s.stage == state.stage + 1:
-        #             future_states.append(s)
-        #     if len(future_states) == 0:
-        #         future_states.append(eow_state)
-        #     for s in future_states:
-        #         self.optConfig(state, s)
-        #         results.append(self.optSolve(False))
-        #     state_res = StateResult(state, future_states, results)
-        #     if state.stage not in state_results:
-        #         state_results[state.stage] = []
-        #     state_results[state.stage].append(state_res)
 
         # # Plotting
-        # if len(self.uhes) == 1:
-        #     for i, s in state_results.items():
-        #         plt.figure()
-        #         plt.title("Função de Custo Futuro - Estágio {}".format(i))
-        #         plt.xlabel("Volume Inicial (hm^3)")
-        #         plt.ylabel("Custo Total ($)")
-        #         costs = []
-        #         vols = []
-        #         for r in s:
-        #             costs.append(r.totalCost)
-        #             vols.append(r.state.volumes[0])
-        #         plt.plot(vols, costs, marker='o')
-        #         plt.savefig('figures/custo_est{}.png'.format(i))
-        # elif len(self.uhes) == 2:
-        #     uhe0_vol_set = set()
-        #     uhe1_vol_set = set()
-        #     for state in self.states:
-        #         uhe0_vol_set.add(state.volumes[0])
-        #         uhe1_vol_set.add(state.volumes[1])
-        #     uhe0_vols = sorted(list(uhe0_vol_set))
-        #     uhe1_vols = sorted(list(uhe1_vol_set))
-        #     uhe0_mesh, uhe1_mesh = np.meshgrid(uhe0_vols, uhe1_vols)
-        #     for i, s in state_results.items():
-        #         fig = plt.figure()
-        #         ax = fig.gca(projection='3d')
-        #         ax.set_title("Função de Custo Futuro - Estágio {}".format(i))
-        #         ax.set_xlabel("Volume Inicial UHE 1 (hm^3)")
-        #         ax.set_ylabel("Volume Inicial UHE 2 (hm^3)")
-        #         ax.set_zlabel("FCF ($)")
-        #         costs = np.zeros((self.configs.discretization_count,
-        #                           self.configs.discretization_count))
-        #         for r in s:
-        #             uhe0_v = r.state.volumes[0]
-        #             uhe1_v = r.state.volumes[1]
-        #             for lin, v0 in enumerate(uhe0_vols):
-        #                 for col, v1 in enumerate(uhe1_vols):
-        #                     if v0 == uhe0_v and v1 == uhe1_v:
-        #                         costs[lin][col] = r.averageCost
-        #         ax.plot_surface(uhe0_mesh,
-        #                         uhe1_mesh,
-        #                         costs,
-        #                         cmap=cm.coolwarm)
-        #         plt.savefig('figures/custo_est{}.png'.format(i))
+        x = np.arange(0, it + 1, 1)
+        plt.figure()
+        plt.plot(x + 1, z_inf, marker='o', linewidth=3.0, label='Zinf')
+        plt.plot(x + 1, z_sup, marker='o', linewidth=3.0, label='Zsup')
+        plt.legend()
+        plt.title("Evolução dos erros inferior e superior")
+        plt.xlabel("Iteração")
+        plt.ylabel("Custo ($)")
+        plt.xticks(x + 1)
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig('figures/convergencia.png')
