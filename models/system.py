@@ -225,7 +225,7 @@ class System:
             cuts[s] = []
         # Cost estimated bounds
         it = 0
-        tol = 1e-2
+        tol = 1e-3
         z_sup = [np.inf]
         z_inf = [0.]
         # General loop
