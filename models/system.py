@@ -33,6 +33,12 @@ class System:
             utes.append(UTE.from_json(d))
         return cls(configs, uhes, utes)
 
+    def setup_post_study(self):
+        for ps in range(self.configs.post_study):
+            self.configs.loads += self.configs.loads
+            for i, uh in enumerate(self.uhes):
+                self.uhes[i].affluents += uh.affluents
+
     def forward_config(self,
                        stage: int,
                        scenario: int,
@@ -220,8 +226,9 @@ class System:
 
     def dispatch(self, scenario: int):
         # Benders cuts for each stage
+        stages_post = (1 + self.configs.post_study) * self.configs.stage_count
         cuts: Dict[int, List[BendersCut]] = {}
-        for s in range(self.configs.stage_count + 1):
+        for s in range(stages_post + 1):
             cuts[s] = []
         # Cost estimated bounds
         it = 0
@@ -233,7 +240,7 @@ class System:
             # Forward loop
             z_sup[it] = 0.
             realizations: List[Realization] = []
-            for s in range(self.configs.stage_count):
+            for s in range(stages_post):
                 # Configures the forward problem
                 self.forward_config(s, scenario, cuts[s + 1])
                 # Solves and export results
@@ -252,7 +259,7 @@ class System:
             z_sup.append(z_sup[it])
             it += 1
             # Backward loop
-            for s in np.arange(self.configs.stage_count - 1, -1, -1):
+            for s in np.arange(stages_post - 1, -1, -1):
                 # Configures the backward problem
                 self.backward_config(s, scenario, realizations, cuts[s + 1])
                 # Solves and export results
@@ -289,10 +296,13 @@ class System:
         for i, uh in enumerate(self.uhes):
             plt.figure()
             vfs = [r.uhes[i].finalVolume for r in realizations]
+            vfs = vfs[:self.configs.stage_count]
             plt.plot(x + 1, vfs, marker='o', linewidth=2.0, label="Vf")
             vts = [r.uhes[i].turbinatedVolume for r in realizations]
+            vts = vts[:self.configs.stage_count]
             plt.plot(x + 1, vts, marker='o', linewidth=2.0, label="Vt")
             vvs = [r.uhes[i].spilledVolume for r in realizations]
+            vvs = vvs[:self.configs.stage_count]
             plt.plot(x + 1, vvs, marker='o', linewidth=2.0, label="Vv")
             plt.legend()
             plt.title("Volumes por estágio para {}".format(uh.name))
@@ -305,8 +315,9 @@ class System:
         # CMA
         plt.figure()
         for i, uh in enumerate(self.uhes):
-            vfs = [r.uhes[i].waterValue for r in realizations]
-            plt.plot(x + 1, vfs, marker='o', linewidth=2.0, label=uh.name)
+            wvals = [r.uhes[i].waterValue for r in realizations]
+            wvals = wvals[:self.configs.stage_count]
+            plt.plot(x + 1, wvals, marker='o', linewidth=2.0, label=uh.name)
         plt.legend()
         plt.title("Custo marginal da água por estágio")
         plt.xlabel("Estágio")
@@ -319,6 +330,7 @@ class System:
         plt.figure()
         for i, ut in enumerate(self.utes):
             gts = [r.utes[i].generated for r in realizations]
+            gts = gts[:self.configs.stage_count]
             plt.plot(x + 1, gts, marker='o', linewidth=2.0, label=ut.name)
         plt.legend()
         plt.title("Geração térmica por estágio")

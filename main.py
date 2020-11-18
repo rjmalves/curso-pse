@@ -12,6 +12,7 @@ def main():
     json_file.close()
     # Runs the program
     s = System.from_json(config_dict)
+    s.setup_post_study()
     s.dispatch(0)
 
 

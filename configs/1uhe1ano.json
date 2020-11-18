@@ -16,12 +16,13 @@
             50.0
         ],
         "stageCount": 12,
-        "scenarioCount": 2
+        "scenarioCount": 2,
+        "postStudy": 3
     },
     "UHES": [
         {
             "name": "UHE_1",
-            "initialVolume": 70.0,
+            "initialVolume": 90.0,
             "maxVolume": 100.0,
             "minVolume": 20.0,
             "productivity": 0.95,
