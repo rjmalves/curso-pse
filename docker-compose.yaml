@@ -8,4 +8,4 @@ services:
     volumes: 
       - ./results:/app/figures
     environment: 
-      - CONFIG_FILE=./configs/1uhe1ano.json
+      - CONFIG_FILE=./configs/1uhe.json
