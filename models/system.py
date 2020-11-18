@@ -186,7 +186,7 @@ class System:
                           self.cons[i].multiplier.value[0])
             uhe_res.append(r)
         ute_res: List[UTEResult] = []
-        for i, u in enumerate(self.uhes):
+        for i, u in enumerate(self.utes):
             ute_res.append(UTEResult(self.gt[i].value()[0]))
         res = Realization(self.obj_f.value()[0],
                           self.alpha[0].value()[0],
@@ -270,7 +270,8 @@ class System:
                 bc = BendersCut(water_values, offset)
                 cuts[s].append(bc)
 
-        # # Plotting
+        # -- Plotting --
+        # Convergência
         x = np.arange(0, it + 1, 1)
         plt.figure()
         plt.plot(x + 1, z_inf, marker='o', linewidth=3.0, label='Zinf')
@@ -283,3 +284,47 @@ class System:
         plt.grid()
         plt.tight_layout()
         plt.savefig('figures/convergencia.png')
+        # Volumes
+        x = np.arange(0, self.configs.stage_count, 1)
+        for i, uh in enumerate(self.uhes):
+            plt.figure()
+            vfs = [r.uhes[i].finalVolume for r in realizations]
+            plt.plot(x + 1, vfs, marker='o', linewidth=2.0, label="Vf")
+            vts = [r.uhes[i].turbinatedVolume for r in realizations]
+            plt.plot(x + 1, vts, marker='o', linewidth=2.0, label="Vt")
+            vvs = [r.uhes[i].spilledVolume for r in realizations]
+            plt.plot(x + 1, vvs, marker='o', linewidth=2.0, label="Vv")
+            plt.legend()
+            plt.title("Volumes por estágio para {}".format(uh.name))
+            plt.xlabel("Estágio")
+            plt.ylabel("Volume (hm^3)")
+            plt.xticks(x + 1)
+            plt.grid()
+            plt.tight_layout()
+            plt.savefig('figures/volumes_{}.png'.format(uh.name))
+        # CMA
+        plt.figure()
+        for i, uh in enumerate(self.uhes):
+            vfs = [r.uhes[i].waterValue for r in realizations]
+            plt.plot(x + 1, vfs, marker='o', linewidth=2.0, label=uh.name)
+        plt.legend()
+        plt.title("Custo marginal da água por estágio")
+        plt.xlabel("Estágio")
+        plt.ylabel("Volume (hm^3)")
+        plt.xticks(x + 1)
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig('figures/custo_agua.png')
+        # UTES
+        plt.figure()
+        for i, ut in enumerate(self.utes):
+            gts = [r.utes[i].generated for r in realizations]
+            plt.plot(x + 1, gts, marker='o', linewidth=2.0, label=ut.name)
+        plt.legend()
+        plt.title("Geração térmica por estágio")
+        plt.xlabel("Estágio")
+        plt.ylabel("Geração (MWmed)")
+        plt.xticks(x + 1)
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig('figures/geracao_termicas.png')
