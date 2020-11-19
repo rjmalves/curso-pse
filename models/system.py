@@ -7,6 +7,7 @@ from models.realization import Realization
 from models.benders_cut import BendersCut
 import numpy as np  # type: ignore
 from typing import List, Dict
+import itertools
 import matplotlib.pyplot as plt  # type: ignore
 # from matplotlib import cm  # type: ignore
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
@@ -33,17 +34,229 @@ class System:
             utes.append(UTE.from_json(d))
         return cls(configs, uhes, utes)
 
+    def assemble_scenario_tree(self):
+        br = self.configs.branch_count
+        # Affluence tree for each UHE
+        # tree[i][j][k] -> i = uhe, j = branch, k = node
+        self.affluence_tree: List[List[List[float]]] = []
+        # Overwrites the affluences with only the chosen stages and
+        # branches
+        for i, u in enumerate(self.uhes):
+            # Cuts the latter stages
+            u.affluents = u.affluents[:self.configs.stage_count]
+            # Makes the first stage deterministic
+            u.affluents[0] = [u.affluents[0][0]]
+            # Limits the number of nodes in the each stage
+            for s in range(1, self.configs.stage_count):
+                u.affluents[s] = u.affluents[s][:br]
+            print(u.affluents)
+            t = itertools.product(*[a for a in u.affluents])
+            self.affluence_tree.append([list(c) for c in t])
+
+        self.node_counts: List[int] = []
+        for i, afls in enumerate(self.uhes[0].affluents):
+            if i == 0:
+                self.node_counts.append(1)
+            else:
+                nc = self.node_counts[i - 1] * len(afls)
+                self.node_counts.append(nc)
+
     def setup_post_study(self):
         for ps in range(self.configs.post_study):
             self.configs.loads += self.configs.loads
             for i, uh in enumerate(self.uhes):
                 self.uhes[i].affluents += uh.affluents
 
+    def single_pl_config(self):
+        # Variables
+        # v[i][j][k] -> i = uhe, j = stage, k = node
+        self.vf: List[List[variable]] = []
+        self.vt: List[List[variable]] = []
+        self.vv: List[List[variable]] = []
+        for i, uh in enumerate(self.uhes):
+            self.vf.append([])
+            self.vt.append([])
+            self.vv.append([])
+            for j in range(self.configs.stage_count):
+                self.vf[i].append(variable(self.node_counts[j],
+                                           "Vf {}, stg {}"
+                                           .format(uh.name, j)
+                                           ))
+                self.vt[i].append(variable(self.node_counts[j],
+                                           "Vt {}, stg {}"
+                                           .format(uh.name, j)
+                                           ))
+                self.vv[i].append(variable(self.node_counts[j],
+                                           "Vv {}, stg {}"
+                                           .format(uh.name, j)
+                                           ))
+
+        self.gt: List[List[variable]] = []
+        # v[i][j][k] -> i = ute, j = stage, k = node
+        for i, ut in enumerate(self.utes):
+            self.gt.append([])
+            for j in range(self.configs.stage_count):
+                self.gt[i].append(variable(self.node_counts[j],
+                                           "Gt {}, stg {}"
+                                           .format(uh.name, j)
+                                           ))
+
+        self.deficit: List[variable] = []
+        for j in range(self.configs.stage_count):
+            self.deficit.append(variable(self.node_counts[j],
+                                         "Déficit stg {}".format(j)))
+
+        # Obj function
+        self.obj_f: _function = 0
+        for j in range(self.configs.stage_count):
+            c = 1.0 / (self.configs.branch_count ** j)
+            for k in range(self.node_counts[j]):
+                for i, ut in enumerate(self.utes):
+                    self.obj_f += c * ut.cost * self.gt[i][j][k]
+
+                self.obj_f += (c * self.deficit[j][k] *
+                               self.configs.deficit_cost)
+
+                for i, uh in enumerate(self.uhes):
+                    self.obj_f += c * 0.001 * self.vv[i][j][k]
+
+        # -- Constraints --
+        self.cons = []
+
+        # Hydric balance
+        for i, uh in enumerate(self.uhes):
+            for j in range(self.configs.stage_count):
+                for k in range(self.node_counts[j]):
+                    if j == 0:
+                        self.cons.append(
+                            self.vf[i][j][k] == float(uh.initial_volume) +
+                            float(uh.affluents[0][0]) -
+                            self.vt[i][j][k] -
+                            self.vv[i][j][k]
+                        )
+                    else:
+                        prev_k = int(k / self.configs.branch_count)
+                        br_idx = k % self.configs.branch_count
+                        self.cons.append(
+                            self.vf[i][j][k] == self.vf[i][j - 1][prev_k] +
+                            float(uh.affluents[j][br_idx]) -
+                            self.vt[i][j][k] -
+                            self.vv[i][j][k]
+                        )
+
+        # Demand constraints
+        for j in range(self.configs.stage_count):
+            for k in range(self.node_counts[j]):
+                balance = 0
+                for i, uh in enumerate(self.uhes):
+                    balance += uh.productivity * self.vt[i][j][k]
+                for i, ut in enumerate(self.utes):
+                    balance += self.gt[i][j][k]
+                balance += self.deficit[j][k]
+
+                self.cons.append(balance == self.configs.loads[j])
+
+        # Operational constraints
+        for i, uh in enumerate(self.uhes):
+            for j in range(self.configs.stage_count):
+                self.cons.append(self.vf[i][j] <= uh.max_volume)
+                self.cons.append(self.vf[i][j] >= uh.min_volume)
+                self.cons.append(self.vt[i][j] >= 0)
+                self.cons.append(self.vt[i][j] <= uh.swallowing)
+                self.cons.append(self.vv[i][j] >= 0)
+
+        for i, ut in enumerate(self.utes):
+            for j in range(self.configs.stage_count):
+                self.cons.append(self.gt[i][j] >= 0)
+                self.cons.append(self.gt[i][j] <= ut.capacity)
+
+        for j in range(self.configs.stage_count):
+            self.cons.append(self.deficit[j] >= 0)
+
+    def single_pl_solve(self, log: bool = False):
+        self.prob = op(self.obj_f, self.cons)
+        print(self.prob)
+        self.prob.solve('dense', 'glpk')
+        # The results
+        node_total = sum(self.node_counts)
+        uhes: List[List[List[UHEResult]]] = []
+        for j in range(self.configs.stage_count):
+            node_partial = sum(self.node_counts[:j])
+            uhe_stg: List[List[UHEResult]] = []
+            for k in range(self.node_counts[j]):
+                uhe_res: List[UHEResult] = []
+                for i, uh in enumerate(self.uhes):
+                    c = i * node_total + j * node_partial + k
+                    r = UHEResult(self.vf[i][j][k].value()[0],
+                                  self.vt[i][j][k].value()[0],
+                                  self.vv[i][j][k].value()[0],
+                                  self.cons[c].multiplier.value[0])
+                    uhe_res.append(r)
+                uhe_stg.append(uhe_res)
+            uhes.append(uhe_stg)
+        utes: List[List[List[UTEResult]]] = []
+        for j in range(self.configs.stage_count):
+            node_partial = sum(self.node_counts[:j])
+            ute_stg: List[List[UTEResult]] = []
+            for k in range(self.node_counts[j]):
+                ute_res: List[UTEResult] = []
+                for i, u in enumerate(self.utes):
+                    ute_res.append(UTEResult(self.gt[i][j][k].value()[0]))
+                ute_stg.append(ute_res)
+            utes.append(ute_stg)
+        deficits: List[List[float]] = []
+        for j in range(self.configs.stage_count):
+            deficits.append([])
+            for k in range(self.node_counts[j]):
+                deficits[-1].append(self.deficit[j][k].value()[0])
+        res = Realization(self.obj_f.value()[0],
+                          deficits,
+                          uhes,
+                          utes)
+        if not log:
+            return res
+        # Report
+        print("Custo total: ", self.obj_f.value())
+        for j in range(self.configs.stage_count):
+            for k in range(self.node_counts[j]):
+                prev_k = int(k / self.configs.branch_count)
+                br_idx = k % self.configs.branch_count
+                for i, uh in enumerate(self.uhes):
+                    if j == 0:
+                        print("Vi " + uh.name + " " +
+                              str(uh.initial_volume))
+                    else:
+                        print("Vi " + uh.name + " " +
+                              str(self.vf[i][j - 1][prev_k].value()[0])
+                              + "hm3")
+                    print("Afl " + str(uh.affluents[j][br_idx]) + "hm3")
+                    print(self.vf[i][j].name, i, "é",
+                          self.vf[i][j][k].value()[0], "hm3")
+                    print(self.vt[i][j].name, i, "é",
+                          self.vt[i][j][k].value()[0], "hm3")
+                    print(self.vv[i][j].name, i, "é",
+                          self.vv[i][j][k].value()[0], "hm3")
+
+                for i, ut in enumerate(self.utes):
+                    print(self.gt[i][j].name, i, "é",
+                          self.gt[i][j][k].value()[0], "MWmed")
+
+                print(self.deficit[j].name, "é",
+                      self.deficit[j][k].value()[0], "MWmed")
+
+                # for i, u in enumerate(self.uhes):
+                #     print("O valor da água na usina", i, "é",
+                #         self.cons[i].multiplier.value[0])
+
+                # print("O Custo Marginal de Operação é",
+                #     self.cons[len(self.uhes)].multiplier.value[0])
+                print("---------------- X ---------------")
+        return res
+
     def forward_config(self,
                        stage: int,
                        scenario: int,
                        cuts: List[BendersCut]):
-
         # Variables
         self.vf = variable(len(self.uhes), "Volume final na usina")
         self.vt = variable(len(self.uhes), "Volume turbinado na usina")
@@ -180,7 +393,7 @@ class System:
             eq += float(cut.offset)
             self.cons.append(self.alpha[0] >= eq)
 
-    def optSolve(self, log: bool = True) -> Realization:
+    def opt_solve(self, log: bool = True) -> Realization:
         self.prob = op(self.obj_f, self.cons)
         self.prob.solve('dense', 'glpk')
         # The results
@@ -224,7 +437,27 @@ class System:
         print("---------------- X ---------------")
         return res
 
-    def dispatch(self, scenario: int):
+    def single_pl_dispatch(self):
+        self.assemble_scenario_tree()
+        self.single_pl_config()
+        r = self.single_pl_solve(False)
+        # Plotting
+        vf: List[List[List[float]]] = []
+        for i in range(len(self.uhes)):
+            uhe_vf: List[List[float]] = []
+            for j in range(self.configs.stage_count):
+                stg_vf: List[float] = []
+                for k in range(self.node_counts[j]):
+                    stg_vf.append(r.uhes[j][k][i].finalVolume)
+                uhe_vf.append(stg_vf)
+            vf.append(uhe_vf)
+        for i, uh in enumerate(self.uhes):
+            fig = plt.figure()
+            ax = fig.add_axes([0, 0, 1, 1])
+            ax.boxplot(vf[i])
+            plt.savefig("figures/volumes_{}.png".format(uh.name))
+
+    def pddd_dispatch(self, scenario: int):
         # Benders cuts for each stage
         stages_post = (1 + self.configs.post_study) * self.configs.stage_count
         cuts: Dict[int, List[BendersCut]] = {}
@@ -244,7 +477,7 @@ class System:
                 # Configures the forward problem
                 self.forward_config(s, scenario, cuts[s + 1])
                 # Solves and export results
-                r = self.optSolve(False)
+                r = self.opt_solve(False)
                 z_sup[it] += r.totalCost - r.futureCost
                 if s == 0:
                     z_inf[it] = r.totalCost
@@ -263,7 +496,7 @@ class System:
                 # Configures the backward problem
                 self.backward_config(s, scenario, realizations, cuts[s + 1])
                 # Solves and export results
-                r = self.optSolve(False)
+                r = self.opt_solve(False)
                 # Generates a new cut
                 water_values: List[float] = []
                 offset = r.totalCost

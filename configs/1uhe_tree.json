@@ -1,14 +1,23 @@
 {
     "generalConfigs": {
+        "stageCount": 5,
+        "branchCount": 2,
+        "postStudy": 0,
         "deficitCost": 500.0,
         "loads": [
             50.0,
             50.0,
+            50.0,
+            50.0,
+            50.0,
+            50.0,
+            50.0,
+            50.0,
+            50.0,
+            50.0,
+            50.0,
             50.0
-        ],
-        "stageCount": 3,
-        "scenarioCount": 2,
-        "postStudy": 1
+        ]
     },
     "UHES": [
         {

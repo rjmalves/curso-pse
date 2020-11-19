@@ -12,8 +12,9 @@ def main():
     json_file.close()
     # Runs the program
     s = System.from_json(config_dict)
-    s.setup_post_study()
-    s.dispatch(0)
+    s.single_pl_dispatch()
+    # s.setup_post_study()
+    # s.pddd_dispatch(0)
 
 
 if __name__ == "__main__":

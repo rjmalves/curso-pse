@@ -6,12 +6,12 @@ class GeneralConfigs:
                  deficit_cost: float,
                  loads: List[float],
                  stage_count: int,
-                 scenario_count: int,
+                 branch_count: int,
                  post_study: int):
         self.deficit_cost = deficit_cost
         self.loads = loads
         self.stage_count = stage_count
-        self.scenario_count = scenario_count
+        self.branch_count = branch_count
         self.post_study = post_study
 
     @classmethod
@@ -19,7 +19,7 @@ class GeneralConfigs:
         return cls(json_dict["deficitCost"],
                    json_dict["loads"],
                    json_dict["stageCount"],
-                   json_dict["scenarioCount"],
+                   json_dict["branchCount"],
                    json_dict["postStudy"])
 
     def __str__(self):

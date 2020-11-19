@@ -28,14 +28,10 @@ class UTEResult:
 class Realization:
     def __init__(self,
                  totalCost: float,
-                 futureCost: float,
-                 cmo: float,
                  deficit: float,
-                 uhes: List[UHEResult],
-                 utes: List[UTEResult]):
+                 uhes: List[List[List[UHEResult]]],
+                 utes: List[List[List[UTEResult]]]):
         self.totalCost = totalCost
-        self.futureCost = futureCost
-        self.cmo = cmo
         self.deficit = deficit
         self.uhes = uhes
         self.utes = utes
