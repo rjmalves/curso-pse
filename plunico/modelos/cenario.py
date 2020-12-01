@@ -12,29 +12,19 @@ class Cenario:
         self.n_uhes = len(nos[0].volumes_finais)
         self.n_utes = len(nos[0].geracao_termica)
         self.afluencias = self.organiza_afluencias(nos)
-        print("AFLUENCIAS")
-        print(self.afluencias)
         self.volumes_finais = self.organiza_vol_finais(nos)
-        print("VOLUMES FINAIS")
-        print(self.volumes_finais)
         self.volumes_turbinados = self.organiza_vol_turbin(nos)
-        print("VOLUMES TURBINADOS")
-        print(self.volumes_turbinados)
         self.volumes_vertidos = self.organiza_vol_vertid(nos)
-        print("VOLUMES VERTIDOS")
-        print(self.volumes_vertidos)
         self.custo_agua = self.organiza_custo_agua(nos)
-        print("CUSTO AGUA")
-        print(self.custo_agua)
         self.geracao_termica = self.organiza_ger_termica(nos)
-        print("TERMICAS")
-        print(self.geracao_termica)
         self.deficit: List[float] = [n.deficit for n in nos]
-        print("DEFICIT")
-        print(self.deficit)
         self.cmo: List[float] = [n.cmo for n in nos]
-        print("CMO")
-        print(self.cmo)
+
+    def __str__(self):
+        to_str = ""
+        for k, v in self.__dict__.items():
+            to_str += "{}: {} - ".format(k, v)
+        return to_str
 
     def organiza_afluencias(self,
                             nos: List[No]) -> Dict[int, List[float]]:

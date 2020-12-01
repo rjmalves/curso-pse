@@ -197,14 +197,16 @@ class PLUnico:
         n_cenarios = self.arvore.nos_por_periodo[-1]
         cenarios: List[Cenario] = []
         for c in range(n_cenarios):
-            print("##### CENARIO " + str(c + 1) + " #####")
+            self.log.debug("##### CENARIO " + str(c + 1) + " #####")
             nos_cenario: List[No] = []
             indice_no = c
             for p in range(self.cfg.n_periodos - 1, -1, -1):
                 no = self.arvore.arvore[p][indice_no]
                 nos_cenario.insert(0, no)
                 indice_no = self.arvore.indice_no_anterior(p, indice_no)
-            cenarios.append(Cenario(nos_cenario))
+            cen = Cenario(nos_cenario)
+            self.log.debug(cen)
+            cenarios.append(cen)
         self.cenarios = cenarios
 
     def escreve_saidas(self, caminho: str):
