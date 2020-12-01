@@ -1,6 +1,7 @@
 from utils.leituraentrada import LeituraEntrada
 from plunico.plunico import PLUnico
 
+import time
 import logging
 from enum import Enum
 
@@ -34,10 +35,13 @@ class Metodo(Enum):
         segundo o método escolhido.
         """
         log.info("Resolvendo o problema de {}".format(self.value))
+        caminho_saida = "results/{}/{}/{}/".format(e.cfg.nome,
+                                                   self.value,
+                                                   int(time.time()))
         if self == Metodo.PL_UNICO:
-            pl = PLUnico(e)
-            prob = pl.monta_pl()
-            print(prob)
+            pl = PLUnico(e, log)
+            if pl.resolve_pl():
+                pl.escreve_saidas(caminho_saida)
         elif self == Metodo.PDDD:
             pass
         elif self == Metodo.PDDE:

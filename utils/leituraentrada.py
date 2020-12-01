@@ -34,7 +34,7 @@ class LeituraEntrada:
         # chave = id da UHE
         # valor = lista de listas de valores em hm3.
         # As listas são uma para cada período, sendo que
-        # cada elemento é uma lista de afluências possíveis
+        # cada elemento é uma afluências possível
         self.afluencias: Dict[int, List[List[float]]] = {}
         # Atributos auxiliares para leitura
         self.usa_backup = False
