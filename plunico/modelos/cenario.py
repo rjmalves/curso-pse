@@ -32,6 +32,9 @@ class Cenario:
         self.deficit: List[float] = [n.deficit for n in nos]
         print("DEFICIT")
         print(self.deficit)
+        self.cmo: List[float] = [n.cmo for n in nos]
+        print("CMO")
+        print(self.cmo)
 
     def organiza_afluencias(self,
                             nos: List[No]) -> Dict[int, List[float]]:

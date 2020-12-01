@@ -179,12 +179,15 @@ class PLUnico:
                 for i, ut in enumerate(self.utes):
                     geracao_termica.append(self.gt[i][j][k].value()[0])
                 deficit = self.deficit[j][k].value()[0]
+                c_cmo = len(self.uhes) * nos_totais + nos_considerados + k
+                cmo = abs(self.cons[c_cmo].multiplier.value[0])
                 self.arvore.arvore[j][k].preenche_resultados(vol_finais,
                                                              vol_turbinados,
                                                              vol_vertidos,
                                                              custo_agua,
                                                              geracao_termica,
-                                                             deficit)
+                                                             deficit,
+                                                             cmo)
 
     def organiza_cenarios(self):
         """
