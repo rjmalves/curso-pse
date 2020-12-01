@@ -123,8 +123,7 @@ class PLUnico:
                 for i, ut in enumerate(self.utes):
                     gerado += self.gt[i][j][k]
                 gerado += self.deficit[j][k]
-
-            self.cons.append(gerado == float(self.demandas[j].demanda))
+                self.cons.append(gerado == float(self.demandas[j].demanda))
 
         # Restrições operacionais
         for i, uh in enumerate(self.uhes):
@@ -155,6 +154,7 @@ class PLUnico:
         Resolve um PL montado anteriormente.
         """
         self.pl.solve("dense", "glpk")
+        self.log.info(self.func_objetivo.value()[0])
         return self.pl.status == "optimal"
 
     def armazena_saidas(self):
@@ -163,7 +163,6 @@ class PLUnico:
         """
         nos_totais = sum(self.arvore.nos_por_periodo)
         for j in range(self.cfg.n_periodos):
-            print(j)
             for k in range(self.arvore.nos_por_periodo[j]):
                 vol_finais: List[float] = []
                 vol_turbinados: List[float] = []
@@ -172,18 +171,20 @@ class PLUnico:
                 geracao_termica: List[float] = []
                 nos_considerados = sum(self.arvore.nos_por_periodo[:j])
                 for i, uh in enumerate(self.uhes):
-                    c = i * nos_totais + j * nos_considerados + k
+                    c = i * nos_totais + nos_considerados + k
                     vol_finais.append(self.vf[i][j][k].value()[0])
                     vol_turbinados.append(self.vt[i][j][k].value()[0])
                     vol_vertidos.append(self.vv[i][j][k].value()[0])
                     custo_agua.append(self.cons[c].multiplier.value[0])
                 for i, ut in enumerate(self.utes):
                     geracao_termica.append(self.gt[i][j][k].value()[0])
+                deficit = self.deficit[j][k].value()[0]
                 self.arvore.arvore[j][k].preenche_resultados(vol_finais,
                                                              vol_turbinados,
                                                              vol_vertidos,
                                                              custo_agua,
-                                                             geracao_termica)
+                                                             geracao_termica,
+                                                             deficit)
 
     def organiza_cenarios(self):
         """
@@ -193,6 +194,7 @@ class PLUnico:
         n_cenarios = self.arvore.nos_por_periodo[-1]
         cenarios: List[Cenario] = []
         for c in range(n_cenarios):
+            print("##### CENARIO " + str(c + 1) + " #####")
             nos_cenario: List[No] = []
             indice_no = c
             for p in range(self.cfg.n_periodos - 1, -1, -1):

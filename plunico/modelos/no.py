@@ -14,13 +14,15 @@ class No:
         self.volumes_vertidos: List[float] = []
         self.custo_agua: List[float] = []
         self.geracao_termica: List[float] = []
+        self.deficit = 0.0
 
     def preenche_resultados(self,
                             volumes_finais: List[float],
                             volumes_turbinados: List[float],
                             volumes_vertidos: List[float],
                             custo_agua: List[float],
-                            geracao_termica: List[float]):
+                            geracao_termica: List[float],
+                            deficit: float):
         """
         Adiciona ao nó os valores das variáveis após a solução
         do PL.
@@ -32,3 +34,4 @@ class No:
         self.volumes_vertidos = volumes_vertidos
         self.custo_agua = custo_agua
         self.geracao_termica = geracao_termica
+        self.deficit = deficit

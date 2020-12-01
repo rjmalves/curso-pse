@@ -27,16 +27,6 @@ def main():
     # Resolve o problema de otimização
     metodo.resolve(e, logger)
     # Gera relatórios e gráficos de saída
-    # # Reads the config JSON
-    # config_file = os.getenv("CONFIG_FILE")
-    # json_file = open(config_file)
-    # config_dict = json.load(json_file)
-    # json_file.close()
-    # # Runs the program
-    # s = System.from_json(config_dict)
-    # s.single_pl_dispatch()
-    # # s.setup_post_study()
-    # # s.pddd_dispatch(0)
     logger.critical("#### FIM DA EXECUÇÃO ####")
 
 
