@@ -2,6 +2,8 @@ from utils.leituraentrada import LeituraEntrada
 from plunico.modelos.arvoreafluencias import ArvoreAfluencias
 from plunico.modelos.no import No
 from plunico.modelos.cenario import Cenario
+from plunico.utils.visual import Visual
+from plunico.utils.escrevesaida import EscreveSaida
 
 import logging
 from typing import List
@@ -154,7 +156,10 @@ class PLUnico:
         Resolve um PL montado anteriormente.
         """
         self.pl.solve("dense", "glpk")
-        self.log.info(self.func_objetivo.value()[0])
+        self.log.info("Função objetivo final: {}".
+                      format(self.func_objetivo.value()[0]))
+        self.armazena_saidas()
+        self.organiza_cenarios()
         return self.pl.status == "optimal"
 
     def armazena_saidas(self):
@@ -206,16 +211,34 @@ class PLUnico:
                 indice_no = self.arvore.indice_no_anterior(p, indice_no)
             cen = Cenario(nos_cenario)
             self.log.debug(cen)
+            self.log.debug("--------------------------------------")
             cenarios.append(cen)
         self.cenarios = cenarios
 
+    def escreve_relatorio_estudo(self, caminho: str):
+        """
+        Gera um arquivo de texto com o relatório preciso dos
+        valores resultantes do PL para cada cenário e periodo.
+        """
+        saida = EscreveSaida(self.cfg,
+                             self.uhes,
+                             self.utes,
+                             caminho,
+                             self.cenarios,
+                             self.log)
+        saida.escreve_relatorio(self.func_objetivo.value()[0])
+
+    def gera_graficos(self, caminho: str):
+        """
+        """
+        vis = Visual(self.uhes, self.utes, caminho, self.cenarios)
+        vis.visualiza()
+
     def escreve_saidas(self, caminho: str):
         """
-        Gera um arquivo de saída para inspeção manual sobre um estudo
+        Gera arquivos de saída para inspeção manual sobre um estudo
         de planejamento energético.
         """
-        self.armazena_saidas()
-        # Escreve o arquivo de texto com os valores finais
-        self.organiza_cenarios()
-        # Gera os gráficos das variáveis de interesse
+        self.escreve_relatorio_estudo(caminho)
+        self.gera_graficos(caminho)
         pass

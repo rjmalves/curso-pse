@@ -5,7 +5,7 @@ from typing import Dict, List
 
 class Cenario:
     """
-    Descreve um possível cenário de operação considerado
+    Descreve um cenário de operação considerado
     dentro da árvore de possibilidades.
     """
     def __init__(self, nos: List[No]):
@@ -103,3 +103,28 @@ class Cenario:
             for i in range(self.n_utes):
                 ger_termica[i].append(n.geracao_termica[i])
         return ger_termica
+
+    def linhas_tabela(self) -> List[str]:
+        """
+        Retorna as linhas formatadas, relativas ao cenário para
+        serem escritas na tabela de saída.
+        """
+        n_periodos = len(self.volumes_finais[0])
+        linhas: List[str] = []
+        for i in range(n_periodos):
+            linha = " "
+            ind_periodo = str(i + 1).rjust(13)
+            linha += ind_periodo + " "
+            for j in range(self.n_uhes):
+                linha += "{:19.4f}".format(self.afluencias[j][i]) + " "
+                linha += "{:19.4f}".format(self.volumes_finais[j][i]) + " "
+                linha += "{:19.4f}".format(self.volumes_turbinados[j][i]) + " "
+                linha += "{:19.4f}".format(self.volumes_vertidos[j][i]) + " "
+                linha += "{:19.4f}".format(self.custo_agua[j][i]) + " "
+            for j in range(self.n_utes):
+                linha += "{:19.4f}".format(self.geracao_termica[j][i]) + " "
+            linha += "{:19.4f}".format(self.deficit[i]) + " "
+            linha += "{:19.4f}".format(self.cmo[i]) + " "
+            linha += "\n"
+            linhas.append(linha)
+        return linhas

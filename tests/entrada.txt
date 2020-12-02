@@ -3,7 +3,7 @@ CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
  NOME DO ESTUDO                        teste
  NÚMERO DE PERÍODOS                        3
- ABERTURAS POR PERÍODO                     2
+ ABERTURAS POR PERÍODO                     3
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)            500.0
  NÚMERO DE HIDRELÉTRICAS                   1
@@ -29,7 +29,7 @@ X-------------X-------------------X
 
 PARÂMETROS DAS USINAS HIDRELÉTRICAS
 X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
-   ID         NOME         VOL. INICIAL (hm3)  VOL. MÍNIMO (hm3)   VOL. MÁXIMO (hm3)   PRODUTIVIDADE (%)  ENGOL. MÁXIMO (hm3)
+   ID         NOME         VOL. INICIAL (hm3)  VOL. MÍNIMO (hm3)   VOL. MÁXIMO (hm3)   PROD. (MWmed/hm3)   ENGOL. MÁXIMO (hm3)
       1             UHE_1                65.0                20.0               100.0                0.95                60.0
 X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
 
