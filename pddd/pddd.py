@@ -1,9 +1,10 @@
 from utils.leituraentrada import LeituraEntrada
 from pddd.modelos.arvoreafluencias import ArvoreAfluencias
+from pddd.modelos.no import No
 from pddd.modelos.cenario import Cenario
 from pddd.modelos.cortebenders import CorteBenders
-from plunico.utils.visual import Visual
-from plunico.utils.escrevesaida import EscreveSaida
+from pddd.utils.visual import Visual
+from pddd.utils.escrevesaida import EscreveSaida
 
 import logging
 import numpy as np
@@ -306,7 +307,18 @@ class PDDD:
         self.cons.append(self.deficit[0] >= 0)
 
         # Cortes de Benders
+        num_uhes = len(self.uhes)
         self.cons.append(self.alpha[0] >= 0)
+        # Adiciona os cortes médios futuros já calculados anteriormente
+        # para o nó
+        no = self.arvore.arvore[periodo][indice_no]
+        for corte in no.cortes_medios_futuros:
+            # Armazena os cortes médios como restrições
+            eq = 0.
+            for i_uhe in range(num_uhes):
+                eq += corte.custo_agua[i_uhe] * self.vf[i_uhe]
+            eq += float(corte.offset)
+            self.cons.append(self.alpha[0] >= eq)
         # Obtém o corte médio dos prováveis nós futuros
         indices_futuros = self.arvore.indices_proximos_nos(periodo,
                                                            indice_no)
@@ -314,29 +326,42 @@ class PDDD:
         num_futuros = len(indices_futuros)
         if num_futuros == 0:
             return
-        # Caso contrário, calcula o corte médio de cada iteração
+
+        # Caso contrário, calcula o novo corte médio (última iteração)
         no_futuro = self.arvore.arvore[periodo + 1][indices_futuros[0]]
         num_cortes = len(no_futuro.cortes)
-        num_uhes = len(self.uhes)
-        # Para cada corte médio a ser calculado
-        for i_corte in range(num_cortes):
-            cma_medios = [0.] * num_uhes
-            offset_medio = 0.
-            # Para cada corte de possível nó futuro
-            for i_futuro in indices_futuros:
-                no_futuro = self.arvore.arvore[periodo + 1][i_futuro]
-                corte = no_futuro.cortes[i_corte]
-                # Calcula o custo médio da água
-                for i_uhe in range(num_uhes):
-                    cma_medios[i_uhe] += corte.custo_agua[i_uhe] / num_futuros
-                # Calcula o offset médio
-                offset_medio += corte.offset / num_futuros
-            # Armazena o corte como restrição
-            eq = 0.
+        self.log.debug("Cortes de benders para o nó {} do período {}: {}".
+                       format(indice_no + 1, periodo + 1, num_cortes))
+
+        novo_corte_futuro = True
+        cma_medios = [0.] * num_uhes
+        offset_medio = 0.
+        # Para cada corte de possível nó futuro
+        for i_futuro in indices_futuros:
+            no_futuro = self.arvore.arvore[periodo + 1][i_futuro]
+            if len(no_futuro.cortes) == 0:
+                novo_corte_futuro = False
+                break
+            corte = no_futuro.cortes[-1]
+            # Calcula o custo médio da água
             for i_uhe in range(num_uhes):
-                eq += cma_medios[i_uhe] * self.vf[i_uhe]
-            eq += float(offset_medio)
-            self.cons.append(self.alpha[0] >= eq)
+                cma_medios[i_uhe] += corte.custo_agua[i_uhe] / num_futuros
+            # Calcula o offset médio
+            offset_medio += corte.offset / num_futuros
+        # Se não possui novo cortes futuro a ser calculado, retorna
+        if not novo_corte_futuro:
+            return
+        # Caso contrário, se não houver corte igual já no nó, adiciona
+        novo_corte = CorteBenders(cma_medios, offset_medio)
+        if not no.adiciona_corte_futuro_medio(novo_corte):
+            return
+        self.log.debug("Novo corte médio: {}".format(corte))
+        # Armazena o novo corte médio como restrição
+        eq = 0.
+        for i_uhe in range(num_uhes):
+            eq += novo_corte.custo_agua[i_uhe] * self.vf[i_uhe]
+        eq += float(novo_corte.offset)
+        self.cons.append(self.alpha[0] >= eq)
 
     def resolve_pddd(self) -> bool:
         """
@@ -349,11 +374,16 @@ class PDDD:
         self.z_sup = [np.inf]
         self.z_inf = [0.]
         while np.abs(self.z_sup[it] - self.z_inf[it]) > tol:
+            self.log.info("# Iteração {} #".format(it + 1))
             # Executa a forward para cada nó
             self.z_sup[it] = 0.
             for j in range(self.cfg.n_periodos):
+                self.log.debug("Executando a FORWARD para o período {}...".
+                               format(j + 1))
                 nos_periodo = self.arvore.nos_por_periodo[j]
                 for k in range(nos_periodo):
+                    self.log.debug("Resolvendo o PL do nó {}...".
+                                   format(k + 1))
                     # Monta e resolve o PL do nó
                     self.__monta_pl(j, k)
                     self.pl = op(self.func_objetivo, self.cons)
@@ -368,16 +398,33 @@ class PDDD:
                         self.z_inf[it] = no.custo_total
             # Condição de saída por convergência
             if np.abs(self.z_sup[it] - self.z_inf[it]) <= tol:
+                self.log.info("Z_sup = {} --- Z_inf = {} --- {} <= {}".
+                              format(self.z_sup[it],
+                                     self.z_inf[it],
+                                     np.abs(self.z_sup[it] - self.z_inf[it]),
+                                     tol))
+                self.log.info("CONVERGIU!")
+                self.__organiza_cenarios()
                 return True
+            self.log.info("Z_sup = {} --- Z_inf = {} --- {} > {}".
+                          format(self.z_sup[it],
+                                 self.z_inf[it],
+                                 np.abs(self.z_sup[it] - self.z_inf[it]),
+                                 tol))
             self.z_inf.append(self.z_inf[it])
             self.z_sup.append(self.z_sup[it])
             it += 1
             # Condição de saída por iterações
-            if it > 1000:
+            if it >= 20:
+                self.__organiza_cenarios()
                 return False
             # Executa a backward para cada nó
             for j in range(self.cfg.n_periodos - 1, -1, -1):
+                self.log.debug("Executando a BACKWARD para o período {}...".
+                               format(j + 1))
                 for k in range(self.arvore.nos_por_periodo[j] - 1, -1, -1):
+                    self.log.debug("Resolvendo o PL do nó {}...".
+                                   format(k + 1))
                     # Monta e resolve o PL do nó
                     self.__monta_pl(j, k)
                     self.pl = op(self.func_objetivo, self.cons)
@@ -429,3 +476,50 @@ class PDDD:
                                                      cmo,
                                                      alpha,
                                                      func_objetivo)
+
+    def __organiza_cenarios(self):
+        """
+        Parte das folhas e reconstroi as séries históricas de cada variável de
+        interesse para cada cenário que aconteceu no estudo realizado.
+        """
+        n_cenarios = self.arvore.nos_por_periodo[-1]
+        cenarios: List[Cenario] = []
+        for c in range(n_cenarios):
+            self.log.debug("##### CENARIO " + str(c + 1) + " #####")
+            nos_cenario: List[No] = []
+            indice_no = c
+            for p in range(self.cfg.n_periodos - 1, -1, -1):
+                no = self.arvore.arvore[p][indice_no]
+                nos_cenario.insert(0, no)
+                indice_no = self.arvore.indice_no_anterior(p, indice_no)
+            cen = Cenario(nos_cenario)
+            self.log.debug(cen)
+            self.log.debug("--------------------------------------")
+            cenarios.append(cen)
+        self.cenarios = cenarios
+
+
+    def __escreve_relatorio_estudo(self, caminho: str):
+        """
+        """
+        saida = EscreveSaida(self.cfg,
+                             self.uhes,
+                             self.utes,
+                             caminho,
+                             self.cenarios,
+                             self.z_sup,
+                             self.z_inf,
+                             self.log)
+        saida.escreve_relatorio()
+
+    def __gera_graficos(self, caminho: str):
+        """
+        """
+        vis = Visual(self.uhes, self.utes, caminho, self.cenarios)
+        vis.visualiza()
+
+    def escreve_saidas(self, caminho: str):
+        """
+        """
+        self.__escreve_relatorio_estudo(caminho)
+        self.__gera_graficos(caminho)

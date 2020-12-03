@@ -45,9 +45,8 @@ class Metodo(Enum):
                 pl.escreve_saidas(caminho_saida)
         elif self == Metodo.PDDD:
             pddd = PDDD(e, log)
-            if pddd.resolve_pddd():
-                print("ZSUP = {} ZINF = {}".format(pddd.z_sup, pddd.z_inf))
-                pass
+            pddd.resolve_pddd()
+            pddd.escreve_saidas(caminho_saida)
         elif self == Metodo.PDDE:
             pass
         else:

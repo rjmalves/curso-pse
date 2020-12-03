@@ -25,9 +25,9 @@ class PLUnico:
         self.arvore = ArvoreAfluencias(e)
         self.arvore.monta_arvore_afluencias()
         self.cenarios: List[Cenario] = []
-        self.pl: op = self.monta_pl()
+        self.pl: op = self.__monta_pl()
 
-    def monta_pl(self) -> op:
+    def __monta_pl(self) -> op:
         """
         Realiza a configuração das variáveis e restrições
         do PL Único a ser resolvido.
@@ -215,7 +215,7 @@ class PLUnico:
             cenarios.append(cen)
         self.cenarios = cenarios
 
-    def escreve_relatorio_estudo(self, caminho: str):
+    def __escreve_relatorio_estudo(self, caminho: str):
         """
         Gera um arquivo de texto com o relatório preciso dos
         valores resultantes do PL para cada cenário e periodo.
@@ -228,7 +228,7 @@ class PLUnico:
                              self.log)
         saida.escreve_relatorio(self.func_objetivo.value()[0])
 
-    def gera_graficos(self, caminho: str):
+    def __gera_graficos(self, caminho: str):
         """
         """
         vis = Visual(self.uhes, self.utes, caminho, self.cenarios)
@@ -239,6 +239,5 @@ class PLUnico:
         Gera arquivos de saída para inspeção manual sobre um estudo
         de planejamento energético.
         """
-        self.escreve_relatorio_estudo(caminho)
-        self.gera_graficos(caminho)
-        pass
+        self.__escreve_relatorio_estudo(caminho)
+        self.__gera_graficos(caminho)

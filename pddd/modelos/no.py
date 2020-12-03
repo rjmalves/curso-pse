@@ -21,13 +21,25 @@ class No:
         self.custo_futuro = 0.0
         self.custo_total = 0.0
         self.cortes: List[CorteBenders] = []
+        self.cortes_medios_futuros: List[CorteBenders] = []
 
     def adiciona_corte(self, corte: CorteBenders):
         """
-        Adiciona um novo corte de benders à lista de cortes
+        Adiciona um novo corte de Benders à lista de cortes
         do nó.
         """
-        self.cortes.append(corte)
+        if corte not in self.cortes:
+            self.cortes.append(corte)
+
+    def adiciona_corte_futuro_medio(self, corte: CorteBenders) -> bool:
+        """
+        Adiciona um novo corte de Benders à lista de cortes
+        médios futuros.
+        """
+        if corte not in self.cortes_medios_futuros:
+            self.cortes_medios_futuros.append(corte)
+            return True
+        return False
 
     def preenche_resultados(self,
                             volumes_finais: List[float],
