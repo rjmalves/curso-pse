@@ -1,4 +1,4 @@
 {
     "arquivoEntrada": "./tests/entrada.txt",
-    "metodo": "PL_UNICO"
+    "metodo": "PDDD"
 }

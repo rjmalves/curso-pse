@@ -1,5 +1,6 @@
 from utils.leituraentrada import LeituraEntrada
 from plunico.plunico import PLUnico
+from pddd.pddd import PDDD
 
 import time
 import logging
@@ -43,7 +44,10 @@ class Metodo(Enum):
             if pl.resolve_pl():
                 pl.escreve_saidas(caminho_saida)
         elif self == Metodo.PDDD:
-            pass
+            pddd = PDDD(e, log)
+            if pddd.resolve_pddd():
+                print("ZSUP = {} ZINF = {}".format(pddd.z_sup, pddd.z_inf))
+                pass
         elif self == Metodo.PDDE:
             pass
         else:
