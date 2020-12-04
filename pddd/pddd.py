@@ -193,14 +193,16 @@ class PDDD:
             self.z_sup.append(self.z_sup[it])
             it += 1
             # Condição de saída por iterações
-            if it >= 40:
+            if it >= 50:
                 self.__organiza_cenarios()
+                self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
                 return False
-            if it >= 4:
+            if it >= 5:
                 erros = [self.z_sup[i] - self.z_inf[i]
-                         for i in range(-4, 0)]
+                         for i in range(-5, 0)]
                 if len(set(erros)) == 1:
                     self.__organiza_cenarios()
+                    self.log.warning("NÃO CONVERGIU ABAIXO DA TOLERÂNCIA!")
                     return False
             # Executa a backward para cada nó
             for j in range(self.cfg.n_periodos - 1, -1, -1):
@@ -209,7 +211,7 @@ class PDDD:
                 for k in range(self.arvore.nos_por_periodo[j] - 1, -1, -1):
                     self.log.debug("Resolvendo o PL do nó {}...".
                                    format(k + 1))
-                    # Monta e resolve o PL do nó
+                    # Monta e resolve o PL do nó (não resolve o último período)
                     if j != self.cfg.n_periodos - 1:
                         self.__monta_pl(j, k)
                         self.pl = op(self.func_objetivo, self.cons)
