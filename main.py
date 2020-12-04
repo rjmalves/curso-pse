@@ -8,7 +8,7 @@ import logging
 import coloredlogs  # type: ignore
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(logger=logger, level="CRITICAL")
+coloredlogs.install(logger=logger, level="INFO")
 
 
 def main():

@@ -198,6 +198,13 @@ class LeituraEntrada:
             # Lê o arquivo linha a linha
             afluencias: Dict[int, List[List[float]]] = {}
             for i in range(self.cfg.n_uhes):
+                # Procura pelo começo das afluências da UHE
+                while True:
+                    linha = self.__le_linha_com_backup(arquivo)
+                    if linha[1:7] != "      ":
+                        self.usa_backup = True
+                        self.backup_linha = linha
+                        break
                 # Identifica a UHE
                 linha = self.__le_linha_com_backup(arquivo)
                 self.usa_backup = True

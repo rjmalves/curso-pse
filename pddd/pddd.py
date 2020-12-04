@@ -31,212 +31,6 @@ class PDDD:
         self.z_sup: List[float] = []
         self.z_inf: List[float] = []
 
-    def __monta_pl_forward(self,
-                           periodo: int,
-                           indice_no: int) -> op:
-        """
-        Realiza a configuração das variáveis e restrições de um
-        problema de otimização a ser realizado na iteração
-        forward do problema de PDDD.
-        """
-        # ----- Variáveis -----
-        self.vf = variable(len(self.uhes), "Volume final (hm3)")
-        self.vt = variable(len(self.uhes), "Volume turbinado (hm3)")
-        self.vv = variable(len(self.uhes), "Volume vertido (hm3)")
-        self.gt = variable(len(self.utes), "Geração térmica (MWmed)")
-        self.deficit = variable(1, "Déficit (MWmed)")
-        self.alpha = variable(1, "Custo futuro ($)")
-
-        # ----- Função objetivo -----
-        self.func_objetivo: _function = 0
-        for i, ut in enumerate(self.utes):
-            self.func_objetivo += ut.custo * self.gt[i]
-
-        self.func_objetivo += self.cfg.custo_deficit * self.deficit[0]
-
-        for i in range(len(self.uhes)):
-            self.func_objetivo += 0.01 * self.vv[i]
-
-        self.func_objetivo += 1.0 * self.alpha[0]
-
-        # ----- Restrições -----
-        self.cons = []
-        # Balanço hídrico
-        for i, uh in enumerate(self.uhes):
-            if periodo == 0:
-                # O volume inicial é dado no problema
-                vi = float(uh.vol_inicial)
-            else:
-                # O volume inicial é o final do nó anterior
-                ant = self.arvore.indice_no_anterior(periodo, indice_no)
-                vi = float(self.arvore.arvore[periodo - 1][ant]
-                           .volumes_finais[i])
-            afl = float(self.arvore.arvore[periodo][indice_no]
-                        .afluencias[i])
-            self.cons.append(self.vf[i] == vi + afl - self.vt[i] - self.vv[i])
-
-        # Atendimento à demanda
-        gerado = 0
-        for i, uh in enumerate(self.uhes):
-            gerado += float(uh.produtividade) + self.vt[i]
-        for i, ut in enumerate(self.utes):
-            gerado += self.gt[i]
-        gerado += self.deficit[0]
-        self.cons.append(gerado == float(self.demandas[periodo].demanda))
-
-        # Restrições operacionais
-        for i, uh in enumerate(self.uhes):
-            # Volume útil do reservatório
-            self.cons.append(self.vf[i] <= uh.vol_maximo)
-            self.cons.append(self.vf[i] >= uh.vol_minimo)
-            # Engolimento máximo
-            self.cons.append(self.vt[i] <= uh.engolimento)
-            # Factibilidade do problema
-            self.cons.append(self.vt[i] >= 0)
-            self.cons.append(self.vv[i] >= 0)
-        for i, ut in enumerate(self.utes):
-            # Geração mínima e máxima de térmica
-            self.cons.append(self.gt[i] >= 0)
-            self.cons.append(self.gt[i] <= ut.capacidade)
-        # Factibilidade do problema
-        self.cons.append(self.deficit[0] >= 0)
-
-        # Cortes de Benders
-        self.cons.append(self.alpha[0] >= 0)
-        # Obtém o corte médio dos prováveis nós futuros
-        indices_futuros = self.arvore.indices_proximos_nos(periodo,
-                                                           indice_no)
-        # Se não existem nós futuros, termina
-        num_futuros = len(indices_futuros)
-        if num_futuros == 0:
-            return
-        # Caso contrário, calcula o corte médio de cada iteração
-        no_futuro = self.arvore.arvore[periodo + 1][indices_futuros[0]]
-        num_cortes = len(no_futuro.cortes)
-        num_uhes = len(self.uhes)
-        # Para cada corte médio a ser calculado
-        for i_corte in range(num_cortes):
-            cma_medios = [0.] * num_uhes
-            offset_medio = 0.
-            # Para cada corte de possível nó futuro
-            for i_futuro in indices_futuros:
-                no_futuro = self.arvore.arvore[periodo + 1][i_futuro]
-                corte = no_futuro.cortes[i_corte]
-                # Calcula o custo médio da água
-                for i_uhe in range(num_uhes):
-                    cma_medios[i_uhe] += corte.custo_agua[i_uhe] / num_futuros
-                # Calcula o offset médio
-                offset_medio += corte.offset / num_futuros
-            # Armazena o corte como restrição
-            eq = 0.
-            for i_uhe in range(num_uhes):
-                eq += cma_medios[i_uhe] * self.vf[i_uhe]
-            eq += float(offset_medio)
-            self.cons.append(self.alpha[0] >= eq)
-
-    def __monta_pl_backward(self,
-                            periodo: int,
-                            indice_no: int) -> op:
-        """
-        Realiza a configuração das variáveis e restrições de um
-        problema de otimização a ser realizado na iteração
-        backward do problema de PDDD.
-        """
-        # ----- Variáveis -----
-        self.vf = variable(len(self.uhes), "Volume final (hm3)")
-        self.vt = variable(len(self.uhes), "Volume turbinado (hm3)")
-        self.vv = variable(len(self.uhes), "Volume vertido (hm3)")
-        self.gt = variable(len(self.utes), "Geração térmica (MWmed)")
-        self.deficit = variable(1, "Déficit (MWmed)")
-        self.alpha = variable(1, "Custo futuro ($)")
-
-        # ----- Função objetivo -----
-        self.func_objetivo: _function = 0
-        for i, ut in enumerate(self.utes):
-            self.func_objetivo += ut.custo * self.gt[i]
-
-        self.func_objetivo += self.cfg.custo_deficit * self.deficit[0]
-
-        for i in range(len(self.uhes)):
-            self.func_objetivo += 0.01 * self.vv[i]
-
-        self.func_objetivo += 1.0 * self.alpha[0]
-
-        # ----- Restrições -----
-        self.cons = []
-        # Balanço hídrico
-        for i, uh in enumerate(self.uhes):
-            if periodo == 0:
-                # O volume inicial é dado no problema
-                vi = float(uh.vol_inicial)
-            else:
-                # O volume inicial é o final do nó anterior na forward
-                ant = self.arvore.indice_no_anterior(periodo, indice_no)
-                vi = float(self.arvore.arvore[periodo - 1][ant]
-                           .volumes_finais[i])
-            afl = float(self.arvore.arvore[periodo][indice_no]
-                        .afluencias[i])
-            self.cons.append(self.vf[i] == vi + afl - self.vt[i] - self.vv[i])
-
-        # Atendimento à demanda
-        gerado = 0
-        for i, uh in enumerate(self.uhes):
-            gerado += float(uh.produtividade) + self.vt[i]
-        for i, ut in enumerate(self.utes):
-            gerado += self.gt[i]
-        gerado += self.deficit[0]
-        self.cons.append(gerado == float(self.demandas[periodo].demanda))
-
-        # Restrições operacionais
-        for i, uh in enumerate(self.uhes):
-            # Volume útil do reservatório
-            self.cons.append(self.vf[i] <= uh.vol_maximo)
-            self.cons.append(self.vf[i] >= uh.vol_minimo)
-            # Engolimento máximo
-            self.cons.append(self.vt[i] <= uh.engolimento)
-            # Factibilidade do problema
-            self.cons.append(self.vt[i] >= 0)
-            self.cons.append(self.vv[i] >= 0)
-        for i, ut in enumerate(self.utes):
-            # Geração mínima e máxima de térmica
-            self.cons.append(self.gt[i] >= 0)
-            self.cons.append(self.gt[i] <= ut.capacidade)
-        # Factibilidade do problema
-        self.cons.append(self.deficit[0] >= 0)
-
-        # Cortes de Benders
-        self.cons.append(self.alpha[0] >= 0)
-        # Obtém o corte médio dos prováveis nós futuros
-        indices_futuros = self.arvore.indices_proximos_nos(periodo,
-                                                           indice_no)
-        # Se não existem nós futuros, termina
-        num_futuros = len(indices_futuros)
-        if num_futuros == 0:
-            return
-        # Caso contrário, calcula o corte médio de cada iteração
-        no_futuro = self.arvore.arvore[periodo + 1][indices_futuros[0]]
-        num_cortes = len(no_futuro.cortes)
-        num_uhes = len(self.uhes)
-        # Para cada corte médio a ser calculado
-        for i_corte in range(num_cortes):
-            cma_medios = [0.] * num_uhes
-            offset_medio = 0.
-            # Para cada corte de possível nó futuro
-            for i_futuro in indices_futuros:
-                no_futuro = self.arvore.arvore[periodo + 1][i_futuro]
-                corte = no_futuro.cortes[i_corte]
-                # Calcula o custo médio da água
-                for i_uhe in range(num_uhes):
-                    cma_medios[i_uhe] += corte.custo_agua[i_uhe] / num_futuros
-                # Calcula o offset médio
-                offset_medio += corte.offset / num_futuros
-            # Armazena o corte como restrição
-            eq = 0.
-            for i_uhe in range(num_uhes):
-                eq += cma_medios[i_uhe] * self.vf[i_uhe]
-            eq += float(offset_medio)
-            self.cons.append(self.alpha[0] >= eq)
-
     def __monta_pl(self,
                    periodo: int,
                    indice_no: int) -> op:
@@ -326,7 +120,6 @@ class PDDD:
         num_futuros = len(indices_futuros)
         if num_futuros == 0:
             return
-
         # Caso contrário, calcula o novo corte médio (última iteração)
         no_futuro = self.arvore.arvore[periodo + 1][indices_futuros[0]]
         num_cortes = len(no_futuro.cortes)
@@ -398,7 +191,7 @@ class PDDD:
                         self.z_inf[it] = no.custo_total
             # Condição de saída por convergência
             if np.abs(self.z_sup[it] - self.z_inf[it]) <= tol:
-                self.log.info("Z_sup = {} --- Z_inf = {} --- {} <= {}".
+                self.log.info("Sup= {:12.6f} | Inf= {:12.6f} | {:12.6f} <= {}".
                               format(self.z_sup[it],
                                      self.z_inf[it],
                                      np.abs(self.z_sup[it] - self.z_inf[it]),
@@ -406,7 +199,7 @@ class PDDD:
                 self.log.info("CONVERGIU!")
                 self.__organiza_cenarios()
                 return True
-            self.log.info("Z_sup = {} --- Z_inf = {} --- {} > {}".
+            self.log.info("Sup= {:12.6f} | Inf= {:12.6f} | {:12.6f} > {}".
                           format(self.z_sup[it],
                                  self.z_inf[it],
                                  np.abs(self.z_sup[it] - self.z_inf[it]),
@@ -415,9 +208,15 @@ class PDDD:
             self.z_sup.append(self.z_sup[it])
             it += 1
             # Condição de saída por iterações
-            if it >= 20:
+            if it >= 40:
                 self.__organiza_cenarios()
                 return False
+            if it >= 10:
+                erros = [self.z_sup[i] - self.z_inf[i]
+                         for i in range(-10, 0)]
+                if len(set(erros)) == 1:
+                    self.__organiza_cenarios()
+                    return False
             # Executa a backward para cada nó
             for j in range(self.cfg.n_periodos - 1, -1, -1):
                 self.log.debug("Executando a BACKWARD para o período {}...".
@@ -431,7 +230,9 @@ class PDDD:
                     self.pl.solve("dense", "glpk")
                     # Armazena as saídas obtidas no PL no objeto nó
                     self.__armazena_saidas(j, k)
-                    # Gera um novo corte para o nó
+                    # Gera um novo corte para o nó, exceto no período 1
+                    if j == 0:
+                        continue
                     no = self.arvore.arvore[j][k]
                     custos_agua: List[float] = []
                     offset = no.custo_total
@@ -498,7 +299,6 @@ class PDDD:
             cenarios.append(cen)
         self.cenarios = cenarios
 
-
     def __escreve_relatorio_estudo(self, caminho: str):
         """
         """
@@ -507,6 +307,7 @@ class PDDD:
                              self.utes,
                              caminho,
                              self.cenarios,
+                             self.arvore,
                              self.z_sup,
                              self.z_inf,
                              self.log)

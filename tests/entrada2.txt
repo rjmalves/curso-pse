@@ -1,25 +1,25 @@
 
 CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
- NOME DO ESTUDO                        teste
- NÚMERO DE PERÍODOS                        6
- ABERTURAS POR PERÍODO                     3
+ NOME DO ESTUDO                       teste2
+ NÚMERO DE PERÍODOS                        3
+ ABERTURAS POR PERÍODO                     2
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)            500.0
- NÚMERO DE HIDRELÉTRICAS                   1
+ NÚMERO DE HIDRELÉTRICAS                   2
  NÚMERO DE TERMELÉTRICAS                   2
 X---------------------------X---------------X
 
 VALORES DE DEMANDA ESPERADAS NOS PERÍODOS
 X-------------X-------------------X
     PERÍODO       DEMANDA (MWmed)
-             1                50.0
-             2                50.0
-             3                50.0
-             4                50.0
-             5                50.0
-             6                50.0
-             7                50.0
+             1                70.0
+             2                70.0
+             3                70.0
+             4                70.0
+             5                70.0
+             6                70.0
+             7                70.0
              8                50.0
              9                50.0
             10                50.0
@@ -30,7 +30,8 @@ X-------------X-------------------X
 PARÂMETROS DAS USINAS HIDRELÉTRICAS
 X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
    ID         NOME         VOL. INICIAL (hm3)  VOL. MÍNIMO (hm3)   VOL. MÁXIMO (hm3)   PROD. (MWmed/hm3)   ENGOL. MÁXIMO (hm3)
-      1             UHE_1                45.0                20.0               100.0                0.95                60.0
+      1             UHE_1                65.0                20.0               100.0                0.95                60.0
+      2             UHE_2                45.0                20.0               120.0                0.95                40.0
 X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
 
 PARÂMETROS DAS USINAS TERMELÉTRICAS
@@ -45,6 +46,18 @@ X------X-------------X-------------------X-------------------X------------------
   UHE      PERÍODO                                              AFLUÊNCIAS (hm3)
                             AFL 1                AFL 2               AFL 3               AFL 4               AFL 5 
       1             1                25.0                20.0                23.0                 0.0                 0.0
+                    2                30.0                22.0                27.0                 0.0                 0.0
+                    3                29.0                18.0                24.0                 0.0                 0.0
+                    4                29.0                18.0                24.0                 0.0                 0.0
+                    5                22.0                14.0                18.0                 0.0                 0.0
+                    6                18.0                13.0                15.0                 0.0                 0.0
+                    7                18.0                12.0                15.0                 0.0                 0.0
+                    8                15.0                 9.0                10.0                 0.0                 0.0
+                    9                12.0                 8.0                10.0                 0.0                 0.0
+                   10                14.0                12.0                13.0                 0.0                 0.0
+                   11                19.0                17.0                16.0                 0.0                 0.0
+                   12                22.0                18.0                20.0                 0.0                 0.0
+      2             1                25.0                20.0                23.0                 0.0                 0.0
                     2                30.0                22.0                27.0                 0.0                 0.0
                     3                29.0                18.0                24.0                 0.0                 0.0
                     4                29.0                18.0                24.0                 0.0                 0.0

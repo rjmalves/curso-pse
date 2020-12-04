@@ -51,8 +51,8 @@ class ArvoreAfluencias:
             combs_periodo.append([list(c) for c in combinacoes])
         # Constroi a árvore a partir das combinações de cada período
         # O primeiro período tem apenas 1 nó:
-        # print(combs_periodo[0][0])
-        self.arvore.append([No(combs_periodo[0][0])])
+        l_no: List[No] = [No(combs_periodo[0][0])]
+        self.arvore.append(l_no)
         # Cada período seguinte multiplica o número de nós do período
         # anterior pelo número de combinações do próprio
         for p in range(1, self.n_periodos):

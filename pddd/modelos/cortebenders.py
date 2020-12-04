@@ -1,3 +1,4 @@
+import numpy as np
 from typing import List
 
 
@@ -21,5 +22,9 @@ class CorteBenders:
     def __eq__(self, obj):
         if not isinstance(obj, CorteBenders):
             return False
-        return (self.custo_agua == obj.custo_agua
-                and self.offset == obj.offset)
+        tol = 1e-15
+        for c1, c2 in zip(self.custo_agua, obj.custo_agua):
+            if abs(c1 - c2) > tol:
+                return False
+        offset_igual = abs(self.offset - obj.offset) < tol
+        return offset_igual

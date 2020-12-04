@@ -1,4 +1,5 @@
 from pddd.modelos.cenario import Cenario
+from pddd.modelos.arvoreafluencias import ArvoreAfluencias
 from modelos.uhe import UHE
 from modelos.ute import UTE
 from modelos.configgeral import ConfigGeral
@@ -18,6 +19,7 @@ class EscreveSaida:
                  utes: List[UTE],
                  caminho: str,
                  cenarios: List[Cenario],
+                 arvore: ArvoreAfluencias,
                  z_sup: List[float],
                  z_inf: List[float],
                  log: logging.Logger):
@@ -26,6 +28,7 @@ class EscreveSaida:
         self.utes = utes
         self.caminho = caminho
         self.cenarios = cenarios
+        self.arvore = arvore
         self.z_sup = z_sup
         self.z_inf = z_inf
         self.log = log
@@ -43,9 +46,13 @@ class EscreveSaida:
                 arquivo.write(titulo + "\n\n")
                 self.__escreve_configs(arquivo)
                 metodo = "PDDD".rjust(18)
-                arquivo.write("MÉTODO UTILIZADO: {}\n".format(metodo))
+                arquivo.write("MÉTODO UTILIZADO: {}\n\n".format(metodo))
                 # Escreve o relatório de convegência
-
+                self.__escreve_convergencia(arquivo)
+                # Escreve o relatório de cortes individuais do nó
+                self.__escreve_cortes_individuais(arquivo)
+                # Escreve o relatório de cortes futuros médios do nó
+                self.__escreve_cortes_futuros_medios(arquivo)
                 # Escreve o relatório detalhado por cenário
                 for i, cen in enumerate(self.cenarios):
                     str_cen = str(i + 1).rjust(4)
@@ -99,6 +106,104 @@ class EscreveSaida:
         chave = " " + str_atributo.ljust(27)
         valor = atributo.rjust(15)
         arquivo.write(chave + " " + valor + "\n")
+
+    def __escreve_convergencia(self, arquivo: IO):
+        """
+        Escreve os valores assumidos pelos Z_sup e Z_inf a cada iteração,
+        bem como o erro (diferença).
+        """
+        arquivo.write("RELATÓRIO DE CONVERGÊNCIA\n\n")
+        campos = [13, 19, 19, 19]
+        self.__escreve_borda_tabela(arquivo, campos)
+        # Escreve o cabeçalho
+        cab_tabela = "     ITER.     "
+        cab_tabela += "       Z_SUP        "
+        cab_tabela += "       Z_INF        "
+        cab_tabela += "        ERRO        "
+        arquivo.write(cab_tabela + "\n")
+        # Escreve as linhas com as entradas para cada iteração
+        n_iters = len(self.z_sup)
+        for i in range(n_iters):
+            linha = " "
+            ind_iter = str(i + 1).rjust(13)
+            linha += ind_iter + " "
+            linha += "{:19.8f}".format(self.z_sup[i]) + " "
+            linha += "{:19.8f}".format(self.z_inf[i]) + " "
+            linha += "{:19.8f}".format(self.z_sup[i] - self.z_inf[i]) + " "
+            linha += "\n"
+            arquivo.write(linha)
+        self.__escreve_borda_tabela(arquivo, campos)
+        arquivo.write("\n")
+
+    def __escreve_cortes_individuais(self, arquivo: IO):
+        """
+        """
+        arquivo.write("RELATÓRIO DE CORTES INDIVIDUAIS\n\n")
+        campos = [13, 13, 19] + [19] * len(self.uhes)
+        self.__escreve_borda_tabela(arquivo, campos)
+        # Escreve o cabeçalho da tabela
+        cab_tabela = "    PERÍODO    "
+        cab_tabela += "      NÓ      "
+        cab_tabela += "        RHS         "
+        for i in range(len(self.uhes)):
+            ind_uhe = str(i + 1).ljust(2)
+            cab_tabela += "       PIV({})      ".format(ind_uhe)
+        arquivo.write(cab_tabela + "\n")
+        # Escreve as informações de cortes
+        for j in range(self.arvore.n_periodos):
+            for k in range(self.arvore.nos_por_periodo[j]):
+                no = self.arvore.arvore[j][k]
+                linhas = no.linhas_tabela_cortes_individuais()
+                if len(linhas) == 0:
+                    continue
+                # Edita a primeira linha para identificar o nó
+                # Se for o primeiro do período, também o identifica
+                if k == 0:
+                    id_per = str(j + 1).rjust(13)
+                    linhas[0] = " " + id_per + linhas[0][13:]
+                else:
+                    linhas[0] = " " + linhas[0]
+                id_no = str(k + 1).rjust(13)
+                linhas[0] = linhas[0][0:15] + id_no + linhas[0][29:]
+                for linha in linhas:
+                    arquivo.write(linha)
+        self.__escreve_borda_tabela(arquivo, campos)
+        arquivo.write("\n")
+
+    def __escreve_cortes_futuros_medios(self, arquivo: IO):
+        """
+        """
+        arquivo.write("RELATÓRIO DE CORTES FUTUROS MÉDIOS\n\n")
+        campos = [13, 13, 19] + [19] * len(self.uhes)
+        self.__escreve_borda_tabela(arquivo, campos)
+        # Escreve o cabeçalho da tabela
+        cab_tabela = "    PERÍODO    "
+        cab_tabela += "      NÓ      "
+        cab_tabela += "        RHS         "
+        for i in range(len(self.uhes)):
+            ind_uhe = str(i + 1).ljust(2)
+            cab_tabela += "       PIV({})      ".format(ind_uhe)
+        arquivo.write(cab_tabela + "\n")
+        # Escreve as informações de cortes
+        for j in range(self.arvore.n_periodos):
+            for k in range(self.arvore.nos_por_periodo[j]):
+                no = self.arvore.arvore[j][k]
+                linhas = no.linhas_tabela_cortes_futuros()
+                if len(linhas) == 0:
+                    continue
+                # Edita a primeira linha para identificar o nó
+                # Se for o primeiro do período, também o identifica
+                if k == 0:
+                    id_per = str(j + 1).rjust(13)
+                    linhas[0] = " " + id_per + linhas[0][13:]
+                else:
+                    linhas[0] = " " + linhas[0]
+                id_no = str(k + 1).rjust(13)
+                linhas[0] = linhas[0][0:15] + id_no + linhas[0][29:]
+                for linha in linhas:
+                    arquivo.write(linha)
+        self.__escreve_borda_tabela(arquivo, campos)
+        arquivo.write("\n")
 
     def __escreve_cenario(self, arquivo: IO, cenario: Cenario):
         """
