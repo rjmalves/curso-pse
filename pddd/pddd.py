@@ -172,6 +172,8 @@ class PDDD:
                                                             no.custo_futuro)
                     if j == 0:
                         self.z_inf[it] = no.custo_total
+                    self.log.debug("Z_sup = {}".format(self.z_sup[it]))
+                    self.log.debug("Z_inf = {}".format(self.z_inf[it]))
             # Condição de saída por convergência
             if np.abs(self.z_sup[it] - self.z_inf[it]) <= tol:
                 self.log.info("Sup= {:12.6f} | Inf= {:12.6f} | {:12.6f} <= {}".
@@ -208,12 +210,13 @@ class PDDD:
                     self.log.debug("Resolvendo o PL do nó {}...".
                                    format(k + 1))
                     # Monta e resolve o PL do nó
-                    self.__monta_pl(j, k)
-                    self.pl = op(self.func_objetivo, self.cons)
-                    self.pl.solve("dense", "glpk")
-                    # Armazena as saídas obtidas no PL no objeto nó
-                    self.__armazena_saidas(j, k)
-                    self.log.debug(no.resumo())
+                    if j != self.cfg.n_periodos - 1:
+                        self.__monta_pl(j, k)
+                        self.pl = op(self.func_objetivo, self.cons)
+                        self.pl.solve("dense", "glpk")
+                        # Armazena as saídas obtidas no PL no objeto nó
+                        self.__armazena_saidas(j, k)
+                        self.log.debug(no.resumo())
                     # Gera um novo corte para o nó
                     self.__cria_corte(j, k)
 

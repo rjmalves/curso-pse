@@ -2,8 +2,8 @@
 CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
  NOME DO ESTUDO                        teste
- NÚMERO DE PERÍODOS                        3
- ABERTURAS POR PERÍODO                     2
+ NÚMERO DE PERÍODOS                        6
+ ABERTURAS POR PERÍODO                     3
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)            500.0
  NÚMERO DE HIDRELÉTRICAS                   1
