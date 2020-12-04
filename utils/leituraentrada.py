@@ -55,13 +55,13 @@ class LeituraEntrada:
                 self.log.debug(self.cfg)
                 # Lê as demandas esperadas
                 self.demandas = self.__le_demandas(arquivo)
-                self.log.debug(self.demandas)
+                self.log.debug([str(d) for d in self.demandas])
                 # Lê os parâmetros das hidrelétricas
                 self.uhes = self.__le_parametros_hidreletricas(arquivo)
-                self.log.debug(self.uhes)
+                self.log.debug([str(u) for u in self.uhes])
                 # Lê os parâmetros das termelétricas
                 self.utes = self.__le_parametros_termeletricas(arquivo)
-                self.log.debug(self.utes)
+                self.log.debug([str(u) for u in self.utes])
                 # Lê os cenários de afluências por período
                 self.afluencias = self.__le_afluencias(arquivo)
                 self.log.debug(self.afluencias)

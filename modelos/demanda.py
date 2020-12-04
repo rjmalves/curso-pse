@@ -18,3 +18,9 @@ class Demanda:
         periodo = int(linha[2:14])
         demanda = float(linha[15:34])
         return cls(periodo, demanda)
+
+    def __str__(self):
+            to_str = ""
+            for k, v in self.__dict__.items():
+                to_str += "{}: {} - ".format(k, v)
+            return to_str

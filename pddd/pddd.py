@@ -77,12 +77,11 @@ class PDDD:
         # Atendimento à demanda
         gerado = 0
         for i, uh in enumerate(self.uhes):
-            gerado += float(uh.produtividade) + self.vt[i]
+            gerado += float(uh.produtividade) * self.vt[i]
         for i, ut in enumerate(self.utes):
             gerado += self.gt[i]
         gerado += self.deficit[0]
         self.cons.append(gerado == float(self.demandas[periodo].demanda))
-
         # Restrições operacionais
         for i, uh in enumerate(self.uhes):
             # Volume útil do reservatório
@@ -100,61 +99,44 @@ class PDDD:
         # Factibilidade do problema
         self.cons.append(self.deficit[0] >= 0)
 
-        # Cortes de Benders
-        num_uhes = len(self.uhes)
+        # Cortes de Benders - exceto se estiver no último período
         self.cons.append(self.alpha[0] >= 0)
-        # Adiciona os cortes médios futuros já calculados anteriormente
-        # para o nó
-        no = self.arvore.arvore[periodo][indice_no]
-        for corte in no.cortes_medios_futuros:
-            # Armazena os cortes médios como restrições
-            eq = 0.
-            for i_uhe in range(num_uhes):
-                eq += corte.custo_agua[i_uhe] * self.vf[i_uhe]
-            eq += float(corte.offset)
-            self.cons.append(self.alpha[0] >= eq)
+        if periodo == self.cfg.n_periodos - 1:
+            return
+        num_uhes = len(self.uhes)
         # Obtém o corte médio dos prováveis nós futuros
         indices_futuros = self.arvore.indices_proximos_nos(periodo,
                                                            indice_no)
-        # Se não existem nós futuros, termina
         num_futuros = len(indices_futuros)
-        if num_futuros == 0:
-            return
-        # Caso contrário, calcula o novo corte médio (última iteração)
         no_futuro = self.arvore.arvore[periodo + 1][indices_futuros[0]]
         num_cortes = len(no_futuro.cortes)
         self.log.debug("Cortes de benders para o nó {} do período {}: {}".
                        format(indice_no + 1, periodo + 1, num_cortes))
 
-        novo_corte_futuro = True
-        cma_medios = [0.] * num_uhes
-        offset_medio = 0.
-        # Para cada corte de possível nó futuro
-        for i_futuro in indices_futuros:
-            no_futuro = self.arvore.arvore[periodo + 1][i_futuro]
-            if len(no_futuro.cortes) == 0:
-                novo_corte_futuro = False
-                break
-            corte = no_futuro.cortes[-1]
-            # Calcula o custo médio da água
+        # Calcula os cortes médios para cada corte existente nos nós futuros
+        cortes_medios: List[CorteBenders] = []
+        for i_corte in range(num_cortes):
+            cma_medios = [0.] * num_uhes
+            offset_medio = 0.
+            for i_futuro in indices_futuros:
+                no_futuro = self.arvore.arvore[periodo + 1][i_futuro]
+                corte = no_futuro.cortes[i_corte]
+                # Calcula o custo médio da água
+                for i_uhe in range(num_uhes):
+                    cma_medios[i_uhe] += corte.custo_agua[i_uhe] / num_futuros
+                # Calcula o offset médio
+                offset_medio += corte.offset / num_futuros
+            # Caso contrário, se não houver corte igual já no nó, adiciona
+            corte_medio = CorteBenders(cma_medios, offset_medio)
+            cortes_medios.append(corte_medio)
+
+        # Armazena os cortes médios como restrições
+        for corte in cortes_medios:
+            eq = 0.
             for i_uhe in range(num_uhes):
-                cma_medios[i_uhe] += corte.custo_agua[i_uhe] / num_futuros
-            # Calcula o offset médio
-            offset_medio += corte.offset / num_futuros
-        # Se não possui novo cortes futuro a ser calculado, retorna
-        if not novo_corte_futuro:
-            return
-        # Caso contrário, se não houver corte igual já no nó, adiciona
-        novo_corte = CorteBenders(cma_medios, offset_medio)
-        if not no.adiciona_corte_futuro_medio(novo_corte):
-            return
-        self.log.debug("Novo corte médio: {}".format(corte))
-        # Armazena o novo corte médio como restrição
-        eq = 0.
-        for i_uhe in range(num_uhes):
-            eq += novo_corte.custo_agua[i_uhe] * self.vf[i_uhe]
-        eq += float(novo_corte.offset)
-        self.cons.append(self.alpha[0] >= eq)
+                eq += corte.custo_agua[i_uhe] * self.vf[i_uhe]
+            eq += float(corte.offset)
+            self.cons.append(self.alpha[0] >= eq)
 
     def resolve_pddd(self) -> bool:
         """
@@ -185,6 +167,7 @@ class PDDD:
                     self.__armazena_saidas(j, k)
                     # Atualiza o z_sup e o z_inf
                     no = self.arvore.arvore[j][k]
+                    self.log.debug(no.resumo())
                     self.z_sup[it] += (1. / nos_periodo) * (no.custo_total -
                                                             no.custo_futuro)
                     if j == 0:
@@ -211,9 +194,9 @@ class PDDD:
             if it >= 40:
                 self.__organiza_cenarios()
                 return False
-            if it >= 10:
+            if it >= 4:
                 erros = [self.z_sup[i] - self.z_inf[i]
-                         for i in range(-10, 0)]
+                         for i in range(-4, 0)]
                 if len(set(erros)) == 1:
                     self.__organiza_cenarios()
                     return False
@@ -230,22 +213,29 @@ class PDDD:
                     self.pl.solve("dense", "glpk")
                     # Armazena as saídas obtidas no PL no objeto nó
                     self.__armazena_saidas(j, k)
-                    # Gera um novo corte para o nó, exceto no período 1
-                    if j == 0:
-                        continue
-                    no = self.arvore.arvore[j][k]
-                    custos_agua: List[float] = []
-                    offset = no.custo_total
-                    for i, uh in enumerate(self.uhes):
-                        custos_agua.append(-no.custo_agua[i])
-                        if j == 0:
-                            vi = uh.vol_inicial
-                        else:
-                            indice_ant = self.arvore.indice_no_anterior(j, k)
-                            ant = self.arvore.arvore[j - 1][indice_ant]
-                            vi = ant.volumes_finais[i]
-                        offset -= vi * custos_agua[i]
-                    no.adiciona_corte(CorteBenders(custos_agua, offset))
+                    self.log.debug(no.resumo())
+                    # Gera um novo corte para o nó
+                    self.__cria_corte(j, k)
+
+    def __cria_corte(self, j: int, k: int):
+        """
+        Cria um novo corte de Benders para um nó, tomando a média
+        dos cortes dos nós futuros (exceto no último período).
+        """
+        no = self.arvore.arvore[j][k]
+        custos_agua: List[float] = []
+        offset = no.custo_total
+        for i, uh in enumerate(self.uhes):
+            custos_agua.append(-no.custo_agua[i])
+            if j == 0:
+                vi = uh.vol_inicial
+            else:
+                indice_ant = self.arvore.indice_no_anterior(j, k)
+                ant = self.arvore.arvore[j - 1][indice_ant]
+                vi = ant.volumes_finais[i]
+            offset -= vi * custos_agua[i]
+        corte = CorteBenders(custos_agua, offset)
+        no.adiciona_corte(corte)
 
     def __armazena_saidas(self, j: int, k: int):
         """
