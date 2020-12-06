@@ -15,6 +15,7 @@ class ArvoreAfluencias:
         self.aberturas_periodo = e.cfg.aberturas_periodo
         self.n_pos_estudo = e.cfg.n_pos_estudo
         self.n_uhes = e.cfg.n_uhes
+        self.vis = [uh.vol_inicial for uh in e.uhes]
         self.afluencias = e.afluencias
         self.nos_por_periodo: List[int] = []
         self.arvore: List[List[No]] = []
@@ -60,21 +61,19 @@ class ArvoreAfluencias:
             for nos_periodo_anterior in range(len(self.arvore[p - 1])):
                 for comb_periodo in combs_periodo[p]:
                     nos_periodo.append(No(comb_periodo))
-            # print([n.afluencias for n in nos_periodo])
             self.arvore.append(nos_periodo)
         # Faz a contagem de nós por período
         for a in self.arvore:
             self.nos_por_periodo.append(len(a))
+        # Força os volumes iniciais do nó do primeiro período
+        self.arvore[0][0].volumes_iniciais = self.vis
 
     def indice_no_anterior(self, periodo: int, indice_no: int) -> int:
         """
         Retorna o índice do nó do período anterior na árvore de afluências
         a partir de um certo nó de um período.
         """
-        if periodo == 1:
-            return 0
-        else:
-            return int(indice_no / self.nos_por_periodo[periodo - 1])
+        return int(indice_no / self.aberturas_periodo)
 
     def indices_proximos_nos(self, periodo: int, indice_no: int) -> List[int]:
         """

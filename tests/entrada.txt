@@ -2,7 +2,7 @@
 CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
  NOME DO ESTUDO                        teste
- NÚMERO DE PERÍODOS                        4
+ NÚMERO DE PERÍODOS                       12
  ABERTURAS POR PERÍODO                     2
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)            500.0
@@ -44,7 +44,7 @@ CENÁRIOS DE AFLUÊNCIAS POR HIDRELÉTRICA POR PERÍODO DE ESTUDO
 X------X-------------X-------------------X-------------------X-------------------X-------------------X-------------------X
   UHE      PERÍODO                                              AFLUÊNCIAS (hm3)
                             AFL 1                AFL 2               AFL 3               AFL 4               AFL 5 
-      1             1                25.0                20.0                23.0                 0.0                 0.0
+      1             1                25.0                25.0                23.0                 0.0                 0.0
                     2                30.0                22.0                27.0                 0.0                 0.0
                     3                20.0                18.0                24.0                 0.0                 0.0
                     4                29.0                18.0                24.0                 0.0                 0.0

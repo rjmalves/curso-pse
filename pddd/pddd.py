@@ -7,6 +7,7 @@ from pddd.utils.visual import Visual
 from pddd.utils.escrevesaida import EscreveSaida
 
 import logging
+import coloredlogs  # type: ignore
 import numpy as np
 from typing import List
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
@@ -133,6 +134,7 @@ class PDDD:
         # Armazena os cortes médios como restrições
         for corte in cortes_medios:
             eq = 0.
+            self.log.debug("CORTE = {}".format(corte))
             for i_uhe in range(num_uhes):
                 eq += corte.custo_agua[i_uhe] * self.vf[i_uhe]
             eq += float(corte.offset)
@@ -150,21 +152,28 @@ class PDDD:
         self.z_inf = [0.]
         while np.abs(self.z_sup[it] - self.z_inf[it]) > tol:
             self.log.info("# Iteração {} #".format(it + 1))
+            # if it == 0 or it == 1:
+            #     coloredlogs.install(logger=self.log, level="DEBUG")
+            # else:
+            #     coloredlogs.install(logger=self.log, level="INFO")
             # Executa a forward para cada nó
             self.z_sup[it] = 0.
             for j in range(self.cfg.n_periodos):
+
                 self.log.debug("Executando a FORWARD para o período {}...".
                                format(j + 1))
                 nos_periodo = self.arvore.nos_por_periodo[j]
                 for k in range(nos_periodo):
-                    self.log.debug("Resolvendo o PL do nó {}...".
-                                   format(k + 1))
-                    # Monta e resolve o PL do nó
-                    self.__monta_pl(j, k)
-                    self.pl = op(self.func_objetivo, self.cons)
-                    self.pl.solve("dense", "glpk")
-                    # Armazena as saídas obtidas no PL no objeto nó
-                    self.__armazena_saidas(j, k)
+                    # Monta e resolve o PL do nó (exceto a partir da
+                    # segunda iteração, no período 1 - pois a backward da igual)
+                    if it == 0 or j > 0:
+                        self.log.debug("Resolvendo o PL do nó {}...".
+                                       format(k + 1))
+                        self.__monta_pl(j, k)
+                        self.pl = op(self.func_objetivo, self.cons)
+                        self.pl.solve("dense", "glpk")
+                        # Armazena as saídas obtidas no PL no objeto nó
+                        self.__armazena_saidas(j, k)
                     # Atualiza o z_sup e o z_inf
                     no = self.arvore.arvore[j][k]
                     self.log.debug(no.resumo())
@@ -209,10 +218,11 @@ class PDDD:
                 self.log.debug("Executando a BACKWARD para o período {}...".
                                format(j + 1))
                 for k in range(self.arvore.nos_por_periodo[j] - 1, -1, -1):
-                    self.log.debug("Resolvendo o PL do nó {}...".
-                                   format(k + 1))
                     # Monta e resolve o PL do nó (não resolve o último período)
                     if j != self.cfg.n_periodos - 1:
+                        self.log.debug("Resolvendo o PL do nó {}...".
+                                       format(k + 1))
+                        no = self.arvore.arvore[j][k]
                         self.__monta_pl(j, k)
                         self.pl = op(self.func_objetivo, self.cons)
                         self.pl.solve("dense", "glpk")
@@ -240,6 +250,7 @@ class PDDD:
                 vi = ant.volumes_finais[i]
             offset -= vi * custos_agua[i]
         corte = CorteBenders(custos_agua, offset)
+        self.log.debug("NOVO CORTE {} - {} : {}".format(j + 1, k + 1, corte))
         no.adiciona_corte(corte)
 
     def __armazena_saidas(self, j: int, k: int):

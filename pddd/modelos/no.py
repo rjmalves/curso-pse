@@ -80,6 +80,7 @@ class No:
     def resumo(self) -> str:
         str_resumo = ""
         str_resumo += "vi = {:4.2f} | ".format(self.volumes_iniciais[0])
+        str_resumo += "af = {:4.2f} | ".format(self.afluencias[0])
         str_resumo += "vt = {:4.2f} | ".format(self.volumes_turbinados[0])
         str_resumo += "vv = {:4.2f} | ".format(self.volumes_vertidos[0])
         str_resumo += "vf = {:4.2f} | ".format(self.volumes_finais[0])
