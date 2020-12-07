@@ -6,4 +6,6 @@ services:
     build:
       context: .
     volumes: 
-      - ./results:/app/figures
+      - ./results:/app/results
+    environment: 
+      - CONFIG_FILE=./configs/1uhe_tree.json

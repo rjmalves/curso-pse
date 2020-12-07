@@ -1,0 +1,70 @@
+{
+    "generalConfigs": {
+        "deficitCost": 500.0,
+        "loads": [
+            100.0,
+            110.0,
+            80.0
+        ],
+        "stageCount": 3,
+        "scenarioCount": 2
+    },
+    "UHES": [
+        {
+            "name": "UHE_1",
+            "initialVolume": 70.0,
+            "maxVolume": 100.0,
+            "minVolume": 20.0,
+            "productivity": 0.95,
+            "swallowing": 60.0,
+            "affluents": [
+                [
+                    23.0,
+                    16.0
+                ],
+                [
+                    19.0,
+                    14.0
+                ],
+                [
+                    15.0,
+                    11.0
+                ]
+            ]
+        },
+        {
+            "name": "UHE_2",
+            "initialVolume": 50.0,
+            "maxVolume": 120.0,
+            "minVolume": 20.0,
+            "productivity": 0.95,
+            "swallowing": 50.0,
+            "affluents": [
+                [
+                    23.0,
+                    16.0
+                ],
+                [
+                    19.0,
+                    14.0
+                ],
+                [
+                    15.0,
+                    11.0
+                ]
+            ]
+        }
+    ],
+    "UTES": [
+        {
+            "name": "GT_1",
+            "capacity": 15.0,
+            "cost": 10.0
+        },
+        {
+            "name": "GT_2",
+            "capacity": 10.0,
+            "cost": 25.0
+        }
+    ]
+}

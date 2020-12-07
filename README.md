@@ -1,2 +1,2 @@
-# curso-pse
-Códigos desenvolvidos baseados no curso de planejamento de sistemas elétricos do prof. André Marcato.
+# estudos-modelos-pe
+Ferramenta para estudo de problemas de planejamento energético, comparando técnicas computacionais de PL Único, PDDD e PDDE.
