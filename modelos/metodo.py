@@ -1,6 +1,7 @@
 from utils.leituraentrada import LeituraEntrada
 from plunico.plunico import PLUnico
 from pddd.pddd import PDDD
+from pdde.pdde import PDDE
 
 import time
 import logging
@@ -48,6 +49,7 @@ class Metodo(Enum):
             pddd.resolve_pddd()
             pddd.escreve_saidas(caminho_saida)
         elif self == Metodo.PDDE:
-            pass
+            pdde = PDDE(e, log)
+            pdde.resolve_pdde()
         else:
             pass

@@ -7,6 +7,7 @@ class ConfigGeral:
                  nome: str,
                  n_periodos: int,
                  aberturas_periodo: int,
+                 n_cenarios: int,
                  n_pos_estudo: int,
                  custo_deficit: float,
                  n_uhes: int,
@@ -14,6 +15,7 @@ class ConfigGeral:
         self.nome = nome
         self.n_periodos = n_periodos
         self.aberturas_periodo = aberturas_periodo
+        self.n_cenarios = n_cenarios
         self.n_pos_estudo = n_pos_estudo
         self.custo_deficit = custo_deficit
         self.n_uhes = n_uhes
@@ -30,4 +32,4 @@ class ConfigGeral:
         """
         Retorna um objeto de configuração vazio.
         """
-        return cls("", 0, 0, 0, 0.0, 0, 0)
+        return cls("", 0, 0, 0, 0, 0.0, 0, 0)

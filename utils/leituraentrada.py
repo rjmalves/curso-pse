@@ -92,6 +92,7 @@ class LeituraEntrada:
             nome = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
             n_estagios = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_aberturas = int(self.__le_linha_com_backup(arquivo)[ci:cf])
+            n_cenarios = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_pos_est = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             custo_def = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_uhe = int(self.__le_linha_com_backup(arquivo)[ci:cf])
@@ -100,6 +101,7 @@ class LeituraEntrada:
             cfg = ConfigGeral(nome,
                               n_estagios,
                               n_aberturas,
+                              n_cenarios,
                               n_pos_est,
                               custo_def,
                               n_uhe,
