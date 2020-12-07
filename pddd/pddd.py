@@ -7,8 +7,7 @@ from pddd.utils.visual import Visual
 from pddd.utils.escrevesaida import EscreveSaida
 
 import logging
-import coloredlogs  # type: ignore
-import numpy as np
+import numpy as np  # type: ignore
 from typing import List
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
@@ -152,20 +151,14 @@ class PDDD:
         self.z_inf = [0.]
         while np.abs(self.z_sup[it] - self.z_inf[it]) > tol:
             self.log.info("# Iteração {} #".format(it + 1))
-            # if it == 0 or it == 1:
-            #     coloredlogs.install(logger=self.log, level="DEBUG")
-            # else:
-            #     coloredlogs.install(logger=self.log, level="INFO")
-            # Executa a forward para cada nó
             self.z_sup[it] = 0.
             for j in range(self.cfg.n_periodos):
-
                 self.log.debug("Executando a FORWARD para o período {}...".
                                format(j + 1))
                 nos_periodo = self.arvore.nos_por_periodo[j]
                 for k in range(nos_periodo):
                     # Monta e resolve o PL do nó (exceto a partir da
-                    # segunda iteração, no período 1 - pois a backward da igual)
+                    # segunda iteração, no período 1 - pois a backward é igual)
                     if it == 0 or j > 0:
                         self.log.debug("Resolvendo o PL do nó {}...".
                                        format(k + 1))
@@ -231,6 +224,7 @@ class PDDD:
                         self.log.debug(no.resumo())
                     # Gera um novo corte para o nó
                     self.__cria_corte(j, k)
+        return False
 
     def __cria_corte(self, j: int, k: int):
         """

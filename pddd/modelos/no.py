@@ -93,28 +93,13 @@ class No:
         str_resumo += "c. total = {:4.2f} | ".format(self.custo_total)
         return str_resumo
 
-    def linhas_tabela_cortes_individuais(self) -> str:
+    def linhas_tabela_cortes_individuais(self) -> List[str]:
         """
         Retorna as linhas de um relatório de cortes individuais.
         """
         linhas: List[str] = []
         n_uhes = len(self.volumes_finais)
         for corte in self.cortes:
-            linha = "                             "
-            linha += "{:19.8f}".format(corte.offset) + " "
-            for i in range(n_uhes):
-                linha += "{:19.8f}".format(corte.custo_agua[i]) + " "
-            linha += "\n"
-            linhas.append(linha)
-        return linhas
-
-    def linhas_tabela_cortes_futuros(self) -> str:
-        """
-        Retorna as linhas de um relatório de cortes futuros médios.
-        """
-        linhas: List[str] = []
-        n_uhes = len(self.volumes_finais)
-        for corte in self.cortes_medios_futuros:
             linha = "                             "
             linha += "{:19.8f}".format(corte.offset) + " "
             for i in range(n_uhes):

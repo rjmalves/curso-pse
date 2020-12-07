@@ -3,9 +3,9 @@ from modelos.uhe import UHE
 from modelos.ute import UTE
 
 import os
-import numpy as np
+import numpy as np  # type: ignore
 from typing import List
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # type: ignore
 
 
 class Visual:
