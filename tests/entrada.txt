@@ -5,8 +5,8 @@ X---------------------------X---------------X
  NÚMERO DE PERÍODOS                        4
  ABERTURAS POR PERÍODO                     5
  NÚMERO DE CENARIOS                       20    # SOMENTE USADA NA PDDE
- % ABERTURAS CAUDA (ALFA)                0.0    # SOMENTE USADA NA PDDE
- PESO CAUDA (LAMBDA)                     0.0    # SOMENTE USADA NA PDDE
+ % ABERTURAS CAUDA (ALFA)                0.2    # SOMENTE USADA NA PDDE
+ PESO CAUDA (LAMBDA)                     0.8    # SOMENTE USADA NA PDDE
  INTERVALO CONF (Nº DESVIOS)             0.5    # SOMENTE USADA NA PDDE
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)            500.0

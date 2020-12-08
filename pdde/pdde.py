@@ -166,7 +166,7 @@ class PDDE:
                 self.log.debug("Executando a BACKWARD no período {}..."
                                .format(p + 1))
                 cortes_periodo: List[CorteBenders] = []
-                for d, dente in enumerate(self.pente.dentes):
+                for d, _ in enumerate(self.pente.dentes):
                     # A BACKWARD na PDDE, para obter um corte,
                     # na verdade é constituída de múltiplos problemas
                     # de despacho e o corte é o médio de todas.
@@ -179,11 +179,10 @@ class PDDE:
                         self.__armazena_saidas(d, p)
                         # Armazena
                         cortes_no.append(self.__obtem_corte(d, p))
-                    cortes_periodo += cortes_no
                     # Cria o corte médio para o nó, referente ao dente
                     cortes_periodo.append(self.__cria_corte(d,
                                                             p,
-                                                            cortes_periodo))
+                                                            cortes_no))
                 # Adiciona os cortes do período para os nós do período,
                 # em cada dente
                 for d, dente in enumerate(self.pente.dentes):
