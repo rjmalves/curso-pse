@@ -4,7 +4,7 @@ from modelos.ute import UTE
 
 import os
 import numpy as np  # type: ignore
-from typing import List
+from typing import List, Tuple
 import matplotlib.pyplot as plt  # type: ignore
 
 
@@ -17,12 +17,18 @@ class Visual:
                  uhes: List[UHE],
                  utes: List[UTE],
                  caminho: str,
-                 cenarios: List[Cenario]):
+                 cenarios: List[Cenario],
+                 z_sup: List[float],
+                 z_inf: List[float],
+                 intervalo_conf: List[Tuple[float, float]]):
         self.uhes = uhes
         self.utes = utes
         # O caminho base já contém NOME_ESTUDO/MÉTODO/EPOCH/
         self.caminho = caminho
         self.cenarios = cenarios
+        self.z_sup = z_sup
+        self.z_inf = z_inf
+        self.intervalo_conf = intervalo_conf
 
     def visualiza(self):
         """
@@ -40,6 +46,7 @@ class Visual:
         self.visualiza_ci()
         self.visualiza_alpha()
         self.visualiza_fobj()
+        self.visualiza_convergencia()
 
     def visualiza_volume_final(self):
         """
@@ -427,7 +434,7 @@ class Visual:
 
     def visualiza_alpha(self):
         """
-        Gera os gráficos para acompanhamento do Custo Imediato.
+        Gera os gráficos para acompanhamento do Custo Futuro.
         """
         # Se o diretório para o CMO não existe, cria
         caminho = self.caminho + "custo_futuro/"
@@ -469,7 +476,7 @@ class Visual:
 
     def visualiza_fobj(self):
         """
-        Gera os gráficos para acompanhamento do Custo Imediato.
+        Gera os gráficos para acompanhamento do Custo Total.
         """
         # Se o diretório para o CMO não existe, cria
         caminho = self.caminho + "custo_total/"
@@ -507,4 +514,47 @@ class Visual:
                  label="Cenário médio")
         # Salva a imagem
         plt.savefig(caminho + "ci.png")
+        plt.close()
+
+    def visualiza_convergencia(self):
+        """
+        Gera gráficos para visualização da convergência do método.
+        """
+        n_iters = len(self.z_sup)
+        cmap = plt.get_cmap('viridis')
+        # Configurações gerais do gráfico
+        plt.figure(figsize=(12, 6))
+        plt.title("CONVERGÊNCIA DA PDDE")
+        # Eixo x:
+        plt.xlabel("Iteração")
+        x = np.arange(1, n_iters + 1, 1)
+        plt.xticks(x)
+        # Eixo y:
+        plt.ylabel("Limites do custo ($/MWmed)")
+        plt.plot(x,
+                 self.z_sup,
+                 color=cmap(0.6),
+                 marker="o",
+                 linewidth=4,
+                 alpha=0.8,
+                 label="Z_sup")
+        plt.plot(x,
+                 self.z_inf,
+                 color=cmap(0.3),
+                 marker="o",
+                 linewidth=4,
+                 alpha=0.8,
+                 label="Z_inf")
+        # Plota o intervalo de confiança
+        limite_inf = [i[0] for i in self.intervalo_conf]
+        limite_sup = [i[1] for i in self.intervalo_conf]
+        plt.fill_between(x,
+                         limite_inf,
+                         limite_sup,
+                         color=cmap(0.6),
+                         alpha=0.2,
+                         label="Área de confiança")
+        plt.legend()
+        # Salva a imagem
+        plt.savefig(self.caminho + "convergencia.png")
         plt.close()

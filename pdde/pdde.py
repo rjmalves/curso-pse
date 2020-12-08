@@ -350,7 +350,13 @@ class PDDE:
     def __gera_graficos(self, caminho: str):
         """
         """
-        vis = Visual(self.uhes, self.utes, caminho, self.cenarios)
+        vis = Visual(self.uhes,
+                     self.utes,
+                     caminho,
+                     self.cenarios,
+                     self.z_sup,
+                     self.z_inf,
+                     self.intervalo_conf)
         vis.visualiza()
 
     def escreve_saidas(self, caminho: str):
