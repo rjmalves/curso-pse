@@ -92,7 +92,7 @@ class No:
         linhas: List[str] = []
         n_uhes = len(self.volumes_finais)
         for corte in self.cortes:
-            linha = "                             "
+            linha = "               "
             linha += "{:19.8f}".format(corte.offset) + " "
             for i in range(n_uhes):
                 linha += "{:19.8f}".format(corte.custo_agua[i]) + " "

@@ -7,7 +7,6 @@ from pdde.utils.escrevesaida import EscreveSaida
 from pdde.utils.visual import Visual
 
 import logging
-from copy import deepcopy
 from typing import List, Tuple
 import numpy as np  # type: ignore
 from statistics import pstdev, mean, stdev

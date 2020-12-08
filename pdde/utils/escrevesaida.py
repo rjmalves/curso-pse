@@ -92,7 +92,7 @@ class EscreveSaida:
                                     str(self.cfg.peso_cauda))
         self.__escreve_linha_config(arquivo,
                                     "INTERVALO CONF (Nº DESVIOS)",
-                                    str(self.cfg.peso_cauda))
+                                    str(self.cfg.intervalo_conf))
         self.__escreve_linha_config(arquivo,
                                     "PERÍODOS PÓS ESTUDO",
                                     str(self.cfg.n_pos_estudo))
@@ -154,12 +154,12 @@ class EscreveSaida:
     def __escreve_cortes_individuais(self, arquivo: IO):
         """
         """
+        arquivo.write("\n")
         arquivo.write("RELATÓRIO DE CORTES INDIVIDUAIS\n\n")
-        campos = [13, 13, 19] + [19] * len(self.uhes)
+        campos = [13, 19] + [19] * len(self.uhes)
         self.__escreve_borda_tabela(arquivo, campos)
         # Escreve o cabeçalho da tabela
         cab_tabela = "    PERÍODO    "
-        cab_tabela += "      NÓ      "
         cab_tabela += "        RHS         "
         for i in range(len(self.uhes)):
             ind_uhe = str(i + 1).ljust(2)
@@ -167,22 +167,16 @@ class EscreveSaida:
         arquivo.write(cab_tabela + "\n")
         # Escreve as informações de cortes
         for p in range(self.cfg.n_periodos):
-            for d, dente in enumerate(self.pente.dentes):
-                no = dente[p]
-                linhas = no.linhas_tabela_cortes_individuais()
-                if len(linhas) == 0:
-                    continue
-                # Edita a primeira linha para identificar o nó
-                # Se for o primeiro do período, também o identifica
-                if d == 0:
-                    id_per = str(p + 1).rjust(13)
-                    linhas[0] = " " + id_per + linhas[0][13:]
-                else:
-                    linhas[0] = " " + linhas[0]
-                id_no = str(d + 1).rjust(13)
-                linhas[0] = linhas[0][0:15] + id_no + linhas[0][29:]
-                for linha in linhas:
-                    arquivo.write(linha)
+            no = self.pente.dentes[0][p]
+            linhas = no.linhas_tabela_cortes_individuais()
+            if len(linhas) == 0:
+                continue
+            # Edita a primeira linha para identificar o nó
+            # Se for o primeiro do período, também o identifica
+            id_per = str(p + 1).rjust(13)
+            linhas[0] = " " + id_per + " " + linhas[0][15:]
+            for linha in linhas:
+                arquivo.write(linha)
         self.__escreve_borda_tabela(arquivo, campos)
         arquivo.write("\n")
 
