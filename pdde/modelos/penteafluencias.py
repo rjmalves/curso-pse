@@ -2,7 +2,7 @@ from utils.leituraentrada import LeituraEntrada
 from pdde.modelos.no import No
 
 from random import choice, sample
-from typing import List
+from typing import List, Set, Tuple
 
 
 class PenteAfluencias:
@@ -19,7 +19,7 @@ class PenteAfluencias:
         self.vis = [uh.vol_inicial for uh in e.uhes]
         self.afluencias = e.afluencias
         self.indices_nos_pente: List[List[int]] = []
-        self.indices_sequencias: List[List[int]] = []
+        self.indices_sequencias: Set[Tuple[int]] = set()
         self.dentes: List[List[No]] = []
 
     def monta_pente_afluencias(self):
@@ -35,11 +35,16 @@ class PenteAfluencias:
             self.indices_nos_pente.append(sample(range(nos_por_periodo),
                                           self.aberturas_periodo))
         # 2º Sorteio: sequências forward dentro das afluências escolhidas
-        for s in range(self.n_sequencias):
+        tentativas = 0
+        while len(self.indices_sequencias) < self.n_sequencias:
+            if tentativas >= 1e4:
+                raise Exception("Não foi possível gerar {} cenarios"
+                                .format(self.n_sequencias))
+            tentativas += 1
             seq: List[int] = []
             for indices in self.indices_nos_pente:
                 seq.append(choice(indices))
-            self.indices_sequencias.append(seq)
+            self.indices_sequencias.add(tuple(seq))
         # Monta cada dente do pente de afluências baseado nos
         # índices que foram sorteados
         for seq in self.indices_sequencias:
@@ -50,6 +55,10 @@ class PenteAfluencias:
                     afls.append(self.afluencias[i][p][indice_no])
                 nos_seq.append(No(afls))
             self.dentes.append(nos_seq)
+        # Adiciona o período pós-estudo
+        for p in range(self.n_pos_estudo):
+            for d, dente in enumerate(self.dentes):
+                self.dentes[d] += dente
         # Força os volumes iniciais nos nós do primeiro período
         for dente in self.dentes:
             dente[0].volumes_iniciais = self.vis
@@ -61,6 +70,7 @@ class PenteAfluencias:
         Retorna as afluências de uma dada abertura em um período.
         """
         afls: List[float] = []
+        p = periodo % self.n_periodos
         for i in range(1, self.n_uhes + 1):
-            afls.append(self.afluencias[i][periodo][abertura])
+            afls.append(self.afluencias[i][p][abertura])
         return afls
