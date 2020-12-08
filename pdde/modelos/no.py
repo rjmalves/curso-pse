@@ -1,6 +1,6 @@
 from pdde.modelos.cortebenders import CorteBenders
 
-from typing import List
+from typing import List, Set
 
 
 class No:
@@ -21,22 +21,14 @@ class No:
         self.cmo = 0.0
         self.custo_futuro = 0.0
         self.custo_total = 0.0
-        self.cortes: List[CorteBenders] = []
-        self.cortes_medios_futuros: List[CorteBenders] = []
+        self.cortes: Set[CorteBenders] = set()
 
     def adiciona_corte(self, corte: CorteBenders):
         """
         Adiciona um novo corte de Benders à lista de cortes
         do nó.
         """
-        self.cortes.append(corte)
-
-    def adiciona_corte_futuro_medio(self, corte: CorteBenders):
-        """
-        Adiciona um novo corte de Benders à lista de cortes
-        médios futuros.
-        """
-        self.cortes_medios_futuros.append(corte)
+        self.cortes.add(corte)
 
     def preenche_resultados(self,
                             volumes_finais: List[float],

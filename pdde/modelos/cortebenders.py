@@ -18,10 +18,14 @@ class CorteBenders:
             to_str += "{}: {} - ".format(k, v)
         return to_str
 
+    def __hash__(self):
+        custos = tuple(self.custo_agua)
+        return hash((custos, self.offset))
+
     def __eq__(self, obj):
         if not isinstance(obj, CorteBenders):
             return False
-        tol = 1e-15
+        tol = 1e-18
         for c1, c2 in zip(self.custo_agua, obj.custo_agua):
             if abs(c1 - c2) > tol:
                 return False

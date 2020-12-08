@@ -7,9 +7,10 @@ from pdde.utils.escrevesaida import EscreveSaida
 from pdde.utils.visual import Visual
 
 import logging
+from copy import deepcopy
 from typing import List, Tuple
 import numpy as np  # type: ignore
-from statistics import pstdev, mean
+from statistics import pstdev, mean, stdev
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
 
@@ -154,10 +155,10 @@ class PDDE:
                 self.__organiza_cenarios()
                 self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
                 return False
-            if it >= 10:
-                erros = [self.z_sup[i] - self.z_inf[i]
-                         for i in range(-2, 0)]
-                if len(set(erros)) == 1:
+            if it >= 5:
+                erros = [self.z_inf[i]
+                         for i in range(-5, 0)]
+                if stdev(erros) < 1e-3:
                     self.__organiza_cenarios()
                     self.log.warning("NÃO CONVERGIU ABAIXO DA TOLERÂNCIA!")
                     return False
@@ -166,7 +167,7 @@ class PDDE:
                 self.log.debug("Executando a BACKWARD no período {}..."
                                .format(p + 1))
                 cortes_periodo: List[CorteBenders] = []
-                for d, _ in enumerate(self.pente.dentes):
+                for d, dente in enumerate(self.pente.dentes):
                     # A BACKWARD na PDDE, para obter um corte,
                     # na verdade é constituída de múltiplos problemas
                     # de despacho e o corte é o médio de todas.
