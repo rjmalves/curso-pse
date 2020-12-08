@@ -4,9 +4,9 @@ X---------------------------X---------------X
  NOME DO ESTUDO                        teste
  NÚMERO DE PERÍODOS                       12
  ABERTURAS POR PERÍODO                     5
- NÚMERO DE CENARIOS                       20    # SOMENTE USADA NA PDDE
- % ABERTURAS CAUDA (ALFA)                0.2    # SOMENTE USADA NA PDDE
- PESO CAUDA (LAMBDA)                     0.8    # SOMENTE USADA NA PDDE
+ NÚMERO DE CENARIOS                       50    # SOMENTE USADA NA PDDE
+ % ABERTURAS CAUDA (ALFA)                0.0    # SOMENTE USADA NA PDDE
+ PESO CAUDA (LAMBDA)                     0.0    # SOMENTE USADA NA PDDE
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)            500.0
  NÚMERO DE HIDRELÉTRICAS                   1

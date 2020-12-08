@@ -2,9 +2,11 @@ from pdde.modelos.cortebenders import CorteBenders
 from pdde.modelos.penteafluencias import PenteAfluencias
 from pdde.modelos.cenario import Cenario
 from utils.leituraentrada import LeituraEntrada
+from pdde.utils.escrevesaida import EscreveSaida
+from pdde.utils.visual import Visual
 
 import logging
-from typing import List
+from typing import List, Tuple
 import numpy as np  # type: ignore
 from statistics import pstdev, mean
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
@@ -125,8 +127,9 @@ class PDDE:
         """
         # Erros e condição de parada
         it = 0
-        self.z_sup = [np.inf]
-        self.z_inf = [0.]
+        self.z_sup: List[float] = []
+        self.z_inf: List[float] = []
+        self.intervalo_conf: List[Tuple[float, float]] = []
         while True:
             self.log.info("# Iteração {} #".format(it + 1))
             # Realiza, para cada dente, a parte FORWARD
@@ -256,6 +259,7 @@ class PDDE:
         desvio = pstdev(custos_dente)
         limite_inf = max([1e-3, z_sup - 1.96 * desvio])
         limite_sup = z_sup + 1.96 * desvio
+        self.intervalo_conf.append((limite_inf, limite_sup))
         self.log.debug("Z_SUP = {} - Z_INF = {}. INTERVALO = [{}, {}]".
                        format(z_sup, z_inf, limite_inf, limite_sup))
         if limite_inf <= z_inf <= limite_sup:
@@ -315,8 +319,35 @@ class PDDE:
         cenarios: List[Cenario] = []
         for c in range(n_dentes):
             self.log.debug("##### CENARIO " + str(c + 1) + " #####")
-            cen = Cenario(self.pente.dentes[c])
+            cen = Cenario.cenario_dos_nos(self.pente.dentes[c])
             self.log.debug(cen)
             self.log.debug("--------------------------------------")
             cenarios.append(cen)
         self.cenarios = cenarios
+
+    def __escreve_relatorio_estudo(self, caminho: str):
+        """
+        """
+        saida = EscreveSaida(self.cfg,
+                             self.uhes,
+                             self.utes,
+                             caminho,
+                             self.cenarios,
+                             self.pente,
+                             self.z_sup,
+                             self.z_inf,
+                             self.intervalo_conf,
+                             self.log)
+        saida.escreve_relatorio()
+
+    def __gera_graficos(self, caminho: str):
+        """
+        """
+        vis = Visual(self.uhes, self.utes, caminho, self.cenarios)
+        vis.visualiza()
+
+    def escreve_saidas(self, caminho: str):
+        """
+        """
+        self.__escreve_relatorio_estudo(caminho)
+        self.__gera_graficos(caminho)

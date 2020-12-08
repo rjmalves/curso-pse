@@ -51,5 +51,6 @@ class Metodo(Enum):
         elif self == Metodo.PDDE:
             pdde = PDDE(e, log)
             pdde.resolve_pdde()
+            pdde.escreve_saidas(caminho_saida)
         else:
             pass

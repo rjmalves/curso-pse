@@ -8,18 +8,65 @@ class Cenario:
     Descreve um cenário de operação considerado
     dentro da árvore de possibilidades.
     """
-    def __init__(self, nos: List[No]):
-        self.n_uhes = len(nos[0].volumes_finais)
-        self.n_utes = len(nos[0].geracao_termica)
-        self.afluencias = self.organiza_afluencias(nos)
-        self.volumes_finais = self.organiza_vol_finais(nos)
-        self.volumes_turbinados = self.organiza_vol_turbin(nos)
-        self.volumes_vertidos = self.organiza_vol_vertid(nos)
-        self.custo_agua = self.organiza_custo_agua(nos)
-        self.geracao_termica = self.organiza_ger_termica(nos)
-        self.deficit: List[float] = [n.deficit for n in nos]
-        self.cmo: List[float] = [n.cmo for n in nos]
-        self.alpha: List[float] = [n.custo_futuro for n in nos]
+    def __init__(self,
+                 n_uhes: int,
+                 n_utes: int,
+                 afluencias: Dict[int, List[float]],
+                 volumes_finais: Dict[int, List[float]],
+                 volumes_turbinados: Dict[int, List[float]],
+                 volumes_vertidos: Dict[int, List[float]],
+                 custo_agua: Dict[int, List[float]],
+                 geracao_termica: Dict[int, List[float]],
+                 deficit: List[float],
+                 cmo: List[float],
+                 alpha: List[float],
+                 fobj: List[float]):
+
+        self.n_uhes = n_uhes
+        self.n_utes = n_utes
+        self.afluencias = afluencias
+        self.volumes_finais = volumes_finais
+        self.volumes_turbinados = volumes_turbinados
+        self.volumes_vertidos = volumes_vertidos
+        self.custo_agua = custo_agua
+        self.geracao_termica = geracao_termica
+        self.deficit: List[float] = deficit
+        self.cmo: List[float] = cmo
+        self.alpha: List[float] = alpha
+        self.fobj = fobj
+        self.ci = [f - a for f, a in zip(fobj, alpha)]
+
+    @classmethod
+    def cenario_dos_nos(cls, nos: List[No]):
+        """
+        Retorna um objeto cenário a partir de uma lista de cenários,
+        calculando os valores médios para cada parâmetro.
+        """
+        n_uhes = len(nos[0].volumes_finais)
+        n_utes = len(nos[0].geracao_termica)
+        afluencias = Cenario.organiza_afluencias(nos)
+        volumes_finais = Cenario.organiza_vol_finais(nos)
+        volumes_turbinados = Cenario.organiza_vol_turbin(nos)
+        volumes_vertidos = Cenario.organiza_vol_vertid(nos)
+        custo_agua = Cenario.organiza_custo_agua(nos)
+        geracao_termica = Cenario.organiza_ger_termica(nos)
+        deficit: List[float] = [n.deficit for n in nos]
+        cmo: List[float] = [n.cmo for n in nos]
+        alpha: List[float] = [n.custo_futuro for n in nos]
+        fobj: List[float] = [n.custo_total for n in nos]
+
+        return cls(n_uhes,
+                   n_utes,
+                   afluencias,
+                   volumes_finais,
+                   volumes_turbinados,
+                   volumes_vertidos,
+                   custo_agua,
+                   geracao_termica,
+                   deficit,
+                   cmo,
+                   alpha,
+                   fobj)
 
     def __str__(self):
         to_str = ""
@@ -27,81 +74,93 @@ class Cenario:
             to_str += "{}: {} - ".format(k, v)
         return to_str
 
-    def organiza_afluencias(self,
+    @classmethod
+    def organiza_afluencias(cls,
                             nos: List[No]) -> Dict[int, List[float]]:
         """
         Extrai as afluências que ocorreram a partir de uma lista de nós
         que representam o cenário.
         """
+        n_uhes = len(nos[0].volumes_finais)
         afluencias: Dict[int, List[float]] = {i: [] for i in
-                                              range(self.n_uhes)}
+                                              range(n_uhes)}
         for n in nos:
-            for i in range(self.n_uhes):
+            for i in range(n_uhes):
                 afluencias[i].append(n.afluencias[i])
         return afluencias
 
-    def organiza_vol_finais(self,
+    @classmethod
+    def organiza_vol_finais(cls,
                             nos: List[No]) -> Dict[int, List[float]]:
         """
         Extrai os volumes finais a partir de uma lista de nós
         que representam o cenário.
         """
+        n_uhes = len(nos[0].volumes_finais)
         vol_finais: Dict[int, List[float]] = {i: [] for i in
-                                              range(self.n_uhes)}
+                                              range(n_uhes)}
         for n in nos:
-            for i in range(self.n_uhes):
+            for i in range(n_uhes):
                 vol_finais[i].append(n.volumes_finais[i])
         return vol_finais
 
-    def organiza_vol_turbin(self,
+    @classmethod
+    def organiza_vol_turbin(cls,
                             nos: List[No]) -> Dict[int, List[float]]:
         """
         Extrai os volumes turbinados a partir de uma lista de nós
         que representam o cenário.
         """
+        n_uhes = len(nos[0].volumes_finais)
         vol_turbin: Dict[int, List[float]] = {i: [] for i in
-                                              range(self.n_uhes)}
+                                              range(n_uhes)}
         for n in nos:
-            for i in range(self.n_uhes):
+            for i in range(n_uhes):
                 vol_turbin[i].append(n.volumes_turbinados[i])
         return vol_turbin
 
-    def organiza_vol_vertid(self,
+    @classmethod
+    def organiza_vol_vertid(cls,
                             nos: List[No]) -> Dict[int, List[float]]:
         """
         Extrai os volumes vertidos a partir de uma lista de nós
         que representam o cenário.
         """
+        n_uhes = len(nos[0].volumes_finais)
         vol_vertid: Dict[int, List[float]] = {i: [] for i in
-                                              range(self.n_uhes)}
+                                              range(n_uhes)}
         for n in nos:
-            for i in range(self.n_uhes):
+            for i in range(n_uhes):
                 vol_vertid[i].append(n.volumes_vertidos[i])
         return vol_vertid
 
-    def organiza_custo_agua(self,
+    @classmethod
+    def organiza_custo_agua(cls,
                             nos: List[No]) -> Dict[int, List[float]]:
         """
         Extrai os custos da água a partir de uma lista de nós
         que representam o cenário.
         """
+        n_uhes = len(nos[0].volumes_finais)
         custo_agua: Dict[int, List[float]] = {i: [] for i in
-                                              range(self.n_uhes)}
+                                              range(n_uhes)}
         for n in nos:
-            for i in range(self.n_uhes):
+            for i in range(n_uhes):
                 custo_agua[i].append(n.custo_agua[i])
         return custo_agua
 
-    def organiza_ger_termica(self,
+    @classmethod
+    def organiza_ger_termica(cls,
                              nos: List[No]) -> Dict[int, List[float]]:
         """
         Extrai as gerações de térmicas a partir de uma lista de nós
         que representam o cenário.
         """
+        n_utes = len(nos[0].geracao_termica)
         ger_termica: Dict[int, List[float]] = {i: [] for i in
-                                               range(self.n_utes)}
+                                               range(n_utes)}
         for n in nos:
-            for i in range(self.n_utes):
+            for i in range(n_utes):
                 ger_termica[i].append(n.geracao_termica[i])
         return ger_termica
 
@@ -126,6 +185,9 @@ class Cenario:
                 linha += "{:19.4f}".format(self.geracao_termica[j][i]) + " "
             linha += "{:19.4f}".format(self.deficit[i]) + " "
             linha += "{:19.4f}".format(self.cmo[i]) + " "
+            linha += "{:19.4f}".format(self.ci[i]) + " "
+            linha += "{:19.4f}".format(self.alpha[i]) + " "
+            linha += "{:19.4f}".format(self.fobj[i]) + " "
             linha += "\n"
             linhas.append(linha)
         return linhas
