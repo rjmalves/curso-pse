@@ -2,12 +2,12 @@
 CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
  NOME DO ESTUDO                        teste
- NÚMERO DE PERÍODOS                        6
+ NÚMERO DE PERÍODOS                        4
  ABERTURAS POR PERÍODO                     5
- NÚMERO DE CENARIOS                      100    # SOMENTE USADA NA PDDE
- % ABERTURAS CAUDA (ALFA)                0.2    # SOMENTE USADA NA PDDE
- PESO CAUDA (LAMBDA)                     0.5    # SOMENTE USADA NA PDDE
- INTERVALO CONF (Nº DESVIOS)             1.0    # SOMENTE USADA NA PDDE
+ NÚMERO DE CENARIOS                       20    # SOMENTE USADA NA PDDE
+ % ABERTURAS CAUDA (ALFA)                0.0    # SOMENTE USADA NA PDDE
+ PESO CAUDA (LAMBDA)                     0.0    # SOMENTE USADA NA PDDE
+ INTERVALO CONF (Nº DESVIOS)             0.5    # SOMENTE USADA NA PDDE
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)            500.0
  NÚMERO DE HIDRELÉTRICAS                   1
@@ -17,18 +17,18 @@ X---------------------------X---------------X
 VALORES DE DEMANDA ESPERADAS NOS PERÍODOS
 X-------------X-------------------X
     PERÍODO       DEMANDA (MWmed)
-             1                50.0
-             2                50.0
-             3                50.0
-             4                50.0
-             5                50.0
-             6                50.0
-             7                50.0
-             8                50.0
-             9                50.0
-            10                50.0
-            11                50.0
-            12                50.0
+             1                40.0
+             2                40.0
+             3                40.0
+             4                40.0
+             5                40.0
+             6                40.0
+             7                40.0
+             8                40.0
+             9                40.0
+            10                40.0
+            11                40.0
+            12                40.0
 X-------------X-------------------X
 
 PARÂMETROS DAS USINAS HIDRELÉTRICAS

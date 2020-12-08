@@ -1,4 +1,5 @@
 from pdde.modelos.cortebenders import CorteBenders
+from pdde.modelos.no import No
 from pdde.modelos.penteafluencias import PenteAfluencias
 from pdde.modelos.cenario import Cenario
 from utils.leituraentrada import LeituraEntrada
@@ -133,10 +134,10 @@ class PDDE:
         while True:
             self.log.info("# Iteração {} #".format(it + 1))
             # Realiza, para cada dente, a parte FORWARD
-            for d, dente in enumerate(self.pente.dentes):
-                for p in range(self.cfg.n_periodos):
-                    # self.log.debug("Executando a FORWARD no período {}...".
-                    #                format(p + 1))
+            for p in range(self.cfg.n_periodos):
+                self.log.debug("Executando a FORWARD no período {}...".
+                               format(p + 1))
+                for d, dente in enumerate(self.pente.dentes):
                     self.__monta_pl(d, p)
                     self.pl = op(self.func_objetivo, self.cons)
                     self.pl.solve("dense", "glpk")
@@ -149,22 +150,23 @@ class PDDE:
                 return True
             it += 1
             # Condição de saída por iterações
-            if it >= 7:
+            if it >= 50:
                 self.__organiza_cenarios()
                 self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
                 return False
             if it >= 10:
                 erros = [self.z_sup[i] - self.z_inf[i]
-                         for i in range(-5, 0)]
+                         for i in range(-2, 0)]
                 if len(set(erros)) == 1:
                     self.__organiza_cenarios()
                     self.log.warning("NÃO CONVERGIU ABAIXO DA TOLERÂNCIA!")
                     return False
             # Realiza, para cada dente, a parte BACKWARD
-            for d, dente in enumerate(self.pente.dentes):
-                for p in range(self.cfg.n_periodos - 1, -1, -1):
-                    # self.log.debug("Executando a BACKWARD no período {}...".
-                    #                format(p + 1))
+            for p in range(self.cfg.n_periodos - 1, -1, -1):
+                self.log.debug("Executando a BACKWARD no período {}..."
+                               .format(p + 1))
+                cortes_periodo: List[CorteBenders] = []
+                for d, dente in enumerate(self.pente.dentes):
                     # A BACKWARD na PDDE, para obter um corte,
                     # na verdade é constituída de múltiplos problemas
                     # de despacho e o corte é o médio de todas.
@@ -175,9 +177,18 @@ class PDDE:
                         self.pl.solve("dense", "glpk")
                         # Armazena as saídas obtidas no nó
                         self.__armazena_saidas(d, p)
+                        # Armazena
                         cortes_no.append(self.__obtem_corte(d, p))
-                    # Cria o corte médio de fato para o nó em questão
-                    self.__cria_corte(d, p, cortes_no)
+                    cortes_periodo += cortes_no
+                    # Cria o corte médio para o nó, referente ao dente
+                    cortes_periodo.append(self.__cria_corte(d,
+                                                            p,
+                                                            cortes_periodo))
+                # Adiciona os cortes do período para os nós do período,
+                # em cada dente
+                for d, dente in enumerate(self.pente.dentes):
+                    for c in cortes_periodo:
+                        self.pente.dentes[d][p].adiciona_corte(c)
 
     def __obtem_corte(self, d: int, p: int) -> CorteBenders:
         """
@@ -198,7 +209,10 @@ class PDDE:
         corte = CorteBenders(custos_agua, offset)
         return corte
 
-    def __cria_corte(self, d: int, p: int, cortes: List[CorteBenders]):
+    def __cria_corte(self,
+                     d: int,
+                     p: int,
+                     cortes: List[CorteBenders]) -> CorteBenders:
         """
         Armazena o corte de Benders médio para um nó.
         """
@@ -231,9 +245,8 @@ class PDDE:
         lmbda = self.cfg.peso_cauda
         cma_ponderado = list((1 - lmbda) * cma_medios + lmbda * cma_cauda)
         offset_ponderado = (1 - lmbda) * offset_medio + lmbda * offset_cauda
-        # Caso contrário, se não houver corte igual já no nó, adiciona
         corte_ponderado = CorteBenders(cma_ponderado, offset_ponderado)
-        self.pente.dentes[d][p].adiciona_corte(corte_ponderado)
+        return corte_ponderado
 
     def __verifica_convergencia(self) -> bool:
         """
@@ -242,8 +255,6 @@ class PDDE:
         confiança.
         """
         # Calcula o Z_inf
-        cts = [d[0].custo_total for d in self.pente.dentes]
-        self.log.debug("CTS = {}".format(cts))
         z_inf = mean([d[0].custo_total for d in self.pente.dentes])
         self.z_inf.append(z_inf)
         # Obtém os custos imediatos para cada nó de cada dente
@@ -282,7 +293,7 @@ class PDDE:
                                      limite_sup))
             return False
 
-    def __armazena_saidas(self, d: int, p: int):
+    def __armazena_saidas(self, d: int, p: int, no: No = None):
         """
         Processa as saídas do problema e armazena nos nós.
         """
@@ -303,15 +314,26 @@ class PDDE:
         cmo = abs(self.cons[c_cmo].multiplier.value[0])
         alpha = self.alpha[0].value()[0]
         f_obj = self.func_objetivo.value()[0]
-        self.pente.dentes[d][p].preenche_resultados(vol_finais,
-                                                    vol_turbinados,
-                                                    vol_vertidos,
-                                                    custo_agua,
-                                                    geracao_termica,
-                                                    deficit,
-                                                    cmo,
-                                                    alpha,
-                                                    f_obj)
+        if no is None:
+            self.pente.dentes[d][p].preenche_resultados(vol_finais,
+                                                        vol_turbinados,
+                                                        vol_vertidos,
+                                                        custo_agua,
+                                                        geracao_termica,
+                                                        deficit,
+                                                        cmo,
+                                                        alpha,
+                                                        f_obj)
+        else:
+            no.preenche_resultados(vol_finais,
+                                   vol_turbinados,
+                                   vol_vertidos,
+                                   custo_agua,
+                                   geracao_termica,
+                                   deficit,
+                                   cmo,
+                                   alpha,
+                                   f_obj)
 
     def __organiza_cenarios(self):
         """

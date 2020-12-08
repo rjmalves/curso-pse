@@ -1,7 +1,7 @@
 from utils.leituraentrada import LeituraEntrada
 from pdde.modelos.no import No
 
-from random import choice, choices
+from random import choice, sample
 from typing import List
 
 
@@ -32,8 +32,8 @@ class PenteAfluencias:
         # período
         nos_por_periodo = LeituraEntrada.afluencias_por_periodo
         for p in range(self.n_periodos):
-            self.indices_nos_pente.append(choices(list(range(nos_por_periodo)),
-                                                  k=self.aberturas_periodo))
+            self.indices_nos_pente.append(sample(range(nos_por_periodo),
+                                          self.aberturas_periodo))
         # 2º Sorteio: sequências forward dentro das afluências escolhidas
         for s in range(self.n_sequencias):
             seq: List[int] = []

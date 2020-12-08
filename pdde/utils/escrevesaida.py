@@ -166,20 +166,20 @@ class EscreveSaida:
             cab_tabela += "       PIV({})      ".format(ind_uhe)
         arquivo.write(cab_tabela + "\n")
         # Escreve as informações de cortes
-        for d, dente in enumerate(self.pente.dentes):
-            for p in range(self.cfg.n_periodos):
+        for p in range(self.cfg.n_periodos):
+            for d, dente in enumerate(self.pente.dentes):
                 no = dente[p]
                 linhas = no.linhas_tabela_cortes_individuais()
                 if len(linhas) == 0:
                     continue
                 # Edita a primeira linha para identificar o nó
                 # Se for o primeiro do período, também o identifica
-                if p == 0:
-                    id_per = str(d + 1).rjust(13)
+                if d == 0:
+                    id_per = str(p + 1).rjust(13)
                     linhas[0] = " " + id_per + linhas[0][13:]
                 else:
                     linhas[0] = " " + linhas[0]
-                id_no = str(p + 1).rjust(13)
+                id_no = str(d + 1).rjust(13)
                 linhas[0] = linhas[0][0:15] + id_no + linhas[0][29:]
                 for linha in linhas:
                     arquivo.write(linha)
