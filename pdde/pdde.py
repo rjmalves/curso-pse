@@ -247,7 +247,6 @@ class PDDE:
         confiança.
         """
         # Calcula o Z_inf
-        print([d[0].custo_total for d in self.pente.dentes])
         z_inf = mean([d[0].custo_total for d in self.pente.dentes])
         self.z_inf.append(z_inf)
         # Obtém os custos imediatos para cada nó de cada dente
@@ -259,7 +258,6 @@ class PDDE:
         # Calcula o Z_sup
         custos_dente = [sum(custo_dente)
                         for custo_dente in custos_imediatos]
-        print(custos_dente)
         z_sup = mean(custos_dente)
         self.z_sup.append(z_sup)
         # Calcula o intervalo de confiança
