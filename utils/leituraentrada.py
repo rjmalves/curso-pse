@@ -93,6 +93,8 @@ class LeituraEntrada:
             n_estagios = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_aberturas = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_cenarios = int(self.__le_linha_com_backup(arquivo)[ci:cf])
+            aberturas_cauda = float(self.__le_linha_com_backup(arquivo)[ci:cf])
+            peso_cauda = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_pos_est = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             custo_def = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_uhe = int(self.__le_linha_com_backup(arquivo)[ci:cf])
@@ -102,6 +104,8 @@ class LeituraEntrada:
                               n_estagios,
                               n_aberturas,
                               n_cenarios,
+                              aberturas_cauda,
+                              peso_cauda,
                               n_pos_est,
                               custo_def,
                               n_uhe,

@@ -27,3 +27,8 @@ class CorteBenders:
                 return False
         offset_igual = abs(self.offset - obj.offset) < tol
         return offset_igual
+
+    def __lt__(self, obj):
+        if not isinstance(obj, CorteBenders):
+            return False
+        return self.offset < obj.offset

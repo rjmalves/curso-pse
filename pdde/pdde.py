@@ -114,7 +114,7 @@ class PDDE:
         for corte in no_futuro.cortes:
             eq = 0.
             for i_uhe in range(num_uhes):
-                eq += corte.custo_agua[i_uhe] * self.vf[i_uhe]
+                eq += float(corte.custo_agua[i_uhe]) * self.vf[i_uhe]
             eq += float(corte.offset)
             self.cons.append(self.alpha[0] >= eq)
 
@@ -199,10 +199,10 @@ class PDDE:
         """
         Armazena o corte de Benders médio para um nó.
         """
-        # Calcula os cortes médios para cada corte existente nos nós futuros
         num_uhes = len(self.uhes)
         num_cortes = self.cfg.aberturas_periodo
-        cma_medios = [0.] * num_uhes
+        # Calcula o corte médio, considerando cauda e não-cauda
+        cma_medios = np.zeros((num_uhes,))
         offset_medio = 0.
         for i, corte in enumerate(cortes):
             # Calcula o custo médio da água
@@ -210,9 +210,27 @@ class PDDE:
                 cma_medios[i_uhe] += corte.custo_agua[i_uhe] / num_cortes
             # Calcula o offset médio
             offset_medio += corte.offset / num_cortes
+        # Obtém o número de cortes na cauda
+        num_cauda = int(self.cfg.aberturas_cauda * self.cfg.aberturas_periodo)
+        # Ordena os cortes e extrai os cortes da cauda
+        cortes_ordenados = sorted(cortes, reverse=True)
+        cortes_cauda = cortes_ordenados[:num_cauda]
+        # Calcula o corte médio da cauda
+        cma_cauda = np.zeros((num_uhes,))
+        offset_cauda = 0.
+        for i, corte in enumerate(cortes_cauda):
+            # Calcula o custo médio da água
+            for i_uhe in range(num_uhes):
+                cma_cauda[i_uhe] += corte.custo_agua[i_uhe] / num_cauda
+            # Calcula o offset médio
+            offset_cauda += corte.offset / num_cauda
+        # Pondera os cortes médios da cauda e não-cauda
+        lmbda = self.cfg.peso_cauda
+        cma_ponderado = list((1 - lmbda) * cma_medios + lmbda * cma_cauda)
+        offset_ponderado = (1 - lmbda) * offset_medio + lmbda * offset_cauda
         # Caso contrário, se não houver corte igual já no nó, adiciona
-        corte_medio = CorteBenders(cma_medios, offset_medio)
-        self.pente.dentes[d][p].adiciona_corte(corte_medio)
+        corte_ponderado = CorteBenders(cma_ponderado, offset_ponderado)
+        self.pente.dentes[d][p].adiciona_corte(corte_ponderado)
 
     def __verifica_convergencia(self) -> bool:
         """
