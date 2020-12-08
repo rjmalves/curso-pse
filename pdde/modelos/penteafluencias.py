@@ -30,8 +30,9 @@ class PenteAfluencias:
         """
         # 1º Sorteio: índices das afluências que irão existir em cada
         # período
+        nos_por_periodo = LeituraEntrada.afluencias_por_periodo
         for p in range(self.n_periodos):
-            self.indices_nos_pente.append(choices(list(range(self.n_periodos)),
+            self.indices_nos_pente.append(choices(list(range(nos_por_periodo)),
                                                   k=self.aberturas_periodo))
         # 2º Sorteio: sequências forward dentro das afluências escolhidas
         for s in range(self.n_sequencias):

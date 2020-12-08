@@ -1,11 +1,11 @@
-from pddd.modelos.cortebenders import CorteBenders
+from pdde.modelos.cortebenders import CorteBenders
 from pdde.modelos.penteafluencias import PenteAfluencias
 from pdde.modelos.cenario import Cenario
 from utils.leituraentrada import LeituraEntrada
 
 import logging
 from typing import List
-import numpy as np
+import numpy as np  # type: ignore
 from statistics import pstdev, mean
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
@@ -29,9 +29,10 @@ class PDDE:
         # self.z_sup: List[float] = []
         # self.z_inf: List[float] = []
 
-    def __monta_pl_forward(self,
-                           dente: int,
-                           periodo: int) -> op:
+    def __monta_pl(self,
+                   dente: int,
+                   periodo: int,
+                   abertura: int = -1) -> op:
         """
         Realiza a configuração das variáveis e restrições de um
         problema de otimização a ser realizado no problema de PDDD.
@@ -67,88 +68,15 @@ class PDDE:
                 # O volume inicial é o final do nó anterior
                 vi = float(self.pente.dentes[dente][periodo - 1]
                            .volumes_finais[i])
-            afl = float(self.pente.dentes[dente][periodo - 1].afluencias[i])
-            self.cons.append(self.vf[i] == vi + afl - self.vt[i] - self.vv[i])
-
-        # Atendimento à demanda
-        gerado = 0
-        for i, uh in enumerate(self.uhes):
-            gerado += float(uh.produtividade) * self.vt[i]
-        for i, ut in enumerate(self.utes):
-            gerado += self.gt[i]
-        gerado += self.deficit[0]
-        self.cons.append(gerado == float(self.demandas[periodo].demanda))
-        # Restrições operacionais
-        for i, uh in enumerate(self.uhes):
-            # Volume útil do reservatório
-            self.cons.append(self.vf[i] <= uh.vol_maximo)
-            self.cons.append(self.vf[i] >= uh.vol_minimo)
-            # Engolimento máximo
-            self.cons.append(self.vt[i] <= uh.engolimento)
-            # Factibilidade do problema
-            self.cons.append(self.vt[i] >= 0)
-            self.cons.append(self.vv[i] >= 0)
-        for i, ut in enumerate(self.utes):
-            # Geração mínima e máxima de térmica
-            self.cons.append(self.gt[i] >= 0)
-            self.cons.append(self.gt[i] <= ut.capacidade)
-        # Factibilidade do problema
-        self.cons.append(self.deficit[0] >= 0)
-
-        # Cortes de Benders - exceto se estiver no último período
-        self.cons.append(self.alpha[0] >= 0)
-        if periodo == self.cfg.n_periodos - 1:
-            return
-        num_uhes = len(self.uhes)
-        # Adiciona os cortes do próximo nó, no mesmo dente
-        no_futuro = self.pente.dentes[dente][periodo + 1]
-        for corte in no_futuro.cortes:
-            eq = 0.
-            for i_uhe in range(num_uhes):
-                eq += corte.custo_agua[i_uhe] * self.vf[i_uhe]
-            eq += float(corte.offset)
-            self.cons.append(self.alpha[0] >= eq)
-
-    def __monta_pl_backward(self,
-                            dente: int,
-                            periodo: int,
-                            abertura: int) -> op:
-        """
-        Realiza a configuração das variáveis e restrições de um
-        problema de otimização a ser realizado no problema de PDDD.
-        """
-        # ----- Variáveis -----
-        self.vf = variable(len(self.uhes), "Volume final (hm3)")
-        self.vt = variable(len(self.uhes), "Volume turbinado (hm3)")
-        self.vv = variable(len(self.uhes), "Volume vertido (hm3)")
-        self.gt = variable(len(self.utes), "Geração térmica (MWmed)")
-        self.deficit = variable(1, "Déficit (MWmed)")
-        self.alpha = variable(1, "Custo futuro ($)")
-
-        # ----- Função objetivo -----
-        self.func_objetivo: _function = 0
-        for i, ut in enumerate(self.utes):
-            self.func_objetivo += ut.custo * self.gt[i]
-
-        self.func_objetivo += self.cfg.custo_deficit * self.deficit[0]
-
-        for i in range(len(self.uhes)):
-            self.func_objetivo += 0.01 * self.vv[i]
-
-        self.func_objetivo += 1.0 * self.alpha[0]
-
-        # ----- Restrições -----
-        self.cons = []
-        # Balanço hídrico
-        for i, uh in enumerate(self.uhes):
-            if periodo == 0:
-                # O volume inicial é dado no problema
-                vi = float(uh.vol_inicial)
+            # Se está executando a FORWARD, a afluência é a do nó
+            # anterior no mesmo dente. Caso contrário, é da abertura
+            # passada à função de montar o PL.
+            if abertura == -1:
+                afl = float(self.pente.dentes[dente][periodo - 1]
+                            .afluencias[i])
             else:
-                # O volume inicial é o final do nó anterior
-                vi = float(self.pente.dentes[dente][periodo - 1]
-                           .volumes_finais[i])
-            afl = float(self.pente.afluencias_abertura(periodo, abertura)[i])
+                afl = float(self.pente
+                            .afluencias_abertura(periodo, abertura)[i])
             self.cons.append(self.vf[i] == vi + afl - self.vt[i] - self.vv[i])
 
         # Atendimento à demanda
@@ -206,7 +134,7 @@ class PDDE:
                 for p in range(self.cfg.n_periodos):
                     self.log.debug("Executando a FORWARD no período {}...".
                                    format(p + 1))
-                    self.__monta_pl_forward(d, p)
+                    self.__monta_pl(d, p)
                     self.pl = op(self.func_objetivo, self.cons)
                     self.pl.solve("dense", "glpk")
                     # Armazena as saídas obtidas no PL no objeto nó
@@ -239,7 +167,7 @@ class PDDE:
                     # de despacho e o corte é o médio de todas.
                     cortes_no: List[CorteBenders] = []
                     for a in range(self.cfg.aberturas_periodo):
-                        self.__monta_pl_backward(d, p, a)
+                        self.__monta_pl(d, p, a)
                         self.pl = op(self.func_objetivo, self.cons)
                         self.pl.solve("dense", "glpk")
                         # Armazena as saídas obtidas no nó
@@ -349,7 +277,7 @@ class PDDE:
         c_cmo = len(self.uhes)
         cmo = abs(self.cons[c_cmo].multiplier.value[0])
         alpha = self.alpha[0].value()[0]
-        func_objetivo = self.func_objetivo.value()[0]
+        f_obj = self.func_objetivo.value()[0]
         self.pente.dentes[d][p].preenche_resultados(vol_finais,
                                                     vol_turbinados,
                                                     vol_vertidos,
@@ -358,7 +286,7 @@ class PDDE:
                                                     deficit,
                                                     cmo,
                                                     alpha,
-                                                    func_objetivo)
+                                                    f_obj)
 
     def __organiza_cenarios(self):
         """
