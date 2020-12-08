@@ -37,6 +37,9 @@ class Visual:
         self.visualiza_geracao_termica()
         self.visualiza_deficit()
         self.visualiza_cmo()
+        self.visualiza_ci()
+        self.visualiza_alpha()
+        self.visualiza_fobj()
 
     def visualiza_volume_final(self):
         """
@@ -68,6 +71,15 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.volumes_finais[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
             # Salva a imagem
             plt.savefig(caminho + "{}.png".format(uh.nome))
             plt.close()
@@ -102,6 +114,15 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.volumes_turbinados[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
             # Salva a imagem
             plt.savefig(caminho + "{}.png".format(uh.nome))
             plt.close()
@@ -136,6 +157,15 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.volumes_vertidos[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
             # Salva a imagem
             plt.savefig(caminho + "{}.png".format(uh.nome))
             plt.close()
@@ -170,6 +200,15 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.afluencias[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
             # Salva a imagem
             plt.savefig(caminho + "{}.png".format(uh.nome))
             plt.close()
@@ -204,6 +243,15 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.custo_agua[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
             # Salva a imagem
             plt.savefig(caminho + "{}.png".format(uh.nome))
             plt.close()
@@ -238,6 +286,15 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.geracao_termica[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
             # Salva a imagem
             plt.savefig(caminho + "{}.png".format(ut.nome))
             plt.close()
@@ -271,6 +328,15 @@ class Visual:
                      linewidth=4,
                      alpha=0.2,
                      label="Cenário {}".format(j + 1))
+        # Plota o cenário médio
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
+        plt.plot(x,
+                 cenario_medio.deficit,
+                 color=cmap(1),
+                 marker="o",
+                 linewidth=16,
+                 alpha=0.2,
+                 label="Cenário médio")
         # Salva a imagem
         plt.savefig(caminho + "deficit.png")
         plt.close()
@@ -304,6 +370,141 @@ class Visual:
                      linewidth=4,
                      alpha=0.2,
                      label="Cenário {}".format(j + 1))
+        # Plota o cenário médio
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
+        plt.plot(x,
+                 cenario_medio.cmo,
+                 color=cmap(1),
+                 marker="o",
+                 linewidth=16,
+                 alpha=0.2,
+                 label="Cenário médio")
         # Salva a imagem
         plt.savefig(caminho + "cmo.png")
+        plt.close()
+
+    def visualiza_ci(self):
+        """
+        Gera os gráficos para acompanhamento do Custo Imediato.
+        """
+        # Se o diretório para o CMO não existe, cria
+        caminho = self.caminho + "custo_imediato/"
+        if not os.path.exists(caminho):
+            os.makedirs(caminho)
+        # Um gráfico de saída para cada UTE
+        n_periodos = len(self.cenarios[0].volumes_finais[0])
+        n_cenarios = len(self.cenarios)
+        cmap = plt.get_cmap('viridis')
+        # Configurações gerais do gráfico
+        plt.figure(figsize=(12, 6))
+        plt.title("CUSTO IMEDIATO DE OPERAÇÃO")
+        # Eixo x:
+        plt.xlabel("Período de estudo")
+        x = np.arange(1, n_periodos + 1, 1)
+        plt.xticks(x)
+        # Eixo y:
+        plt.ylabel("Custo ($/MWmed)")
+        for j, cen in enumerate(self.cenarios):
+            plt.plot(x,
+                     cen.ci,
+                     color=cmap(j / n_cenarios),
+                     marker="o",
+                     linewidth=4,
+                     alpha=0.2,
+                     label="Cenário {}".format(j + 1))
+        # Plota o cenário médio
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
+        plt.plot(x,
+                 cenario_medio.ci,
+                 color=cmap(1),
+                 marker="o",
+                 linewidth=16,
+                 alpha=0.2,
+                 label="Cenário médio")
+        # Salva a imagem
+        plt.savefig(caminho + "ci.png")
+        plt.close()
+
+    def visualiza_alpha(self):
+        """
+        Gera os gráficos para acompanhamento do Custo Imediato.
+        """
+        # Se o diretório para o CMO não existe, cria
+        caminho = self.caminho + "custo_futuro/"
+        if not os.path.exists(caminho):
+            os.makedirs(caminho)
+        # Um gráfico de saída para cada UTE
+        n_periodos = len(self.cenarios[0].volumes_finais[0])
+        n_cenarios = len(self.cenarios)
+        cmap = plt.get_cmap('viridis')
+        # Configurações gerais do gráfico
+        plt.figure(figsize=(12, 6))
+        plt.title("CUSTO FUTURO DE OPERAÇÃO")
+        # Eixo x:
+        plt.xlabel("Período de estudo")
+        x = np.arange(1, n_periodos + 1, 1)
+        plt.xticks(x)
+        # Eixo y:
+        plt.ylabel("Custo ($/MWmed)")
+        for j, cen in enumerate(self.cenarios):
+            plt.plot(x,
+                     cen.alpha,
+                     color=cmap(j / n_cenarios),
+                     marker="o",
+                     linewidth=4,
+                     alpha=0.2,
+                     label="Cenário {}".format(j + 1))
+        # Plota o cenário médio
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
+        plt.plot(x,
+                 cenario_medio.alpha,
+                 color=cmap(1),
+                 marker="o",
+                 linewidth=16,
+                 alpha=0.2,
+                 label="Cenário médio")
+        # Salva a imagem
+        plt.savefig(caminho + "alpha.png")
+        plt.close()
+
+    def visualiza_fobj(self):
+        """
+        Gera os gráficos para acompanhamento do Custo Imediato.
+        """
+        # Se o diretório para o CMO não existe, cria
+        caminho = self.caminho + "custo_total/"
+        if not os.path.exists(caminho):
+            os.makedirs(caminho)
+        # Um gráfico de saída para cada UTE
+        n_periodos = len(self.cenarios[0].volumes_finais[0])
+        n_cenarios = len(self.cenarios)
+        cmap = plt.get_cmap('viridis')
+        # Configurações gerais do gráfico
+        plt.figure(figsize=(12, 6))
+        plt.title("CUSTO TOTAL DE OPERAÇÃO")
+        # Eixo x:
+        plt.xlabel("Período de estudo")
+        x = np.arange(1, n_periodos + 1, 1)
+        plt.xticks(x)
+        # Eixo y:
+        plt.ylabel("Custo ($/MWmed)")
+        for j, cen in enumerate(self.cenarios):
+            plt.plot(x,
+                     cen.fobj,
+                     color=cmap(j / n_cenarios),
+                     marker="o",
+                     linewidth=4,
+                     alpha=0.2,
+                     label="Cenário {}".format(j + 1))
+        # Plota o cenário médio
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
+        plt.plot(x,
+                 cenario_medio.fobj,
+                 color=cmap(1),
+                 marker="o",
+                 linewidth=16,
+                 alpha=0.2,
+                 label="Cenário médio")
+        # Salva a imagem
+        plt.savefig(caminho + "ci.png")
         plt.close()

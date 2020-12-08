@@ -1,6 +1,7 @@
 from pdde.modelos.no import No
 
 from typing import Dict, List
+import numpy as np  # type: ignore
 
 
 class Cenario:
@@ -67,6 +68,72 @@ class Cenario:
                    cmo,
                    alpha,
                    fobj)
+
+    @classmethod
+    def cenario_medio(cls, cens):
+        """
+        Calcula um cenário médio a partir de uma lista de cenários.
+        """
+        cenarios: List[Cenario] = cens
+        n_uhes = cenarios[0].n_uhes
+        n_utes = cenarios[0].n_utes
+        afluencias_medias: Dict[int, List[float]] = {i: [] for i in
+                                                     range(n_uhes)}
+        vol_finais_medios: Dict[int, List[float]] = {i: [] for i in
+                                                     range(n_uhes)}
+        vol_turbin_medios: Dict[int, List[float]] = {i: [] for i in
+                                                     range(n_uhes)}
+        vol_vertid_medios: Dict[int, List[float]] = {i: [] for i in
+                                                     range(n_uhes)}
+        custo_agua_medios: Dict[int, List[float]] = {i: [] for i in
+                                                     range(n_uhes)}
+        gera_termi_medios: Dict[int, List[float]] = {i: [] for i in
+                                                     range(n_utes)}
+        n_cenarios = len(cenarios)
+        # Calcula os atributos médios das UHEs
+        for i in range(n_uhes):
+            afl_cen = [np.array(c.afluencias[i]) for c in cenarios]
+            vf_cen = [np.array(c.volumes_finais[i]) for c in cenarios]
+            vt_cen = [np.array(c.volumes_turbinados[i]) for c in cenarios]
+            vv_cen = [np.array(c.volumes_vertidos[i]) for c in cenarios]
+            cma_cen = [np.array(c.custo_agua[i]) for c in cenarios]
+            afl_med = sum(afl_cen) / n_cenarios
+            vf_med = sum(vf_cen) / n_cenarios
+            vt_med = sum(vt_cen) / n_cenarios
+            vv_med = sum(vv_cen) / n_cenarios
+            cma_med = sum(cma_cen) / n_cenarios
+            afluencias_medias[i] = list(afl_med)
+            vol_finais_medios[i] = list(vf_med)
+            vol_turbin_medios[i] = list(vt_med)
+            vol_vertid_medios[i] = list(vv_med)
+            custo_agua_medios[i] = list(cma_med)
+        # Calcula os atributos médios das UTEs
+        for i in range(n_utes):
+            ger_cen = [np.array(c.geracao_termica[i]) for c in cenarios]
+            ger_med = sum(ger_cen) / n_cenarios
+            gera_termi_medios[i] = list(ger_med)
+        # Calcula o deficit, cmo, fobj e fcf médios
+        deficit_cen = [np.array(c.deficit) for c in cenarios]
+        cmo_cen = [np.array(c.cmo) for c in cenarios]
+        alpha_cen = [np.array(c.alpha) for c in cenarios]
+        fobj_cen = [np.array(c.fobj) for c in cenarios]
+        deficit_medio = list(sum(deficit_cen) / n_cenarios)
+        cmo_medio = list(sum(cmo_cen) / n_cenarios)
+        alpha_medio = list(sum(alpha_cen) / n_cenarios)
+        fobj_medio = list(sum(fobj_cen) / n_cenarios)
+        # Constroi o cenário e retorna
+        return cls(n_uhes,
+                   n_utes,
+                   afluencias_medias,
+                   vol_finais_medios,
+                   vol_turbin_medios,
+                   vol_vertid_medios,
+                   custo_agua_medios,
+                   gera_termi_medios,
+                   deficit_medio,
+                   cmo_medio,
+                   alpha_medio,
+                   fobj_medio)
 
     def __str__(self):
         to_str = ""

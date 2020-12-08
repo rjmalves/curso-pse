@@ -135,8 +135,8 @@ class PDDE:
             # Realiza, para cada dente, a parte FORWARD
             for d, dente in enumerate(self.pente.dentes):
                 for p in range(self.cfg.n_periodos):
-                    self.log.debug("Executando a FORWARD no período {}...".
-                                   format(p + 1))
+                    # self.log.debug("Executando a FORWARD no período {}...".
+                    #                format(p + 1))
                     self.__monta_pl(d, p)
                     self.pl = op(self.func_objetivo, self.cons)
                     self.pl.solve("dense", "glpk")
@@ -149,7 +149,7 @@ class PDDE:
                 return True
             it += 1
             # Condição de saída por iterações
-            if it >= 50:
+            if it >= 7:
                 self.__organiza_cenarios()
                 self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
                 return False
@@ -163,8 +163,8 @@ class PDDE:
             # Realiza, para cada dente, a parte BACKWARD
             for d, dente in enumerate(self.pente.dentes):
                 for p in range(self.cfg.n_periodos - 1, -1, -1):
-                    self.log.debug("Executando a BACKWARD no período {}...".
-                                   format(p + 1))
+                    # self.log.debug("Executando a BACKWARD no período {}...".
+                    #                format(p + 1))
                     # A BACKWARD na PDDE, para obter um corte,
                     # na verdade é constituída de múltiplos problemas
                     # de despacho e o corte é o médio de todas.
@@ -242,6 +242,8 @@ class PDDE:
         confiança.
         """
         # Calcula o Z_inf
+        cts = [d[0].custo_total for d in self.pente.dentes]
+        self.log.debug("CTS = {}".format(cts))
         z_inf = mean([d[0].custo_total for d in self.pente.dentes])
         self.z_inf.append(z_inf)
         # Obtém os custos imediatos para cada nó de cada dente
@@ -257,8 +259,9 @@ class PDDE:
         self.z_sup.append(z_sup)
         # Calcula o intervalo de confiança
         desvio = pstdev(custos_dente)
-        limite_inf = max([1e-3, z_sup - 1.96 * desvio])
-        limite_sup = z_sup + 1.96 * desvio
+        conf = self.cfg.intervalo_conf
+        limite_inf = max([1e-3, z_sup - conf * desvio])
+        limite_sup = z_sup + conf * desvio
         self.intervalo_conf.append((limite_inf, limite_sup))
         self.log.debug("Z_SUP = {} - Z_INF = {}. INTERVALO = [{}, {}]".
                        format(z_sup, z_inf, limite_inf, limite_sup))
@@ -318,10 +321,10 @@ class PDDE:
         n_dentes = len(self.pente.dentes)
         cenarios: List[Cenario] = []
         for c in range(n_dentes):
-            self.log.debug("##### CENARIO " + str(c + 1) + " #####")
+            # self.log.debug("##### CENARIO " + str(c + 1) + " #####")
             cen = Cenario.cenario_dos_nos(self.pente.dentes[c])
-            self.log.debug(cen)
-            self.log.debug("--------------------------------------")
+            # self.log.debug(cen)
+            # self.log.debug("--------------------------------------")
             cenarios.append(cen)
         self.cenarios = cenarios
 

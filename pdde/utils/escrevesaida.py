@@ -1,4 +1,3 @@
-import enum
 from pdde.modelos.cenario import Cenario
 from pdde.modelos.penteafluencias import PenteAfluencias
 from modelos.uhe import UHE
@@ -6,10 +5,9 @@ from modelos.ute import UTE
 from modelos.configgeral import ConfigGeral
 
 import os
-import numpy as np
 import logging
 from traceback import print_exc
-from typing import List, Dict, Tuple, IO
+from typing import List, Tuple, IO
 
 
 class EscreveSaida:
@@ -84,14 +82,17 @@ class EscreveSaida:
                                     "ABERTURAS POR PERÍODO",
                                     str(self.cfg.aberturas_periodo))
         self.__escreve_linha_config(arquivo,
+                                    "NÚMERO DE CENÁRIOS",
+                                    str(self.cfg.n_cenarios))
+        self.__escreve_linha_config(arquivo,
                                     "% ABERTURAS CAUDA (ALFA)",
                                     str(self.cfg.aberturas_cauda))
         self.__escreve_linha_config(arquivo,
                                     "PESO CAUDA (LAMBDA)",
                                     str(self.cfg.peso_cauda))
         self.__escreve_linha_config(arquivo,
-                                    "NÚMERO DE CENÁRIOS",
-                                    str(self.cfg.n_cenarios))
+                                    "INTERVALO CONF (Nº DESVIOS)",
+                                    str(self.cfg.peso_cauda))
         self.__escreve_linha_config(arquivo,
                                     "PERÍODOS PÓS ESTUDO",
                                     str(self.cfg.n_pos_estudo))
@@ -190,7 +191,7 @@ class EscreveSaida:
         Escreve informações sobre um cenário no relatório de saída.
         """
         # Calcula os campos existentes com base no número de UHE e UTE
-        campos = [13] + [19] * (5 * len(self.uhes) + len(self.utes) + 2)
+        campos = [13] + [19] * (5 * len(self.uhes) + len(self.utes) + 5)
         self.__escreve_borda_tabela(arquivo, campos)
         # Escreve o cabeçalho da tabela
         cab_tabela = "    PERÍODO    "
@@ -206,6 +207,9 @@ class EscreveSaida:
             cab_tabela += "      GT({})        ".format(ind_ute)
         cab_tabela += "      DEFICIT       "
         cab_tabela += "        CMO         "
+        cab_tabela += "   CUSTO IMEDIATO   "
+        cab_tabela += "    CUSTO FUTURO    "
+        cab_tabela += "    CUSTO TOTAL     "
         arquivo.write(cab_tabela + "\n")
         # Escreve as linhas com dados numéricos
         linhas_cenario = cenario.linhas_tabela()
@@ -240,65 +244,7 @@ class EscreveSaida:
         cab_tabela += "    CUSTO TOTAL     "
         arquivo.write(cab_tabela + "\n")
         # Constroi o cenário médio
-        n_uhes = self.cenarios[0].n_uhes
-        n_utes = self.cenarios[0].n_utes
-        afluencias_medias: Dict[int, List[float]] = {i: [] for i in
-                                                     range(n_uhes)}
-        vol_finais_medios: Dict[int, List[float]] = {i: [] for i in
-                                                     range(n_uhes)}
-        vol_turbin_medios: Dict[int, List[float]] = {i: [] for i in
-                                                     range(n_uhes)}
-        vol_vertid_medios: Dict[int, List[float]] = {i: [] for i in
-                                                     range(n_uhes)}
-        custo_agua_medios: Dict[int, List[float]] = {i: [] for i in
-                                                     range(n_uhes)}
-        gera_termi_medios: Dict[int, List[float]] = {i: [] for i in
-                                                     range(n_utes)}
-        n_cenarios = len(self.cenarios)
-        # Calcula os atributos médios das UHEs
-        for i, uh in enumerate(self.uhes):
-            afl_cen = [np.array(c.afluencias[i]) for c in self.cenarios]
-            vf_cen = [np.array(c.volumes_finais[i]) for c in self.cenarios]
-            vt_cen = [np.array(c.volumes_turbinados[i]) for c in self.cenarios]
-            vv_cen = [np.array(c.volumes_vertidos[i]) for c in self.cenarios]
-            cma_cen = [np.array(c.custo_agua[i]) for c in self.cenarios]
-            afl_med = sum(afl_cen) / n_cenarios
-            vf_med = sum(vf_cen) / n_cenarios
-            vt_med = sum(vt_cen) / n_cenarios
-            vv_med = sum(vv_cen) / n_cenarios
-            cma_med = sum(cma_cen) / n_cenarios
-            afluencias_medias[i] = list(afl_med)
-            vol_finais_medios[i] = list(vf_med)
-            vol_turbin_medios[i] = list(vt_med)
-            vol_vertid_medios[i] = list(vv_med)
-            custo_agua_medios[i] = list(cma_med)
-        # Calcula os atributos médios das UTEs
-        for i, ut in enumerate(self.utes):
-            ger_cen = [np.array(c.geracao_termica[i]) for c in self.cenarios]
-            ger_med = sum(ger_cen) / n_cenarios
-            gera_termi_medios[i] = list(ger_med)
-        # Calcula o deficit, cmo, fobj e fcf médios
-        deficit_cen = [np.array(c.deficit) for c in self.cenarios]
-        cmo_cen = [np.array(c.cmo) for c in self.cenarios]
-        alpha_cen = [np.array(c.alpha) for c in self.cenarios]
-        fobj_cen = [np.array(c.fobj) for c in self.cenarios]
-        deficit_medio = list(sum(deficit_cen) / n_cenarios)
-        cmo_medio = list(sum(cmo_cen) / n_cenarios)
-        alpha_medio = list(sum(alpha_cen) / n_cenarios)
-        fobj_medio = list(sum(fobj_cen) / n_cenarios)
-        # Constroi o cenário
-        cenario_medio = Cenario(n_uhes,
-                                n_utes,
-                                afluencias_medias,
-                                vol_finais_medios,
-                                vol_turbin_medios,
-                                vol_vertid_medios,
-                                custo_agua_medios,
-                                gera_termi_medios,
-                                deficit_medio,
-                                cmo_medio,
-                                alpha_medio,
-                                fobj_medio)
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
         # Escreve as linhas com dados numéricos
         linhas_cenario = cenario_medio.linhas_tabela()
         for linha in linhas_cenario:
