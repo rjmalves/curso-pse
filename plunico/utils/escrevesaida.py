@@ -1,4 +1,4 @@
-from plunico.modelos.cenario import Cenario
+from modelos.cenario import Cenario
 from modelos.uhe import UHE
 from modelos.ute import UTE
 from modelos.configgeral import ConfigGeral

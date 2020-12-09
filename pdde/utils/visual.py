@@ -1,4 +1,4 @@
-from pdde.modelos.cenario import Cenario
+from modelos.cenario import Cenario
 from modelos.uhe import UHE
 from modelos.ute import UTE
 

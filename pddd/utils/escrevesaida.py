@@ -1,4 +1,4 @@
-from pddd.modelos.cenario import Cenario
+from modelos.cenario import Cenario
 from pddd.modelos.arvoreafluencias import ArvoreAfluencias
 from modelos.uhe import UHE
 from modelos.ute import UTE

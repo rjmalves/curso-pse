@@ -1,7 +1,7 @@
 from utils.leituraentrada import LeituraEntrada
 from pddd.modelos.arvoreafluencias import ArvoreAfluencias
 from modelos.no import No
-from pddd.modelos.cenario import Cenario
+from modelos.cenario import Cenario
 from modelos.cortebenders import CorteBenders
 from pddd.utils.visual import Visual
 from pddd.utils.escrevesaida import EscreveSaida
@@ -294,7 +294,7 @@ class PDDD:
                 no = self.arvore.arvore[p][indice_no]
                 nos_cenario.insert(0, no)
                 indice_no = self.arvore.indice_no_anterior(p, indice_no)
-            cen = Cenario(nos_cenario)
+            cen = Cenario.cenario_dos_nos(nos_cenario)
             self.log.debug(cen)
             self.log.debug("--------------------------------------")
             cenarios.append(cen)

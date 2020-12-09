@@ -1,7 +1,7 @@
 from utils.leituraentrada import LeituraEntrada
-from plunico.modelos.arvoreafluencias import ArvoreAfluencias
 from modelos.no import No
-from plunico.modelos.cenario import Cenario
+from modelos.cenario import Cenario
+from plunico.modelos.arvoreafluencias import ArvoreAfluencias
 from plunico.utils.visual import Visual
 from plunico.utils.escrevesaida import EscreveSaida
 
@@ -216,7 +216,7 @@ class PLUnico:
                 no = self.arvore.arvore[p][indice_no]
                 nos_cenario.insert(0, no)
                 indice_no = self.arvore.indice_no_anterior(p, indice_no)
-            cen = Cenario(nos_cenario)
+            cen = Cenario.cenario_dos_nos(nos_cenario)
             self.log.debug(cen)
             self.log.debug("--------------------------------------")
             cenarios.append(cen)

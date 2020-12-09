@@ -1,6 +1,6 @@
 from modelos.cortebenders import CorteBenders
 from pdde.modelos.penteafluencias import PenteAfluencias
-from pdde.modelos.cenario import Cenario
+from modelos.cenario import Cenario
 from utils.leituraentrada import LeituraEntrada
 from pdde.utils.escrevesaida import EscreveSaida
 from pdde.utils.visual import Visual
