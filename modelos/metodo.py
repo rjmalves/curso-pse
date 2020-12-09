@@ -1,6 +1,7 @@
 from utils.leituraentrada import LeituraEntrada
 from plunico.plunico import PLUnico
 from pddd.pddd import PDDD
+from pdde.pdde import PDDE
 
 import time
 import logging
@@ -28,7 +29,8 @@ class Metodo(Enum):
         for k in cls:
             if valor == k.value:
                 return k
-        return Metodo.PL_UNICO
+        # Se não encontrou um dentro dos possíveis
+        raise Exception("Método de solução inválido: {}".format(valor))
 
     def resolve(self, e: LeituraEntrada, log: logging.Logger):
         """
@@ -40,14 +42,16 @@ class Metodo(Enum):
                                                    self.value,
                                                    int(time.time()))
         if self == Metodo.PL_UNICO:
-            pl = PLUnico(e, log)
-            if pl.resolve_pl():
-                pl.escreve_saidas(caminho_saida)
+            self.pl = PLUnico(e, log)
+            if self.pl.resolve_pl():
+                self.pl.escreve_saidas(caminho_saida)
         elif self == Metodo.PDDD:
-            pddd = PDDD(e, log)
-            pddd.resolve_pddd()
-            pddd.escreve_saidas(caminho_saida)
+            self.pddd = PDDD(e, log)
+            self.pddd.resolve_pddd()
+            self.pddd.escreve_saidas(caminho_saida)
         elif self == Metodo.PDDE:
-            pass
+            self.pdde = PDDE(e, log)
+            self.pdde.resolve_pdde()
+            self.pdde.escreve_saidas(caminho_saida)
         else:
-            pass
+            raise Exception("Método de solução inválido")

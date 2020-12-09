@@ -19,6 +19,7 @@ class Cenario:
         self.geracao_termica = self.organiza_ger_termica(nos)
         self.deficit: List[float] = [n.deficit for n in nos]
         self.cmo: List[float] = [n.cmo for n in nos]
+        self.ci: List[float] = [n.ci for n in nos]
 
     def __str__(self):
         to_str = ""

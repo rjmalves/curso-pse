@@ -25,6 +25,7 @@ class LeituraEntrada:
                  caminho: str,
                  log: logging.Logger):
         self.caminho = caminho
+        self.metodo = ""
         self.log = log
         self.cfg: ConfigGeral = ConfigGeral.default_config()
         self.demandas: List[Demanda] = []
@@ -90,16 +91,26 @@ class LeituraEntrada:
             ci = 29
             cf = 44
             nome = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
+            metodo = nome = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
             n_estagios = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_aberturas = int(self.__le_linha_com_backup(arquivo)[ci:cf])
+            n_cenarios = int(self.__le_linha_com_backup(arquivo)[ci:cf])
+            aberturas_cauda = float(self.__le_linha_com_backup(arquivo)[ci:cf])
+            peso_cauda = float(self.__le_linha_com_backup(arquivo)[ci:cf])
+            intervalo_conf = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_pos_est = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             custo_def = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_uhe = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_ute = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             # Constroi o objeto de configurações gerais
             cfg = ConfigGeral(nome,
+                              metodo,
                               n_estagios,
                               n_aberturas,
+                              n_cenarios,
+                              aberturas_cauda,
+                              peso_cauda,
+                              intervalo_conf,
                               n_pos_est,
                               custo_def,
                               n_uhe,

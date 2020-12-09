@@ -1,11 +1,11 @@
-from plunico.modelos.cenario import Cenario
+from pdde.modelos.cenario import Cenario
 from modelos.uhe import UHE
 from modelos.ute import UTE
 
 import os
 import csv
 import numpy as np  # type: ignore
-from typing import List
+from typing import List, Tuple
 import matplotlib.pyplot as plt  # type: ignore
 
 
@@ -18,12 +18,18 @@ class Visual:
                  uhes: List[UHE],
                  utes: List[UTE],
                  caminho: str,
-                 cenarios: List[Cenario]):
+                 cenarios: List[Cenario],
+                 z_sup: List[float],
+                 z_inf: List[float],
+                 intervalo_conf: List[Tuple[float, float]]):
         self.uhes = uhes
         self.utes = utes
         # O caminho base já contém NOME_ESTUDO/MÉTODO/EPOCH/
         self.caminho = caminho
         self.cenarios = cenarios
+        self.z_sup = z_sup
+        self.z_inf = z_inf
+        self.intervalo_conf = intervalo_conf
 
     def visualiza(self):
         """
@@ -39,6 +45,9 @@ class Visual:
         self.visualiza_deficit()
         self.visualiza_cmo()
         self.visualiza_ci()
+        self.visualiza_alpha()
+        self.visualiza_fobj()
+        self.visualiza_convergencia()
 
     def visualiza_volume_final(self):
         """
@@ -62,11 +71,7 @@ class Visual:
             plt.xticks(x)
             # Eixo y:
             plt.ylabel("Volume final (hm3)")
-            dados = [x]
-            cabecalho = ["PERIODO"]
             for j, cen in enumerate(self.cenarios):
-                dados.append(cen.volumes_finais[i])
-                cabecalho.append("VF_CENARIO_{}".format(j + 1))
                 plt.plot(x,
                          cen.volumes_finais[i],
                          color=cmap(j / n_cenarios),
@@ -74,9 +79,20 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
-            # Salva a imagem
-            caminho_saida = caminho + uh.nome
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.volumes_finais[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(uh.nome)
             plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "VOLUME_FINAL"]
+            dados = [x, cenario_medio.volumes_finais[i]]
             self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
@@ -102,11 +118,7 @@ class Visual:
             plt.xticks(x)
             # Eixo y:
             plt.ylabel("Volume turbinado (hm3)")
-            dados = [x]
-            cabecalho = ["PERIODO"]
             for j, cen in enumerate(self.cenarios):
-                dados.append(cen.volumes_turbinados[i])
-                cabecalho.append("VT_CENARIO_{}".format(j + 1))
                 plt.plot(x,
                          cen.volumes_turbinados[i],
                          color=cmap(j / n_cenarios),
@@ -114,9 +126,20 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
-            # Salva a imagem
-            caminho_saida = caminho + uh.nome
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.volumes_turbinados[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(uh.nome)
             plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "VOLUME_TURBINADO"]
+            dados = [x, cenario_medio.volumes_turbinados[i]]
             self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
@@ -142,11 +165,7 @@ class Visual:
             plt.xticks(x)
             # Eixo y:
             plt.ylabel("Volume vertido (hm3)")
-            dados = [x]
-            cabecalho = ["PERIODO"]
             for j, cen in enumerate(self.cenarios):
-                dados.append(cen.volumes_vertidos[i])
-                cabecalho.append("VV_CENARIO_{}".format(j + 1))
                 plt.plot(x,
                          cen.volumes_vertidos[i],
                          color=cmap(j / n_cenarios),
@@ -154,9 +173,20 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
-            # Salva a imagem
-            caminho_saida = caminho + uh.nome
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.volumes_vertidos[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(uh.nome)
             plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "VOLUME_VERTIDO"]
+            dados = [x, cenario_medio.volumes_vertidos[i]]
             self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
@@ -182,11 +212,7 @@ class Visual:
             plt.xticks(x)
             # Eixo y:
             plt.ylabel("Volume (hm3)")
-            dados = [x]
-            cabecalho = ["PERIODO"]
             for j, cen in enumerate(self.cenarios):
-                dados.append(cen.afluencias[i])
-                cabecalho.append("AFL_CENARIO_{}".format(j + 1))
                 plt.plot(x,
                          cen.afluencias[i],
                          color=cmap(j / n_cenarios),
@@ -194,9 +220,20 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
-            # Salva a imagem
-            caminho_saida = caminho + uh.nome
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.afluencias[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(uh.nome)
             plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "AFLUENCIA"]
+            dados = [x, cenario_medio.afluencias[i]]
             self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
@@ -222,11 +259,7 @@ class Visual:
             plt.xticks(x)
             # Eixo y:
             plt.ylabel("Variação do custo ($/hm3)")
-            dados = [x]
-            cabecalho = ["PERIODO"]
             for j, cen in enumerate(self.cenarios):
-                dados.append(cen.custo_agua[i])
-                cabecalho.append("CMA_CENARIO_{}".format(j + 1))
                 plt.plot(x,
                          cen.custo_agua[i],
                          color=cmap(j / n_cenarios),
@@ -234,9 +267,20 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
-            # Salva a imagem
-            caminho_saida = caminho + uh.nome
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.custo_agua[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(uh.nome)
             plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "CUSTO_AGUA"]
+            dados = [x, cenario_medio.custo_agua[i]]
             self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
@@ -261,11 +305,8 @@ class Visual:
             x = np.arange(1, n_periodos + 1, 1)
             plt.xticks(x)
             # Eixo y:
-            dados = [x]
-            cabecalho = ["PERIODO"]
+            plt.ylabel("Geração (MWmed)")
             for j, cen in enumerate(self.cenarios):
-                dados.append(cen.geracao_termica[i])
-                cabecalho.append("GT_CENARIO_{}".format(j + 1))
                 plt.plot(x,
                          cen.geracao_termica[i],
                          color=cmap(j / n_cenarios),
@@ -273,9 +314,20 @@ class Visual:
                          linewidth=4,
                          alpha=0.2,
                          label="Cenário {}".format(j + 1))
-            # Salva a imagem
-            caminho_saida = caminho + ut.nome
+            # Plota o cenário médio
+            cenario_medio = Cenario.cenario_medio(self.cenarios)
+            plt.plot(x,
+                     cenario_medio.geracao_termica[i],
+                     color=cmap(1),
+                     marker="o",
+                     linewidth=16,
+                     alpha=0.2,
+                     label="Cenário médio")
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(ut.nome)
             plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "GERACAO"]
+            dados = [x, cenario_medio.geracao_termica[i]]
             self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
@@ -300,11 +352,7 @@ class Visual:
         plt.xticks(x)
         # Eixo y:
         plt.ylabel("Geração (MWmed)")
-        dados = [x]
-        cabecalho = ["PERIODO"]
         for j, cen in enumerate(self.cenarios):
-            dados.append(cen.deficit)
-            cabecalho.append("DEFICIT_CENARIO_{}".format(j + 1))
             plt.plot(x,
                      cen.deficit,
                      color=cmap(j / n_cenarios),
@@ -312,9 +360,20 @@ class Visual:
                      linewidth=4,
                      alpha=0.2,
                      label="Cenário {}".format(j + 1))
-        # Salva a imagem
+        # Plota o cenário médio
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
+        plt.plot(x,
+                 cenario_medio.deficit,
+                 color=cmap(1),
+                 marker="o",
+                 linewidth=16,
+                 alpha=0.2,
+                 label="Cenário médio")
+        # Salva a imagem e exporta os dados
         caminho_saida = caminho + "deficit"
         plt.savefig(caminho_saida + ".png")
+        cabecalho = ["PERIODO", "DEFICIT"]
+        dados = [x, cenario_medio.deficit]
         self.exporta_dados(caminho_saida, cabecalho, dados)
         plt.close()
 
@@ -339,11 +398,7 @@ class Visual:
         plt.xticks(x)
         # Eixo y:
         plt.ylabel("Variação do Custo ($/MWmed)")
-        dados = [x]
-        cabecalho = ["PERIODO"]
         for j, cen in enumerate(self.cenarios):
-            dados.append(cen.cmo)
-            cabecalho.append("CMO_CENARIO_{}".format(j + 1))
             plt.plot(x,
                      cen.cmo,
                      color=cmap(j / n_cenarios),
@@ -351,17 +406,28 @@ class Visual:
                      linewidth=4,
                      alpha=0.2,
                      label="Cenário {}".format(j + 1))
-        # Salva a imagem
+        # Plota o cenário médio
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
+        plt.plot(x,
+                 cenario_medio.cmo,
+                 color=cmap(1),
+                 marker="o",
+                 linewidth=16,
+                 alpha=0.2,
+                 label="Cenário médio")
+        # Salva a imagem e exporta os dados
         caminho_saida = caminho + "cmo"
         plt.savefig(caminho_saida + ".png")
+        cabecalho = ["PERIODO", "CMO"]
+        dados = [x, cenario_medio.cmo]
         self.exporta_dados(caminho_saida, cabecalho, dados)
         plt.close()
 
     def visualiza_ci(self):
         """
-        Gera os gráficos para acompanhamento do CI.
+        Gera os gráficos para acompanhamento do Custo Imediato.
         """
-        # Se o diretório para o CI não existe, cria
+        # Se o diretório para o CMO não existe, cria
         caminho = self.caminho + "custo_imediato/"
         if not os.path.exists(caminho):
             os.makedirs(caminho)
@@ -371,18 +437,14 @@ class Visual:
         cmap = plt.get_cmap('viridis')
         # Configurações gerais do gráfico
         plt.figure(figsize=(12, 6))
-        plt.title("CUSTO IMEDIATO DE OPERAÇÂO")
+        plt.title("CUSTO IMEDIATO DE OPERAÇÃO")
         # Eixo x:
         plt.xlabel("Período de estudo")
         x = np.arange(1, n_periodos + 1, 1)
         plt.xticks(x)
         # Eixo y:
-        plt.ylabel("Custo ($)")
-        dados = [x]
-        cabecalho = ["PERIODO"]
+        plt.ylabel("Custo ($/MWmed)")
         for j, cen in enumerate(self.cenarios):
-            dados.append(cen.ci)
-            cabecalho.append("CI_CENARIO_{}".format(j + 1))
             plt.plot(x,
                      cen.ci,
                      color=cmap(j / n_cenarios),
@@ -390,10 +452,156 @@ class Visual:
                      linewidth=4,
                      alpha=0.2,
                      label="Cenário {}".format(j + 1))
-        # Salva a imagem
+        # Plota o cenário médio
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
+        plt.plot(x,
+                 cenario_medio.ci,
+                 color=cmap(1),
+                 marker="o",
+                 linewidth=16,
+                 alpha=0.2,
+                 label="Cenário médio")
+        # Salva a imagem e exporta os dados
         caminho_saida = caminho + "ci"
         plt.savefig(caminho_saida + ".png")
+        cabecalho = ["PERIODO", "CUSTO_IMEDIATO"]
+        dados = [x, cenario_medio.ci]
         self.exporta_dados(caminho_saida, cabecalho, dados)
+        plt.close()
+
+    def visualiza_alpha(self):
+        """
+        Gera os gráficos para acompanhamento do Custo Futuro.
+        """
+        # Se o diretório para o CMO não existe, cria
+        caminho = self.caminho + "custo_futuro/"
+        if not os.path.exists(caminho):
+            os.makedirs(caminho)
+        # Um gráfico de saída para cada UTE
+        n_periodos = len(self.cenarios[0].volumes_finais[0])
+        n_cenarios = len(self.cenarios)
+        cmap = plt.get_cmap('viridis')
+        # Configurações gerais do gráfico
+        plt.figure(figsize=(12, 6))
+        plt.title("CUSTO FUTURO DE OPERAÇÃO")
+        # Eixo x:
+        plt.xlabel("Período de estudo")
+        x = np.arange(1, n_periodos + 1, 1)
+        plt.xticks(x)
+        # Eixo y:
+        plt.ylabel("Custo ($/MWmed)")
+        for j, cen in enumerate(self.cenarios):
+            plt.plot(x,
+                     cen.alpha,
+                     color=cmap(j / n_cenarios),
+                     marker="o",
+                     linewidth=4,
+                     alpha=0.2,
+                     label="Cenário {}".format(j + 1))
+        # Plota o cenário médio
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
+        plt.plot(x,
+                 cenario_medio.alpha,
+                 color=cmap(1),
+                 marker="o",
+                 linewidth=16,
+                 alpha=0.2,
+                 label="Cenário médio")
+        # Salva a imagem e exporta os dados
+        caminho_saida = caminho + "alpha"
+        plt.savefig(caminho_saida + ".png")
+        cabecalho = ["PERIODO", "CUSTO_FUTURO"]
+        dados = [x, cenario_medio.alpha]
+        self.exporta_dados(caminho_saida, cabecalho, dados)
+        plt.close()
+
+    def visualiza_fobj(self):
+        """
+        Gera os gráficos para acompanhamento do Custo Total.
+        """
+        # Se o diretório para o CMO não existe, cria
+        caminho = self.caminho + "custo_total/"
+        if not os.path.exists(caminho):
+            os.makedirs(caminho)
+        # Um gráfico de saída para cada UTE
+        n_periodos = len(self.cenarios[0].volumes_finais[0])
+        n_cenarios = len(self.cenarios)
+        cmap = plt.get_cmap('viridis')
+        # Configurações gerais do gráfico
+        plt.figure(figsize=(12, 6))
+        plt.title("CUSTO TOTAL DE OPERAÇÃO")
+        # Eixo x:
+        plt.xlabel("Período de estudo")
+        x = np.arange(1, n_periodos + 1, 1)
+        plt.xticks(x)
+        # Eixo y:
+        plt.ylabel("Custo ($/MWmed)")
+        for j, cen in enumerate(self.cenarios):
+            plt.plot(x,
+                     cen.fobj,
+                     color=cmap(j / n_cenarios),
+                     marker="o",
+                     linewidth=4,
+                     alpha=0.2,
+                     label="Cenário {}".format(j + 1))
+        # Plota o cenário médio
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
+        plt.plot(x,
+                 cenario_medio.fobj,
+                 color=cmap(1),
+                 marker="o",
+                 linewidth=16,
+                 alpha=0.2,
+                 label="Cenário médio")
+        # Salva a imagem e exporta os dados
+        caminho_saida = caminho + "fobj"
+        plt.savefig(caminho_saida + ".png")
+        cabecalho = ["PERIODO", "CUSTO_TOTAL"]
+        dados = [x, cenario_medio.fobj]
+        self.exporta_dados(caminho_saida, cabecalho, dados)
+        plt.close()
+
+    def visualiza_convergencia(self):
+        """
+        Gera gráficos para visualização da convergência do método.
+        """
+        n_iters = len(self.z_sup)
+        cmap = plt.get_cmap('viridis')
+        # Configurações gerais do gráfico
+        plt.figure(figsize=(12, 6))
+        plt.title("CONVERGÊNCIA DA PDDE")
+        # Eixo x:
+        plt.xlabel("Iteração")
+        x = np.arange(1, n_iters + 1, 1)
+        plt.xticks(x)
+        # Eixo y:
+        plt.ylabel("Limites do custo ($/MWmed)")
+        plt.plot(x,
+                 self.z_sup,
+                 color=cmap(0.6),
+                 marker="o",
+                 linewidth=4,
+                 alpha=0.8,
+                 label="Z_sup")
+        plt.plot(x,
+                 self.z_inf,
+                 color=cmap(0.3),
+                 marker="o",
+                 linewidth=4,
+                 alpha=0.8,
+                 label="Z_inf")
+        # Plota o intervalo de confiança
+        limite_inf = [i[0] for i in self.intervalo_conf]
+        limite_sup = [i[1] for i in self.intervalo_conf]
+        plt.fill_between(x,
+                         limite_inf,
+                         limite_sup,
+                         color=cmap(0.6),
+                         alpha=0.2,
+                         label="Área de confiança")
+        plt.legend()
+        # Salva a imagem
+        plt.savefig(self.caminho + "convergencia.png")
         plt.close()
 
     def exporta_dados(self,

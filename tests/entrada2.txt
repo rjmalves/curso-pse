@@ -2,11 +2,16 @@
 CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
  NOME DO ESTUDO                       teste2
- NÚMERO DE PERÍODOS                        3
- ABERTURAS POR PERÍODO                     2
+ MÉTODO DE SOLUÇÃO                  PL_UNICO    # SÃO VÁLIDOS: PL_UNICO, PDDD E PDDE
+ NÚMERO DE PERÍODOS                        8
+ ABERTURAS POR PERÍODO                     1
+ NÚMERO DE CENARIOS                       50    # SOMENTE USADA NA PDDE
+ % ABERTURAS CAUDA (ALFA)                0.2    # SOMENTE USADA NA PDDE
+ PESO CAUDA (LAMBDA)                    0.95    # SOMENTE USADA NA PDDE
+ INTERVALO CONF (Nº DESVIOS)               1    # SOMENTE USADA NA PDDE
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)            500.0
- NÚMERO DE HIDRELÉTRICAS                   2
+ NÚMERO DE HIDRELÉTRICAS                   1
  NÚMERO DE TERMELÉTRICAS                   2
 X---------------------------X---------------X
 
