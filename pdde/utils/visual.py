@@ -3,6 +3,7 @@ from modelos.uhe import UHE
 from modelos.ute import UTE
 
 import os
+import csv
 import numpy as np  # type: ignore
 from typing import List, Tuple
 import matplotlib.pyplot as plt  # type: ignore
@@ -87,8 +88,12 @@ class Visual:
                      linewidth=16,
                      alpha=0.2,
                      label="Cenário médio")
-            # Salva a imagem
-            plt.savefig(caminho + "{}.png".format(uh.nome))
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(uh.nome)
+            plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "VOLUME_FINAL"]
+            dados = [x, cenario_medio.volumes_finais[i]]
+            self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
     def visualiza_volume_turbinado(self):
@@ -130,8 +135,12 @@ class Visual:
                      linewidth=16,
                      alpha=0.2,
                      label="Cenário médio")
-            # Salva a imagem
-            plt.savefig(caminho + "{}.png".format(uh.nome))
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(uh.nome)
+            plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "VOLUME_TURBINADO"]
+            dados = [x, cenario_medio.volumes_turbinados[i]]
+            self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
     def visualiza_volume_vertido(self):
@@ -173,8 +182,12 @@ class Visual:
                      linewidth=16,
                      alpha=0.2,
                      label="Cenário médio")
-            # Salva a imagem
-            plt.savefig(caminho + "{}.png".format(uh.nome))
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(uh.nome)
+            plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "VOLUME_VERTIDO"]
+            dados = [x, cenario_medio.volumes_vertidos[i]]
+            self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
     def visualiza_afluencias(self):
@@ -216,8 +229,12 @@ class Visual:
                      linewidth=16,
                      alpha=0.2,
                      label="Cenário médio")
-            # Salva a imagem
-            plt.savefig(caminho + "{}.png".format(uh.nome))
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(uh.nome)
+            plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "AFLUENCIA"]
+            dados = [x, cenario_medio.afluencias[i]]
+            self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
     def visualiza_custo_agua(self):
@@ -259,8 +276,12 @@ class Visual:
                      linewidth=16,
                      alpha=0.2,
                      label="Cenário médio")
-            # Salva a imagem
-            plt.savefig(caminho + "{}.png".format(uh.nome))
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(uh.nome)
+            plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "CUSTO_AGUA"]
+            dados = [x, cenario_medio.custo_agua[i]]
+            self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
     def visualiza_geracao_termica(self):
@@ -302,8 +323,12 @@ class Visual:
                      linewidth=16,
                      alpha=0.2,
                      label="Cenário médio")
-            # Salva a imagem
-            plt.savefig(caminho + "{}.png".format(ut.nome))
+            # Salva a imagem e exporta os dados
+            caminho_saida = caminho + "{}".format(ut.nome)
+            plt.savefig(caminho_saida + ".png")
+            cabecalho = ["PERIODO", "GERACAO"]
+            dados = [x, cenario_medio.geracao_termica[i]]
+            self.exporta_dados(caminho_saida, cabecalho, dados)
             plt.close()
 
     def visualiza_deficit(self):
@@ -344,8 +369,12 @@ class Visual:
                  linewidth=16,
                  alpha=0.2,
                  label="Cenário médio")
-        # Salva a imagem
-        plt.savefig(caminho + "deficit.png")
+        # Salva a imagem e exporta os dados
+        caminho_saida = caminho + "deficit"
+        plt.savefig(caminho_saida + ".png")
+        cabecalho = ["PERIODO", "DEFICIT"]
+        dados = [x, cenario_medio.deficit]
+        self.exporta_dados(caminho_saida, cabecalho, dados)
         plt.close()
 
     def visualiza_cmo(self):
@@ -386,8 +415,12 @@ class Visual:
                  linewidth=16,
                  alpha=0.2,
                  label="Cenário médio")
-        # Salva a imagem
-        plt.savefig(caminho + "cmo.png")
+        # Salva a imagem e exporta os dados
+        caminho_saida = caminho + "cmo"
+        plt.savefig(caminho_saida + ".png")
+        cabecalho = ["PERIODO", "CMO"]
+        dados = [x, cenario_medio.cmo]
+        self.exporta_dados(caminho_saida, cabecalho, dados)
         plt.close()
 
     def visualiza_ci(self):
@@ -428,8 +461,12 @@ class Visual:
                  linewidth=16,
                  alpha=0.2,
                  label="Cenário médio")
-        # Salva a imagem
-        plt.savefig(caminho + "ci.png")
+        # Salva a imagem e exporta os dados
+        caminho_saida = caminho + "ci"
+        plt.savefig(caminho_saida + ".png")
+        cabecalho = ["PERIODO", "CUSTO_IMEDIATO"]
+        dados = [x, cenario_medio.ci]
+        self.exporta_dados(caminho_saida, cabecalho, dados)
         plt.close()
 
     def visualiza_alpha(self):
@@ -470,8 +507,12 @@ class Visual:
                  linewidth=16,
                  alpha=0.2,
                  label="Cenário médio")
-        # Salva a imagem
-        plt.savefig(caminho + "alpha.png")
+        # Salva a imagem e exporta os dados
+        caminho_saida = caminho + "alpha"
+        plt.savefig(caminho_saida + ".png")
+        cabecalho = ["PERIODO", "CUSTO_FUTURO"]
+        dados = [x, cenario_medio.alpha]
+        self.exporta_dados(caminho_saida, cabecalho, dados)
         plt.close()
 
     def visualiza_fobj(self):
@@ -512,8 +553,12 @@ class Visual:
                  linewidth=16,
                  alpha=0.2,
                  label="Cenário médio")
-        # Salva a imagem
-        plt.savefig(caminho + "ci.png")
+        # Salva a imagem e exporta os dados
+        caminho_saida = caminho + "fobj"
+        plt.savefig(caminho_saida + ".png")
+        cabecalho = ["PERIODO", "CUSTO_TOTAL"]
+        dados = [x, cenario_medio.fobj]
+        self.exporta_dados(caminho_saida, cabecalho, dados)
         plt.close()
 
     def visualiza_convergencia(self):
@@ -558,3 +603,24 @@ class Visual:
         # Salva a imagem
         plt.savefig(self.caminho + "convergencia.png")
         plt.close()
+
+    def exporta_dados(self,
+                      caminho: str,
+                      cabecalhos: List[str],
+                      dados: List[list]):
+        """
+        Exporta um conjunto de dados de uma determinada visualização
+        para um formato CSV.
+        """
+        # Confere se o número de cabeçalhos é igual ao de dados
+        n_dados = len(dados[0])
+        # Confere se a quantidade de entradas de cada dado é igual
+        arq = caminho + ".csv"
+        with open(arq, "w", newline="") as arqcsv:
+            escritor = csv.writer(arqcsv,
+                                  delimiter=",",
+                                  quotechar="|",
+                                  quoting=csv.QUOTE_MINIMAL)
+            escritor.writerow(cabecalhos)
+            for i in range(n_dados):
+                escritor.writerow([d[i] for d in dados])

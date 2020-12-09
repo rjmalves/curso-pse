@@ -175,15 +175,20 @@ class PLUnico:
                 custo_agua: List[float] = []
                 geracao_termica: List[float] = []
                 nos_considerados = sum(self.arvore.nos_por_periodo[:j])
+                # Calcula também o custo imediato no nó
+                ci = 0.0
                 for i, uh in enumerate(self.uhes):
                     c = i * nos_totais + nos_considerados + k
                     vol_finais.append(self.vf[i][j][k].value()[0])
                     vol_turbinados.append(self.vt[i][j][k].value()[0])
                     vol_vertidos.append(self.vv[i][j][k].value()[0])
+                    ci += 0.01 * self.vv[i][j][k].value()[0]
                     custo_agua.append(self.cons[c].multiplier.value[0])
                 for i, ut in enumerate(self.utes):
                     geracao_termica.append(self.gt[i][j][k].value()[0])
+                    ci += ut.custo * self.gt[i][j][k].value()[0]
                 deficit = self.deficit[j][k].value()[0]
+                ci += self.cfg.custo_deficit * deficit
                 c_cmo = len(self.uhes) * nos_totais + nos_considerados + k
                 cmo = abs(self.cons[c_cmo].multiplier.value[0])
                 self.arvore.arvore[j][k].preenche_resultados(vol_finais,
@@ -192,7 +197,8 @@ class PLUnico:
                                                              custo_agua,
                                                              geracao_termica,
                                                              deficit,
-                                                             cmo)
+                                                             cmo,
+                                                             ci)
 
     def organiza_cenarios(self):
         """

@@ -3,6 +3,7 @@ from modelos.uhe import UHE
 from modelos.ute import UTE
 
 import os
+import csv
 import numpy as np  # type: ignore
 from typing import List
 import matplotlib.pyplot as plt  # type: ignore
@@ -307,3 +308,24 @@ class Visual:
         # Salva a imagem
         plt.savefig(caminho + "cmo.png")
         plt.close()
+
+    def exporta_dados(self,
+                      caminho: str,
+                      cabecalhos: List[str],
+                      dados: List[list]):
+        """
+        Exporta um conjunto de dados de uma determinada visualização
+        para um formato CSV.
+        """
+        # Confere se o número de cabeçalhos é igual ao de dados
+        n_dados = len(dados[0])
+        # Confere se a quantidade de entradas de cada dado é igual
+        arq = caminho + ".csv"
+        with open(arq, "w", newline="") as arqcsv:
+            escritor = csv.writer(arqcsv,
+                                  delimiter=",",
+                                  quotechar="|",
+                                  quoting=csv.QUOTE_MINIMAL)
+            escritor.writerow(cabecalhos)
+            for i in range(n_dados):
+                escritor.writerow([d[i] for d in dados])
