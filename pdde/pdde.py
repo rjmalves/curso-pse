@@ -120,7 +120,7 @@ class PDDE:
             eq += float(corte.offset)
             self.cons.append(self.alpha[0] >= eq)
 
-    def resolve_pdde(self) -> bool:
+    def resolve_pdde(self) -> List[Cenario]:
         """
         Resolve um problema de planejamento energético através da
         PDDE.
@@ -143,14 +143,12 @@ class PDDE:
             # Condição de saída por convergência
             if self.__verifica_convergencia():
                 self.log.info("CONVERGIU!")
-                self.__organiza_cenarios()
-                return True
+                break
             it += 1
             # Condição de saída por iterações
             if it >= 20:
-                self.__organiza_cenarios()
                 self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
-                return False
+                break
             # Realiza, para cada dente, a parte BACKWARD
             for p in range(self.cfg.n_periodos - 1, -1, -1):
                 # self.log.debug("Executando a BACKWARD no período {}..."
@@ -176,6 +174,9 @@ class PDDE:
                 for d, dente in enumerate(self.pente.dentes):
                     for c in cortes_periodo:
                         self.pente.dentes[d][p].adiciona_corte(c)
+        # Terminando o loop do método, organiza e retorna os resultados
+        self.__organiza_cenarios()
+        return self.cenarios
 
     def __obtem_corte(self, d: int, p: int) -> CorteBenders:
         """
@@ -282,21 +283,21 @@ class PDDE:
                 return False
         else:
             its_relevantes = 3
-            self.log.debug("Z_SUP = {} - MEDIA: {} - DESVIO: {}".
-                           format(z_sup,
-                                  mean(self.z_sup[-its_relevantes:]),
-                                  pstdev(self.z_sup[-its_relevantes:])))
+            self.log.debug("Z_INF = {} - MEDIA: {} - DESVIO: {}".
+                           format(z_inf,
+                                  mean(self.z_inf[-its_relevantes:]),
+                                  pstdev(self.z_inf[-its_relevantes:])))
             # Condições de convergência para PDDE com aversão a risco
             # Mínimo de 3 iterações
-            n_it = len(self.z_sup)
+            n_it = len(self.z_inf)
             if n_it < its_relevantes:
                 self.log.info("Ainda não convergiu: {} de 3 iterações min."
                               .format(n_it))
                 return False
-            # Estabilidade do Z_sup por 3 iterações
-            erros = [self.z_sup[i] for i in range(-its_relevantes, 0)]
+            # Estabilidade do Z_inf por 3 iterações
+            erros = [self.z_inf[i] for i in range(-its_relevantes, 0)]
             if max(erros) - min(erros) < 1e-3:
-                self.log.info("Estabilidade do Z_sup: {}".format(erros))
+                self.log.info("Estabilidade do Z_inf: {}".format(erros))
                 return True
 
             return False

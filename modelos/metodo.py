@@ -1,10 +1,12 @@
 from utils.leituraentrada import LeituraEntrada
+from modelos.cenario import Cenario
 from plunico.plunico import PLUnico
 from pddd.pddd import PDDD
 from pdde.pdde import PDDE
 
 import time
 import logging
+from typing import List
 from enum import Enum
 
 
@@ -32,7 +34,9 @@ class Metodo(Enum):
         # Se não encontrou um dentro dos possíveis
         raise Exception("Método de solução inválido: {}".format(valor))
 
-    def resolve(self, e: LeituraEntrada, log: logging.Logger):
+    def resolve(self,
+                e: LeituraEntrada,
+                log: logging.Logger) -> List[Cenario]:
         """
         Resolve o problema de otimização para o problema descrito,
         segundo o método escolhido.
@@ -41,17 +45,20 @@ class Metodo(Enum):
         caminho_saida = "results/{}/{}/{}/".format(e.cfg.nome,
                                                    self.value,
                                                    int(time.time()))
+        cen: List[Cenario] = []
         if self == Metodo.PL_UNICO:
             self.pl = PLUnico(e, log)
-            if self.pl.resolve_pl():
-                self.pl.escreve_saidas(caminho_saida)
+            cen = self.pl.resolve_pl()
+            self.pl.escreve_saidas(caminho_saida)
         elif self == Metodo.PDDD:
             self.pddd = PDDD(e, log)
-            self.pddd.resolve_pddd()
+            cen = self.pddd.resolve_pddd()
             self.pddd.escreve_saidas(caminho_saida)
         elif self == Metodo.PDDE:
             self.pdde = PDDE(e, log)
-            self.pdde.resolve_pdde()
+            cen = self.pdde.resolve_pdde()
             self.pdde.escreve_saidas(caminho_saida)
         else:
             raise Exception("Método de solução inválido")
+
+        return cen

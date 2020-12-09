@@ -35,4 +35,5 @@ class CorteBenders:
     def __lt__(self, obj):
         if not isinstance(obj, CorteBenders):
             return False
+        # TEM QUE SER PELA FOBJ
         return self.offset < obj.offset

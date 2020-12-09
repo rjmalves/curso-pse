@@ -139,7 +139,7 @@ class PDDD:
             eq += float(corte.offset)
             self.cons.append(self.alpha[0] >= eq)
 
-    def resolve_pddd(self) -> bool:
+    def resolve_pddd(self) -> List[Cenario]:
         """
         Resolve um problema de planejamento energético através da
         PDDD.
@@ -184,8 +184,7 @@ class PDDD:
                                      np.abs(self.z_sup[it] - self.z_inf[it]),
                                      tol))
                 self.log.info("CONVERGIU!")
-                self.__organiza_cenarios()
-                return True
+                break
             self.log.info("Sup= {:12.6f} | Inf= {:12.6f} | {:12.6f} > {}".
                           format(self.z_sup[it],
                                  self.z_inf[it],
@@ -196,16 +195,14 @@ class PDDD:
             it += 1
             # Condição de saída por iterações
             if it >= 50:
-                self.__organiza_cenarios()
                 self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
-                return False
+                break
             if it >= 5:
                 erros = [self.z_sup[i] - self.z_inf[i]
                          for i in range(-5, 0)]
                 if len(set(erros)) == 1:
-                    self.__organiza_cenarios()
                     self.log.warning("NÃO CONVERGIU ABAIXO DA TOLERÂNCIA!")
-                    return False
+                    break
             # Executa a backward para cada nó
             for j in range(self.cfg.n_periodos - 1, -1, -1):
                 self.log.debug("Executando a BACKWARD para o período {}...".
@@ -224,7 +221,9 @@ class PDDD:
                         self.log.debug(no.resumo())
                     # Gera um novo corte para o nó
                     self.__cria_corte(j, k)
-        return False
+        # Terminando o loop do método, organiza e retorna os resultados
+        self.__organiza_cenarios()
+        return self.cenarios
 
     def __cria_corte(self, j: int, k: int):
         """
