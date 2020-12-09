@@ -329,6 +329,7 @@ class PDDE:
                                                     geracao_termica,
                                                     deficit,
                                                     cmo,
+                                                    f_obj - alpha,
                                                     alpha,
                                                     f_obj)
 

@@ -1,6 +1,6 @@
 from utils.leituraentrada import LeituraEntrada
 from plunico.modelos.arvoreafluencias import ArvoreAfluencias
-from plunico.modelos.no import No
+from modelos.no import No
 from plunico.modelos.cenario import Cenario
 from plunico.utils.visual import Visual
 from plunico.utils.escrevesaida import EscreveSaida
@@ -198,7 +198,8 @@ class PLUnico:
                                                              geracao_termica,
                                                              deficit,
                                                              cmo,
-                                                             ci)
+                                                             ci,
+                                                             0.0, 0.0)
 
     def organiza_cenarios(self):
         """

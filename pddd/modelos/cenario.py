@@ -1,4 +1,4 @@
-from pddd.modelos.no import No
+from modelos.no import No
 
 from typing import Dict, List
 

@@ -1,6 +1,6 @@
 from utils.leituraentrada import LeituraEntrada
 from pddd.modelos.arvoreafluencias import ArvoreAfluencias
-from pddd.modelos.no import No
+from modelos.no import No
 from pddd.modelos.cenario import Cenario
 from modelos.cortebenders import CorteBenders
 from pddd.utils.visual import Visual
@@ -245,7 +245,7 @@ class PDDD:
             offset -= vi * custos_agua[i]
         corte = CorteBenders(custos_agua, offset)
         self.log.debug("NOVO CORTE {} - {} : {}".format(j + 1, k + 1, corte))
-        no.adiciona_corte(corte)
+        no.adiciona_corte(corte, True)
 
     def __armazena_saidas(self, j: int, k: int):
         """
@@ -275,6 +275,7 @@ class PDDD:
                                                      geracao_termica,
                                                      deficit,
                                                      cmo,
+                                                     func_objetivo - alpha,
                                                      alpha,
                                                      func_objetivo)
 

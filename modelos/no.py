@@ -5,7 +5,7 @@ from typing import List
 
 class No:
     """
-    Representação de um nó na árvore de afluências.
+    Representação de um nó no pente de afluências.
     """
     def __init__(self, afluencias: List[float]):
         # Uma lista onde o ID da UHE é usada como índice
@@ -19,24 +19,21 @@ class No:
         self.geracao_termica: List[float] = []
         self.deficit = 0.0
         self.cmo = 0.0
+        self.custo_imediato = 0.0
         self.custo_futuro = 0.0
         self.custo_total = 0.0
         self.cortes: List[CorteBenders] = []
-        self.cortes_medios_futuros: List[CorteBenders] = []
 
-    def adiciona_corte(self, corte: CorteBenders):
+    def adiciona_corte(self,
+                       corte: CorteBenders,
+                       repetidos: bool = False):
         """
         Adiciona um novo corte de Benders à lista de cortes
         do nó.
         """
         self.cortes.append(corte)
-
-    def adiciona_corte_futuro_medio(self, corte: CorteBenders):
-        """
-        Adiciona um novo corte de Benders à lista de cortes
-        médios futuros.
-        """
-        self.cortes_medios_futuros.append(corte)
+        if not repetidos:
+            self.cortes = list(set(self.cortes))
 
     def preenche_resultados(self,
                             volumes_finais: List[float],
@@ -46,6 +43,7 @@ class No:
                             geracao_termica: List[float],
                             deficit: float,
                             cmo: float,
+                            ci: float,
                             alpha: float,
                             func_objetivo: float):
         """
@@ -68,6 +66,7 @@ class No:
         self.geracao_termica = geracao_termica
         self.deficit = deficit
         self.cmo = cmo
+        self.ci = ci
         self.custo_futuro = alpha
         self.custo_total = func_objetivo
 
@@ -100,7 +99,7 @@ class No:
         linhas: List[str] = []
         n_uhes = len(self.volumes_finais)
         for corte in self.cortes:
-            linha = "                             "
+            linha = "               "
             linha += "{:19.8f}".format(corte.offset) + " "
             for i in range(n_uhes):
                 linha += "{:19.8f}".format(corte.custo_agua[i]) + " "
