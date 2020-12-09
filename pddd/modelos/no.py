@@ -1,4 +1,4 @@
-from pddd.modelos.cortebenders import CorteBenders
+from modelos.cortebenders import CorteBenders
 
 from typing import List
 

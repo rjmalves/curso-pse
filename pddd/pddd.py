@@ -2,7 +2,7 @@ from utils.leituraentrada import LeituraEntrada
 from pddd.modelos.arvoreafluencias import ArvoreAfluencias
 from pddd.modelos.no import No
 from pddd.modelos.cenario import Cenario
-from pddd.modelos.cortebenders import CorteBenders
+from modelos.cortebenders import CorteBenders
 from pddd.utils.visual import Visual
 from pddd.utils.escrevesaida import EscreveSaida
 

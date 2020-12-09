@@ -1,4 +1,4 @@
-from pdde.modelos.cortebenders import CorteBenders
+from modelos.cortebenders import CorteBenders
 from pdde.modelos.penteafluencias import PenteAfluencias
 from pdde.modelos.cenario import Cenario
 from utils.leituraentrada import LeituraEntrada

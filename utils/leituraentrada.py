@@ -91,7 +91,7 @@ class LeituraEntrada:
             ci = 29
             cf = 44
             nome = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
-            metodo = nome = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
+            metodo = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
             n_estagios = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_aberturas = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_cenarios = int(self.__le_linha_com_backup(arquivo)[ci:cf])
