@@ -3,8 +3,8 @@ CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
  NOME DO ESTUDO                        teste
  MÉTODO DE SOLUÇÃO                      PDDD    # SÃO VÁLIDOS: PL_UNICO, PDDD E PDDE
- NÚMERO DE PERÍODOS                        8
- ABERTURAS POR PERÍODO (BKD)               5
+ NÚMERO DE PERÍODOS                        5
+ ABERTURAS POR PERÍODO (BKD)               2
  NÚMERO DE CENARIOS FWD                   50    # SOMENTE USADA NA PDDE
  % ABERTURAS CAUDA (ALFA)                0.2    # SOMENTE USADA NA PDDE
  PESO CAUDA (LAMBDA)                    1.00    # SOMENTE USADA NA PDDE

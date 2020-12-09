@@ -3,7 +3,6 @@ from pddd.modelos.arvoreafluencias import ArvoreAfluencias
 from modelos.no import No
 from modelos.cenario import Cenario
 from modelos.cortebenders import CorteBenders
-from pddd.utils.visual import Visual
 from pddd.utils.escrevesaida import EscreveSaida
 
 import logging
@@ -313,14 +312,7 @@ class PDDD:
                              self.log)
         saida.escreve_relatorio()
 
-    def __gera_graficos(self, caminho: str):
-        """
-        """
-        vis = Visual(self.uhes, self.utes, caminho, self.cenarios)
-        vis.visualiza()
-
     def escreve_saidas(self, caminho: str):
         """
         """
         self.__escreve_relatorio_estudo(caminho)
-        self.__gera_graficos(caminho)

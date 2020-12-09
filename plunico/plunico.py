@@ -2,7 +2,6 @@ from utils.leituraentrada import LeituraEntrada
 from modelos.no import No
 from modelos.cenario import Cenario
 from plunico.modelos.arvoreafluencias import ArvoreAfluencias
-from plunico.utils.visual import Visual
 from plunico.utils.escrevesaida import EscreveSaida
 
 import logging
@@ -235,16 +234,9 @@ class PLUnico:
                              self.log)
         saida.escreve_relatorio(self.func_objetivo.value()[0])
 
-    def __gera_graficos(self, caminho: str):
-        """
-        """
-        vis = Visual(self.uhes, self.utes, caminho, self.cenarios)
-        vis.visualiza()
-
     def escreve_saidas(self, caminho: str):
         """
         Gera arquivos de saída para inspeção manual sobre um estudo
         de planejamento energético.
         """
         self.__escreve_relatorio_estudo(caminho)
-        self.__gera_graficos(caminho)

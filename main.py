@@ -1,6 +1,7 @@
 # from modelos.configgeral import ConfigGeral
 from modelos.metodo import Metodo
 from utils.leituraentrada import LeituraEntrada
+from utils.visual import Visual
 
 import time
 import logging
@@ -21,8 +22,15 @@ def main():
     metodo = Metodo.obtem_metodo_pelo_valor(e.cfg.metodo)
     logger.critical("Método de solução escolhido: {}".format(metodo.value))
     # Resolve o problema de otimização
-    metodo.resolve(e, logger)
+    cenarios = metodo.resolve(e, logger)
     # Gera relatórios e gráficos de saída
+    caminho_saida = "results/{}/{}/{}/".format(e.cfg.nome,
+                                               metodo.value,
+                                               int(time.time()))
+    visualizador = Visual(metodo,
+                          caminho_saida,
+                          cenarios)
+    visualizador.visualiza()
     logger.critical("#### FIM DA EXECUÇÃO ####")
 
 
