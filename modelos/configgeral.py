@@ -26,6 +26,11 @@ class ConfigGeral:
         self.custo_deficit = custo_deficit
         self.n_uhes = n_uhes
         self.n_utes = n_utes
+        # Inicializa o atributo que indica se é usada aversão
+        # a risco no estudo
+        self.aversao_risco = False
+        if (self.aberturas_cauda > 0 and self.peso_cauda > 0):
+            self.aversao_risco = True
 
     def __str__(self):
         to_str = ""

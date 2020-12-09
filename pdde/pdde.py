@@ -8,7 +8,7 @@ from pdde.utils.visual import Visual
 import logging
 from typing import List, Tuple
 import numpy as np  # type: ignore
-from statistics import pstdev, mean, stdev
+from statistics import pstdev, mean
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
 
@@ -147,17 +147,10 @@ class PDDE:
                 return True
             it += 1
             # Condição de saída por iterações
-            if it >= 50:
+            if it >= 20:
                 self.__organiza_cenarios()
                 self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
                 return False
-            if it >= 5:
-                erros = [self.z_inf[i]
-                         for i in range(-5, 0)]
-                if stdev(erros) < 1e-3:
-                    self.__organiza_cenarios()
-                    self.log.warning("NÃO CONVERGIU ABAIXO DA TOLERÂNCIA!")
-                    return False
             # Realiza, para cada dente, a parte BACKWARD
             for p in range(self.cfg.n_periodos - 1, -1, -1):
                 # self.log.debug("Executando a BACKWARD no período {}..."
@@ -267,23 +260,45 @@ class PDDE:
         limite_inf = max([1e-3, z_sup - conf * desvio - tol])
         limite_sup = z_sup + conf * desvio + tol
         self.intervalo_conf.append((limite_inf, limite_sup))
-        self.log.debug("Z_SUP = {} - Z_INF = {}. INTERVALO = [{}, {}]".
-                       format(z_sup, z_inf, limite_inf, limite_sup))
-        if limite_inf <= z_inf <= limite_sup:
-            self.log.info("{} <= {} <= {}".
-                          format(limite_inf,
-                                 z_inf,
-                                 limite_sup))
-            return True
-        else:
-            if z_inf < limite_inf:
-                self.log.info("Ainda não convergiu: {} < {}".
-                              format(z_inf,
-                                     limite_inf))
-            elif z_inf > limite_sup:
-                self.log.info("Ainda não convergiu: {} > {}".
-                              format(z_inf,
+        if not self.cfg.aversao_risco:
+            self.log.debug("Z_SUP = {} - Z_INF = {}. INTERVALO = [{}, {}]".
+                           format(z_sup, z_inf, limite_inf, limite_sup))
+            # Condições de convergência para PDDE sem aversão a risco
+            if limite_inf <= z_inf <= limite_sup:
+                self.log.info("{} <= {} <= {}".
+                              format(limite_inf,
+                                     z_inf,
                                      limite_sup))
+                return True
+            else:
+                if z_inf < limite_inf:
+                    self.log.info("Ainda não convergiu: {} < {}".
+                                  format(z_inf,
+                                         limite_inf))
+                elif z_inf > limite_sup:
+                    self.log.info("Ainda não convergiu: {} > {}".
+                                  format(z_inf,
+                                         limite_sup))
+                return False
+        else:
+            its_relevantes = 3
+            self.log.debug("Z_SUP = {} - MEDIA: {} - DESVIO: {}".
+                           format(z_sup,
+                                  mean(self.z_sup[-its_relevantes:]),
+                                  pstdev(self.z_sup[-its_relevantes:])))
+            # Condições de convergência para PDDE com aversão a risco
+            # Mínimo de 3 iterações
+            n_it = len(self.z_sup)
+            if n_it < its_relevantes:
+                self.log.info("Ainda não convergiu: {} de 3 iterações min."
+                              .format(n_it))
+                return False
+            # Estabilidade do Z_sup por 3 iterações
+            erros = [self.z_sup[i] for i in range(-its_relevantes, 0)]
+            if max(erros) - min(erros) < 1e-3:
+                self.log.info("Estabilidade do Z_sup: {}".format(erros))
+                return True
+
             return False
 
     def __armazena_saidas(self, d: int, p: int):
