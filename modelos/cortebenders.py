@@ -8,9 +8,11 @@ class CorteBenders:
     """
     def __init__(self,
                  custo_agua: List[float],
-                 offset: float):
+                 offset: float,
+                 fobj: float):
         self.custo_agua = custo_agua
         self.offset = offset
+        self.fobj = fobj
 
     def __str__(self):
         to_str = ""
@@ -35,5 +37,4 @@ class CorteBenders:
     def __lt__(self, obj):
         if not isinstance(obj, CorteBenders):
             return False
-        # TEM QUE SER PELA FOBJ
-        return self.offset < obj.offset
+        return self.fobj < obj.fobj

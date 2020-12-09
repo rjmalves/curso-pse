@@ -194,7 +194,7 @@ class PDDE:
                 ant = self.pente.dentes[d][p - 1]
                 vi = ant.volumes_finais[i]
             offset -= vi * custos_agua[i]
-        corte = CorteBenders(custos_agua, offset)
+        corte = CorteBenders(custos_agua, offset, no.custo_total)
         return corte
 
     def __cria_corte(self,
@@ -231,7 +231,7 @@ class PDDE:
         lmbda = self.cfg.peso_cauda
         cma_ponderado = list((1 - lmbda) * cma_medios + lmbda * cma_cauda)
         offset_ponderado = (1 - lmbda) * offset_medio + lmbda * offset_cauda
-        corte_ponderado = CorteBenders(cma_ponderado, offset_ponderado)
+        corte_ponderado = CorteBenders(cma_ponderado, offset_ponderado, 0.0)
         return corte_ponderado
 
     def __verifica_convergencia(self) -> bool:

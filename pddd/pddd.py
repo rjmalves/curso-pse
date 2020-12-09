@@ -127,7 +127,7 @@ class PDDD:
                 # Calcula o offset médio
                 offset_medio += corte.offset / num_futuros
             # Caso contrário, se não houver corte igual já no nó, adiciona
-            corte_medio = CorteBenders(cma_medios, offset_medio)
+            corte_medio = CorteBenders(cma_medios, offset_medio, 0.0)
             cortes_medios.append(corte_medio)
 
         # Armazena os cortes médios como restrições
@@ -242,7 +242,7 @@ class PDDD:
                 ant = self.arvore.arvore[j - 1][indice_ant]
                 vi = ant.volumes_finais[i]
             offset -= vi * custos_agua[i]
-        corte = CorteBenders(custos_agua, offset)
+        corte = CorteBenders(custos_agua, offset, no.custo_total)
         self.log.debug("NOVO CORTE {} - {} : {}".format(j + 1, k + 1, corte))
         no.adiciona_corte(corte, True)
 
