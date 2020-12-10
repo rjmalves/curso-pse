@@ -62,9 +62,6 @@ def main_multi():
         metodo = Metodo.obtem_metodo_pelo_valor(e.cfg.metodo)
         resultados.append(metodo.resolve(e, logger))
 
-    for r in resultados:
-        print(r.cfg.nome)
-
     # Gera relatórios e gráficos de saída
     caminho_saida = "results/multi/{}/".format(int(time.time()))
     visualizador = MultiVisual(resultados,
