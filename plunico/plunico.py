@@ -1,6 +1,7 @@
 from utils.leituraentrada import LeituraEntrada
 from modelos.no import No
 from modelos.cenario import Cenario
+from modelos.resultado import Resultado
 from plunico.modelos.arvoreafluencias import ArvoreAfluencias
 
 import logging
@@ -149,7 +150,7 @@ class PLUnico:
         self.log.info("Problema de otimização: {}".format(prob))
         return prob
 
-    def resolve_pl(self) -> List[Cenario]:
+    def resolve_pl(self) -> Resultado:
         """
         Resolve um PL montado anteriormente.
         """
@@ -158,7 +159,11 @@ class PLUnico:
                       format(self.func_objetivo.value()[0]))
         self.armazena_saidas()
         self.organiza_cenarios()
-        return self.cenarios
+        return Resultado(self.cfg,
+                         self.uhes,
+                         self.utes,
+                         self.cenarios,
+                         [], [], [])
 
     def armazena_saidas(self):
         """

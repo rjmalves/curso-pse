@@ -3,6 +3,7 @@ from pddd.modelos.arvoreafluencias import ArvoreAfluencias
 from modelos.no import No
 from modelos.cenario import Cenario
 from modelos.cortebenders import CorteBenders
+from modelos.resultado import Resultado
 
 import logging
 import numpy as np  # type: ignore
@@ -137,7 +138,7 @@ class PDDD:
             eq += float(corte.offset)
             self.cons.append(self.alpha[0] >= eq)
 
-    def resolve_pddd(self) -> List[Cenario]:
+    def resolve_pddd(self) -> Resultado:
         """
         Resolve um problema de planejamento energético através da
         PDDD.
@@ -221,7 +222,13 @@ class PDDD:
                     self.__cria_corte(j, k)
         # Terminando o loop do método, organiza e retorna os resultados
         self.__organiza_cenarios()
-        return self.cenarios
+        return Resultado(self.cfg,
+                         self.uhes,
+                         self.utes,
+                         self.cenarios,
+                         self.z_sup,
+                         self.z_inf,
+                         [])
 
     def __cria_corte(self, j: int, k: int):
         """

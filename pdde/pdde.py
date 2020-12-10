@@ -1,6 +1,7 @@
 from modelos.cortebenders import CorteBenders
 from pdde.modelos.penteafluencias import PenteAfluencias
 from modelos.cenario import Cenario
+from modelos.resultado import Resultado
 from utils.leituraentrada import LeituraEntrada
 
 import logging
@@ -118,7 +119,7 @@ class PDDE:
             eq += float(corte.offset)
             self.cons.append(self.alpha[0] >= eq)
 
-    def resolve_pdde(self) -> List[Cenario]:
+    def resolve_pdde(self) -> Resultado:
         """
         Resolve um problema de planejamento energético através da
         PDDE.
@@ -174,7 +175,13 @@ class PDDE:
                         self.pente.dentes[d][p].adiciona_corte(c)
         # Terminando o loop do método, organiza e retorna os resultados
         self.__organiza_cenarios()
-        return self.cenarios
+        return Resultado(self.cfg,
+                         self.uhes,
+                         self.utes,
+                         self.cenarios,
+                         self.z_sup,
+                         self.z_inf,
+                         self.intervalo_conf)
 
     def __obtem_corte(self, d: int, p: int) -> CorteBenders:
         """
