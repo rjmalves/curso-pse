@@ -2,6 +2,7 @@
 from modelos.metodo import Metodo
 from utils.leituraentrada import LeituraEntrada
 from utils.visual import Visual
+from utils.escrevesaida import EscreveSaida
 
 import time
 import logging
@@ -27,6 +28,11 @@ def main():
     caminho_saida = "results/{}/{}/{}/".format(e.cfg.nome,
                                                metodo.value,
                                                int(time.time()))
+    relator = EscreveSaida(metodo,
+                           caminho_saida,
+                           cenarios,
+                           logger)
+    relator.escreve_relatorio()
     visualizador = Visual(metodo,
                           caminho_saida,
                           cenarios)

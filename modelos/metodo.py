@@ -1,3 +1,4 @@
+from modelos.configgeral import ConfigGeral
 from utils.leituraentrada import LeituraEntrada
 from modelos.cenario import Cenario
 from modelos.uhe import UHE
@@ -6,7 +7,6 @@ from plunico.plunico import PLUnico
 from pddd.pddd import PDDD
 from pdde.pdde import PDDE
 
-import time
 import logging
 from typing import List, Tuple
 from enum import Enum
@@ -44,9 +44,6 @@ class Metodo(Enum):
         segundo o método escolhido.
         """
         log.info("Resolvendo o problema de {}".format(self.value))
-        caminho_saida = "results/{}/{}/{}/".format(e.cfg.nome,
-                                                   self.value,
-                                                   int(time.time()))
         # Armazena as UHES e UTES existentes
         self.__uhes = e.uhes
         self.__utes = e.utes
@@ -55,19 +52,25 @@ class Metodo(Enum):
         if self == Metodo.PL_UNICO:
             self.pl = PLUnico(e, log)
             cen = self.pl.resolve_pl()
-            self.pl.escreve_saidas(caminho_saida)
         elif self == Metodo.PDDD:
             self.pddd = PDDD(e, log)
             cen = self.pddd.resolve_pddd()
-            self.pddd.escreve_saidas(caminho_saida)
         elif self == Metodo.PDDE:
             self.pdde = PDDE(e, log)
             cen = self.pdde.resolve_pdde()
-            self.pdde.escreve_saidas(caminho_saida)
         else:
             raise Exception("Método de solução inválido")
 
         return cen
+
+    @property
+    def cfg(self) -> ConfigGeral:
+        if self == Metodo.PL_UNICO:
+            return self.pl.cfg
+        elif self == Metodo.PDDD:
+            return self.pddd.cfg
+        else:
+            return self.pdde.cfg
 
     @property
     def uhes(self) -> List[UHE]:

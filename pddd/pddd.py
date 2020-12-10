@@ -3,7 +3,6 @@ from pddd.modelos.arvoreafluencias import ArvoreAfluencias
 from modelos.no import No
 from modelos.cenario import Cenario
 from modelos.cortebenders import CorteBenders
-from pddd.utils.escrevesaida import EscreveSaida
 
 import logging
 import numpy as np  # type: ignore
@@ -297,22 +296,3 @@ class PDDD:
             self.log.debug("--------------------------------------")
             cenarios.append(cen)
         self.cenarios = cenarios
-
-    def __escreve_relatorio_estudo(self, caminho: str):
-        """
-        """
-        saida = EscreveSaida(self.cfg,
-                             self.uhes,
-                             self.utes,
-                             caminho,
-                             self.cenarios,
-                             self.arvore,
-                             self.z_sup,
-                             self.z_inf,
-                             self.log)
-        saida.escreve_relatorio()
-
-    def escreve_saidas(self, caminho: str):
-        """
-        """
-        self.__escreve_relatorio_estudo(caminho)

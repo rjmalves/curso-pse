@@ -6,7 +6,7 @@ from modelos.ute import UTE
 import os
 import csv
 import numpy as np  # type: ignore
-from typing import List, Tuple
+from typing import List
 import matplotlib.pyplot as plt  # type: ignore
 
 
@@ -21,8 +21,8 @@ class Visual:
                  cenarios: List[Cenario]):
 
         self.metodo = metodo
-        self.uhes = metodo.uhes
-        self.utes = metodo.utes
+        self.uhes: List[UHE] = metodo.uhes
+        self.utes: List[UTE] = metodo.utes
         # O caminho base já contém NOME_ESTUDO/MÉTODO/EPOCH/
         self.caminho = caminho
         self.cenarios = cenarios

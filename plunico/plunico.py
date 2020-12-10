@@ -2,7 +2,6 @@ from utils.leituraentrada import LeituraEntrada
 from modelos.no import No
 from modelos.cenario import Cenario
 from plunico.modelos.arvoreafluencias import ArvoreAfluencias
-from plunico.utils.escrevesaida import EscreveSaida
 
 import logging
 from typing import List
@@ -220,23 +219,3 @@ class PLUnico:
             self.log.debug("--------------------------------------")
             cenarios.append(cen)
         self.cenarios = cenarios
-
-    def __escreve_relatorio_estudo(self, caminho: str):
-        """
-        Gera um arquivo de texto com o relatório preciso dos
-        valores resultantes do PL para cada cenário e periodo.
-        """
-        saida = EscreveSaida(self.cfg,
-                             self.uhes,
-                             self.utes,
-                             caminho,
-                             self.cenarios,
-                             self.log)
-        saida.escreve_relatorio(self.func_objetivo.value()[0])
-
-    def escreve_saidas(self, caminho: str):
-        """
-        Gera arquivos de saída para inspeção manual sobre um estudo
-        de planejamento energético.
-        """
-        self.__escreve_relatorio_estudo(caminho)

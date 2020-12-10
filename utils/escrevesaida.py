@@ -1,5 +1,5 @@
 from modelos.cenario import Cenario
-from pdde.modelos.penteafluencias import PenteAfluencias
+from modelos.metodo import Metodo
 from modelos.uhe import UHE
 from modelos.ute import UTE
 from modelos.configgeral import ConfigGeral
@@ -7,32 +7,26 @@ from modelos.configgeral import ConfigGeral
 import os
 import logging
 from traceback import print_exc
-from typing import List, Tuple, IO
+from typing import List, IO
 
 
 class EscreveSaida:
     """
     """
     def __init__(self,
-                 cfg: ConfigGeral,
-                 uhes: List[UHE],
-                 utes: List[UTE],
+                 metodo: Metodo,
                  caminho: str,
                  cenarios: List[Cenario],
-                 pente: PenteAfluencias,
-                 z_sup: List[float],
-                 z_inf: List[float],
-                 intervalo_conf: List[Tuple[float, float]],
                  log: logging.Logger):
-        self.cfg = cfg
-        self.uhes = uhes
-        self.utes = utes
+        self.cfg: ConfigGeral = metodo.cfg
+        self.uhes: List[UHE] = metodo.uhes
+        self.utes: List[UTE] = metodo.utes
+        self.metodo: str = metodo.value
         self.caminho = caminho
         self.cenarios = cenarios
-        self.pente = pente
-        self.z_sup = z_sup
-        self.z_inf = z_inf
-        self.intervalo_conf = intervalo_conf
+        self.z_sup = metodo.z_sup
+        self.z_inf = metodo.z_inf
+        self.intervalo_conf = metodo.intervalo_confianca
         self.log = log
 
     def escreve_relatorio(self):
@@ -47,10 +41,11 @@ class EscreveSaida:
                 titulo = "RELATÓRIO DE ESTUDO DE PLANEJAMENTO ENERGÉTICO"
                 arquivo.write(titulo + "\n\n")
                 self.__escreve_configs(arquivo)
-                metodo = "PDDE".rjust(18)
+                metodo = "{}".format(self.metodo).rjust(18)
                 arquivo.write("MÉTODO UTILIZADO: {}\n\n".format(metodo))
-                # Escreve o relatório de convegência
-                self.__escreve_convergencia(arquivo)
+                if self.metodo == "PDDD" or self.metodo == "PDDE":
+                    # Escreve o relatório de convegência
+                    self.__escreve_convergencia(arquivo)
                 # Escreve o relatório do cenário médio avaliado
                 self.__escreve_cenario_medio(arquivo)
                 # Escreve o relatório detalhado por cenário
@@ -59,8 +54,6 @@ class EscreveSaida:
                     str_cen = str(i + 1).rjust(4)
                     arquivo.write("CENÁRIO " + str_cen + "\n")
                     self.__escreve_cenario(arquivo, cen)
-                # Escreve o relatório de cortes individuais do nó
-                self.__escreve_cortes_individuais(arquivo)
         except Exception as e:
             self.log.error("Falha na escrita do arquivo: {}".format(e))
             print_exc()
@@ -127,14 +120,16 @@ class EscreveSaida:
         bem como o erro (diferença).
         """
         arquivo.write("RELATÓRIO DE CONVERGÊNCIA\n\n")
-        campos = [13, 19, 19, 19, 19]
-        self.__escreve_borda_tabela(arquivo, campos)
+        campos = [13, 19, 19]
         # Escreve o cabeçalho
         cab_tabela = "     ITER.     "
         cab_tabela += "       Z_SUP        "
         cab_tabela += "       Z_INF        "
-        cab_tabela += " LIMITE INF. CONF.  "
-        cab_tabela += " LIMITE SUP. CONF.  "
+        if self.metodo == "PDDE":
+            campos += [19, 19]
+            cab_tabela += " LIMITE INF. CONF.  "
+            cab_tabela += " LIMITE SUP. CONF.  "
+        self.__escreve_borda_tabela(arquivo, campos)
         arquivo.write(cab_tabela + "\n")
         # Escreve as linhas com as entradas para cada iteração
         n_iters = len(self.z_sup)
@@ -144,39 +139,11 @@ class EscreveSaida:
             linha += ind_iter + " "
             linha += "{:19.8f}".format(self.z_sup[i]) + " "
             linha += "{:19.8f}".format(self.z_inf[i]) + " "
-            linha += "{:19.8f}".format(self.intervalo_conf[i][0]) + " "
-            linha += "{:19.8f}".format(self.intervalo_conf[i][1]) + " "
+            if self.metodo == "PDDE":
+                linha += "{:19.8f}".format(self.intervalo_conf[i][0]) + " "
+                linha += "{:19.8f}".format(self.intervalo_conf[i][1]) + " "
             linha += "\n"
             arquivo.write(linha)
-        self.__escreve_borda_tabela(arquivo, campos)
-        arquivo.write("\n")
-
-    def __escreve_cortes_individuais(self, arquivo: IO):
-        """
-        """
-        arquivo.write("\n")
-        arquivo.write("RELATÓRIO DE CORTES INDIVIDUAIS\n\n")
-        campos = [13, 19] + [19] * len(self.uhes)
-        self.__escreve_borda_tabela(arquivo, campos)
-        # Escreve o cabeçalho da tabela
-        cab_tabela = "    PERÍODO    "
-        cab_tabela += "        RHS         "
-        for i in range(len(self.uhes)):
-            ind_uhe = str(i + 1).ljust(2)
-            cab_tabela += "       PIV({})      ".format(ind_uhe)
-        arquivo.write(cab_tabela + "\n")
-        # Escreve as informações de cortes
-        for p in range(self.cfg.n_periodos):
-            no = self.pente.dentes[0][p]
-            linhas = no.linhas_tabela_cortes_individuais()
-            if len(linhas) == 0:
-                continue
-            # Edita a primeira linha para identificar o nó
-            # Se for o primeiro do período, também o identifica
-            id_per = str(p + 1).rjust(13)
-            linhas[0] = " " + id_per + " " + linhas[0][15:]
-            for linha in linhas:
-                arquivo.write(linha)
         self.__escreve_borda_tabela(arquivo, campos)
         arquivo.write("\n")
 

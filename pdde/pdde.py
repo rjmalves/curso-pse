@@ -2,7 +2,6 @@ from modelos.cortebenders import CorteBenders
 from pdde.modelos.penteafluencias import PenteAfluencias
 from modelos.cenario import Cenario
 from utils.leituraentrada import LeituraEntrada
-from pdde.utils.escrevesaida import EscreveSaida
 
 import logging
 from typing import List, Tuple
@@ -347,23 +346,3 @@ class PDDE:
             # self.log.debug("--------------------------------------")
             cenarios.append(cen)
         self.cenarios = cenarios
-
-    def __escreve_relatorio_estudo(self, caminho: str):
-        """
-        """
-        saida = EscreveSaida(self.cfg,
-                             self.uhes,
-                             self.utes,
-                             caminho,
-                             self.cenarios,
-                             self.pente,
-                             self.z_sup,
-                             self.z_inf,
-                             self.intervalo_conf,
-                             self.log)
-        saida.escreve_relatorio()
-
-    def escreve_saidas(self, caminho: str):
-        """
-        """
-        self.__escreve_relatorio_estudo(caminho)
