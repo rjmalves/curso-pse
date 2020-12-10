@@ -1,9 +1,7 @@
-from pdde.modelos.cortebenders import CorteBenders
+from modelos.cortebenders import CorteBenders
 from pdde.modelos.penteafluencias import PenteAfluencias
-from pdde.modelos.cenario import Cenario
+from modelos.cenario import Cenario
 from utils.leituraentrada import LeituraEntrada
-from pdde.utils.escrevesaida import EscreveSaida
-from pdde.utils.visual import Visual
 
 import logging
 from typing import List, Tuple
@@ -120,7 +118,7 @@ class PDDE:
             eq += float(corte.offset)
             self.cons.append(self.alpha[0] >= eq)
 
-    def resolve_pdde(self) -> bool:
+    def resolve_pdde(self) -> List[Cenario]:
         """
         Resolve um problema de planejamento energético através da
         PDDE.
@@ -143,14 +141,12 @@ class PDDE:
             # Condição de saída por convergência
             if self.__verifica_convergencia():
                 self.log.info("CONVERGIU!")
-                self.__organiza_cenarios()
-                return True
+                break
             it += 1
             # Condição de saída por iterações
             if it >= 20:
-                self.__organiza_cenarios()
                 self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
-                return False
+                break
             # Realiza, para cada dente, a parte BACKWARD
             for p in range(self.cfg.n_periodos - 1, -1, -1):
                 # self.log.debug("Executando a BACKWARD no período {}..."
@@ -176,6 +172,9 @@ class PDDE:
                 for d, dente in enumerate(self.pente.dentes):
                     for c in cortes_periodo:
                         self.pente.dentes[d][p].adiciona_corte(c)
+        # Terminando o loop do método, organiza e retorna os resultados
+        self.__organiza_cenarios()
+        return self.cenarios
 
     def __obtem_corte(self, d: int, p: int) -> CorteBenders:
         """
@@ -193,7 +192,7 @@ class PDDE:
                 ant = self.pente.dentes[d][p - 1]
                 vi = ant.volumes_finais[i]
             offset -= vi * custos_agua[i]
-        corte = CorteBenders(custos_agua, offset)
+        corte = CorteBenders(custos_agua, offset, no.custo_total)
         return corte
 
     def __cria_corte(self,
@@ -230,7 +229,7 @@ class PDDE:
         lmbda = self.cfg.peso_cauda
         cma_ponderado = list((1 - lmbda) * cma_medios + lmbda * cma_cauda)
         offset_ponderado = (1 - lmbda) * offset_medio + lmbda * offset_cauda
-        corte_ponderado = CorteBenders(cma_ponderado, offset_ponderado)
+        corte_ponderado = CorteBenders(cma_ponderado, offset_ponderado, 0.0)
         return corte_ponderado
 
     def __verifica_convergencia(self) -> bool:
@@ -282,21 +281,21 @@ class PDDE:
                 return False
         else:
             its_relevantes = 3
-            self.log.debug("Z_SUP = {} - MEDIA: {} - DESVIO: {}".
-                           format(z_sup,
-                                  mean(self.z_sup[-its_relevantes:]),
-                                  pstdev(self.z_sup[-its_relevantes:])))
+            self.log.debug("Z_INF = {} - MEDIA: {} - DESVIO: {}".
+                           format(z_inf,
+                                  mean(self.z_inf[-its_relevantes:]),
+                                  pstdev(self.z_inf[-its_relevantes:])))
             # Condições de convergência para PDDE com aversão a risco
             # Mínimo de 3 iterações
-            n_it = len(self.z_sup)
+            n_it = len(self.z_inf)
             if n_it < its_relevantes:
                 self.log.info("Ainda não convergiu: {} de 3 iterações min."
                               .format(n_it))
                 return False
-            # Estabilidade do Z_sup por 3 iterações
-            erros = [self.z_sup[i] for i in range(-its_relevantes, 0)]
+            # Estabilidade do Z_inf por 3 iterações
+            erros = [self.z_inf[i] for i in range(-its_relevantes, 0)]
             if max(erros) - min(erros) < 1e-3:
-                self.log.info("Estabilidade do Z_sup: {}".format(erros))
+                self.log.info("Estabilidade do Z_inf: {}".format(erros))
                 return True
 
             return False
@@ -329,6 +328,7 @@ class PDDE:
                                                     geracao_termica,
                                                     deficit,
                                                     cmo,
+                                                    f_obj - alpha,
                                                     alpha,
                                                     f_obj)
 
@@ -346,36 +346,3 @@ class PDDE:
             # self.log.debug("--------------------------------------")
             cenarios.append(cen)
         self.cenarios = cenarios
-
-    def __escreve_relatorio_estudo(self, caminho: str):
-        """
-        """
-        saida = EscreveSaida(self.cfg,
-                             self.uhes,
-                             self.utes,
-                             caminho,
-                             self.cenarios,
-                             self.pente,
-                             self.z_sup,
-                             self.z_inf,
-                             self.intervalo_conf,
-                             self.log)
-        saida.escreve_relatorio()
-
-    def __gera_graficos(self, caminho: str):
-        """
-        """
-        vis = Visual(self.uhes,
-                     self.utes,
-                     caminho,
-                     self.cenarios,
-                     self.z_sup,
-                     self.z_inf,
-                     self.intervalo_conf)
-        vis.visualiza()
-
-    def escreve_saidas(self, caminho: str):
-        """
-        """
-        self.__escreve_relatorio_estudo(caminho)
-        self.__gera_graficos(caminho)

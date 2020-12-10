@@ -8,9 +8,11 @@ class CorteBenders:
     """
     def __init__(self,
                  custo_agua: List[float],
-                 offset: float):
+                 offset: float,
+                 fobj: float):
         self.custo_agua = custo_agua
         self.offset = offset
+        self.fobj = fobj
 
     def __str__(self):
         to_str = ""
@@ -18,12 +20,21 @@ class CorteBenders:
             to_str += "{}: {} - ".format(k, v)
         return to_str
 
+    def __hash__(self):
+        custos = tuple(self.custo_agua)
+        return hash((custos, self.offset))
+
     def __eq__(self, obj):
         if not isinstance(obj, CorteBenders):
             return False
-        tol = 1e-15
+        tol = 1e-18
         for c1, c2 in zip(self.custo_agua, obj.custo_agua):
             if abs(c1 - c2) > tol:
                 return False
         offset_igual = abs(self.offset - obj.offset) < tol
         return offset_igual
+
+    def __lt__(self, obj):
+        if not isinstance(obj, CorteBenders):
+            return False
+        return self.fobj < obj.fobj

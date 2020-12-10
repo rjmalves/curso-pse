@@ -1,5 +1,5 @@
 from utils.leituraentrada import LeituraEntrada
-from pddd.modelos.no import No
+from modelos.no import No
 
 from typing import List
 from itertools import product

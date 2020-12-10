@@ -1,4 +1,4 @@
-from pdde.modelos.no import No
+from modelos.no import No
 
 from typing import Dict, List
 import numpy as np  # type: ignore
@@ -20,6 +20,7 @@ class Cenario:
                  geracao_termica: Dict[int, List[float]],
                  deficit: List[float],
                  cmo: List[float],
+                 ci: List[float],
                  alpha: List[float],
                  fobj: List[float]):
 
@@ -33,9 +34,9 @@ class Cenario:
         self.geracao_termica = geracao_termica
         self.deficit: List[float] = deficit
         self.cmo: List[float] = cmo
+        self.ci = ci
         self.alpha: List[float] = alpha
         self.fobj = fobj
-        self.ci = [f - a for f, a in zip(fobj, alpha)]
 
     @classmethod
     def cenario_dos_nos(cls, nos: List[No]):
@@ -53,6 +54,7 @@ class Cenario:
         geracao_termica = Cenario.organiza_ger_termica(nos)
         deficit: List[float] = [n.deficit for n in nos]
         cmo: List[float] = [n.cmo for n in nos]
+        ci: List[float] = [n.ci for n in nos]
         alpha: List[float] = [n.custo_futuro for n in nos]
         fobj: List[float] = [n.custo_total for n in nos]
 
@@ -66,6 +68,7 @@ class Cenario:
                    geracao_termica,
                    deficit,
                    cmo,
+                   ci,
                    alpha,
                    fobj)
 
@@ -115,10 +118,12 @@ class Cenario:
         # Calcula o deficit, cmo, fobj e fcf médios
         deficit_cen = [np.array(c.deficit) for c in cenarios]
         cmo_cen = [np.array(c.cmo) for c in cenarios]
+        ci_cen = [np.array(c.ci) for c in cenarios]
         alpha_cen = [np.array(c.alpha) for c in cenarios]
         fobj_cen = [np.array(c.fobj) for c in cenarios]
         deficit_medio = list(sum(deficit_cen) / n_cenarios)
         cmo_medio = list(sum(cmo_cen) / n_cenarios)
+        ci_medio = list(sum(ci_cen) / n_cenarios)
         alpha_medio = list(sum(alpha_cen) / n_cenarios)
         fobj_medio = list(sum(fobj_cen) / n_cenarios)
         # Constroi o cenário e retorna
@@ -132,6 +137,7 @@ class Cenario:
                    gera_termi_medios,
                    deficit_medio,
                    cmo_medio,
+                   ci_medio,
                    alpha_medio,
                    fobj_medio)
 

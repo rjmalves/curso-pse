@@ -1,4 +1,5 @@
-from plunico.modelos.cenario import Cenario
+from modelos.cenario import Cenario
+from modelos.metodo import Metodo
 from modelos.uhe import UHE
 from modelos.ute import UTE
 from modelos.configgeral import ConfigGeral
@@ -13,20 +14,22 @@ class EscreveSaida:
     """
     """
     def __init__(self,
-                 cfg: ConfigGeral,
-                 uhes: List[UHE],
-                 utes: List[UTE],
+                 metodo: Metodo,
                  caminho: str,
                  cenarios: List[Cenario],
                  log: logging.Logger):
-        self.cfg = cfg
-        self.uhes = uhes
-        self.utes = utes
+        self.cfg: ConfigGeral = metodo.cfg
+        self.uhes: List[UHE] = metodo.uhes
+        self.utes: List[UTE] = metodo.utes
+        self.metodo: str = metodo.value
         self.caminho = caminho
         self.cenarios = cenarios
+        self.z_sup = metodo.z_sup
+        self.z_inf = metodo.z_inf
+        self.intervalo_conf = metodo.intervalo_confianca
         self.log = log
 
-    def escreve_relatorio(self, custo: float):
+    def escreve_relatorio(self):
         """
         Gera o relatório de saída em formato de arquivo de texto.
         """
@@ -38,15 +41,19 @@ class EscreveSaida:
                 titulo = "RELATÓRIO DE ESTUDO DE PLANEJAMENTO ENERGÉTICO"
                 arquivo.write(titulo + "\n\n")
                 self.__escreve_configs(arquivo)
-                metodo = "PL ÚNICO".rjust(18)
-                arquivo.write("MÉTODO UTILIZADO: {}\n".format(metodo))
-                arquivo.write("FUNÇÃO OBJETIVO: {:19.4f}\n\n".format(custo))
+                metodo = "{}".format(self.metodo).rjust(18)
+                arquivo.write("MÉTODO UTILIZADO: {}\n\n".format(metodo))
+                if self.metodo == "PDDD" or self.metodo == "PDDE":
+                    # Escreve o relatório de convegência
+                    self.__escreve_convergencia(arquivo)
+                # Escreve o relatório do cenário médio avaliado
+                self.__escreve_cenario_medio(arquivo)
                 # Escreve o relatório detalhado por cenário
+                arquivo.write("RELATÓRIO DE CENÁRIOS DETALHADOS\n\n")
                 for i, cen in enumerate(self.cenarios):
                     str_cen = str(i + 1).rjust(4)
                     arquivo.write("CENÁRIO " + str_cen + "\n")
                     self.__escreve_cenario(arquivo, cen)
-                pass
         except Exception as e:
             self.log.error("Falha na escrita do arquivo: {}".format(e))
             print_exc()
@@ -67,6 +74,18 @@ class EscreveSaida:
         self.__escreve_linha_config(arquivo,
                                     "ABERTURAS POR PERÍODO",
                                     str(self.cfg.aberturas_periodo))
+        self.__escreve_linha_config(arquivo,
+                                    "NÚMERO DE CENÁRIOS",
+                                    str(self.cfg.n_cenarios))
+        self.__escreve_linha_config(arquivo,
+                                    "% ABERTURAS CAUDA (ALFA)",
+                                    str(self.cfg.aberturas_cauda))
+        self.__escreve_linha_config(arquivo,
+                                    "PESO CAUDA (LAMBDA)",
+                                    str(self.cfg.peso_cauda))
+        self.__escreve_linha_config(arquivo,
+                                    "INTERVALO CONF (Nº DESVIOS)",
+                                    str(self.cfg.intervalo_conf))
         self.__escreve_linha_config(arquivo,
                                     "PERÍODOS PÓS ESTUDO",
                                     str(self.cfg.n_pos_estudo))
@@ -95,12 +114,45 @@ class EscreveSaida:
         valor = atributo.rjust(15)
         arquivo.write(chave + " " + valor + "\n")
 
+    def __escreve_convergencia(self, arquivo: IO):
+        """
+        Escreve os valores assumidos pelos Z_sup e Z_inf a cada iteração,
+        bem como o erro (diferença).
+        """
+        arquivo.write("RELATÓRIO DE CONVERGÊNCIA\n\n")
+        campos = [13, 19, 19]
+        # Escreve o cabeçalho
+        cab_tabela = "     ITER.     "
+        cab_tabela += "       Z_SUP        "
+        cab_tabela += "       Z_INF        "
+        if self.metodo == "PDDE":
+            campos += [19, 19]
+            cab_tabela += " LIMITE INF. CONF.  "
+            cab_tabela += " LIMITE SUP. CONF.  "
+        self.__escreve_borda_tabela(arquivo, campos)
+        arquivo.write(cab_tabela + "\n")
+        # Escreve as linhas com as entradas para cada iteração
+        n_iters = len(self.z_sup)
+        for i in range(n_iters):
+            linha = " "
+            ind_iter = str(i + 1).rjust(13)
+            linha += ind_iter + " "
+            linha += "{:19.8f}".format(self.z_sup[i]) + " "
+            linha += "{:19.8f}".format(self.z_inf[i]) + " "
+            if self.metodo == "PDDE":
+                linha += "{:19.8f}".format(self.intervalo_conf[i][0]) + " "
+                linha += "{:19.8f}".format(self.intervalo_conf[i][1]) + " "
+            linha += "\n"
+            arquivo.write(linha)
+        self.__escreve_borda_tabela(arquivo, campos)
+        arquivo.write("\n")
+
     def __escreve_cenario(self, arquivo: IO, cenario: Cenario):
         """
         Escreve informações sobre um cenário no relatório de saída.
         """
         # Calcula os campos existentes com base no número de UHE e UTE
-        campos = [13] + [19] * (5 * len(self.uhes) + len(self.utes) + 2)
+        campos = [13] + [19] * (5 * len(self.uhes) + len(self.utes) + 5)
         self.__escreve_borda_tabela(arquivo, campos)
         # Escreve o cabeçalho da tabela
         cab_tabela = "    PERÍODO    "
@@ -116,12 +168,50 @@ class EscreveSaida:
             cab_tabela += "      GT({})        ".format(ind_ute)
         cab_tabela += "      DEFICIT       "
         cab_tabela += "        CMO         "
+        cab_tabela += "   CUSTO IMEDIATO   "
+        cab_tabela += "    CUSTO FUTURO    "
+        cab_tabela += "    CUSTO TOTAL     "
         arquivo.write(cab_tabela + "\n")
         # Escreve as linhas com dados numéricos
         linhas_cenario = cenario.linhas_tabela()
         for linha in linhas_cenario:
             arquivo.write(linha)
         self.__escreve_borda_tabela(arquivo, campos)
+
+    def __escreve_cenario_medio(self, arquivo: IO):
+        """
+        Escreve informações sobre os cenários médios no relatório de saída.
+        """
+        arquivo.write("RELATÓRIO DE CENÁRIOS MÉDIOS\n\n")
+        # Calcula os campos existentes com base no número de UHE e UTE
+        campos = [13] + [19] * (5 * len(self.uhes) + len(self.utes) + 5)
+        self.__escreve_borda_tabela(arquivo, campos)
+        # Escreve o cabeçalho da tabela
+        cab_tabela = "    PERÍODO    "
+        for i in range(len(self.uhes)):
+            ind_uhe = str(i + 1).ljust(2)
+            cab_tabela += "      AFL({})       ".format(ind_uhe)
+            cab_tabela += "      VF({})        ".format(ind_uhe)
+            cab_tabela += "      VT({})        ".format(ind_uhe)
+            cab_tabela += "      VV({})        ".format(ind_uhe)
+            cab_tabela += "      CMA({})       ".format(ind_uhe)
+        for i in range(len(self.utes)):
+            ind_ute = str(i + 1).ljust(2)
+            cab_tabela += "      GT({})        ".format(ind_ute)
+        cab_tabela += "      DEFICIT       "
+        cab_tabela += "        CMO         "
+        cab_tabela += "   CUSTO IMEDIATO   "
+        cab_tabela += "    CUSTO FUTURO    "
+        cab_tabela += "    CUSTO TOTAL     "
+        arquivo.write(cab_tabela + "\n")
+        # Constroi o cenário médio
+        cenario_medio = Cenario.cenario_medio(self.cenarios)
+        # Escreve as linhas com dados numéricos
+        linhas_cenario = cenario_medio.linhas_tabela()
+        for linha in linhas_cenario:
+            arquivo.write(linha)
+        self.__escreve_borda_tabela(arquivo, campos)
+        arquivo.write("\n")
 
     def __escreve_borda_tabela(self, arquivo: IO, campos: List[int]):
         """

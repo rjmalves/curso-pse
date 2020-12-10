@@ -1,5 +1,5 @@
 from utils.leituraentrada import LeituraEntrada
-from pdde.modelos.no import No
+from modelos.no import No
 
 from random import choice, sample
 from typing import List, Set, Tuple
