@@ -6,73 +6,83 @@ from utils.visual import Visual
 from utils.multivisual import MultiVisual
 from utils.escrevesaida import EscreveSaida
 
+import os
 import time
 import logging
+import argparse
 from typing import List
 import coloredlogs  # type: ignore
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(logger=logger, level="DEBUG")
+LOG_LEVEL = "CRITICAL"
 
 
 def main():
-    logger.critical("#### ESTUDO DE MODELOS DE PLANEJAMENTO ENERGÉTICO ####")
-    # Lê o arquivo de configuração de entrada
-    entrada = "./tests/entrada.txt"
-    e = LeituraEntrada(entrada, logger)
-    logger.critical("Arquivo de entrada selecionado: {}".format(entrada))
-    e.le_arquivo()
-    # Determina o método de solução
-    metodo = Metodo.obtem_metodo_pelo_valor(e.cfg.metodo)
-    logger.critical("Método de solução escolhido: {}".format(metodo.value))
-    # Resolve o problema de otimização
-    cenarios = metodo.resolve(e, logger)
-    # Gera relatórios e gráficos de saída
-    caminho_saida = "results/{}/{}/{}/".format(e.cfg.nome,
-                                               metodo.value,
-                                               int(time.time()))
-    relator = EscreveSaida(metodo,
-                           cenarios,
-                           caminho_saida,
-                           logger)
-    relator.escreve_relatorio()
-    visualizador = Visual(metodo,
-                          cenarios,
-                          caminho_saida,
-                          logger)
-    visualizador.visualiza()
+    # Configura a interface de chamada do programa via linha de
+    # comando (CLI)
+    str_descrip = ("Realiza um estudo de Planejamento Energético " +
+                   "a partir de arquivos de entrada tabulares.\n")
+    parser = argparse.ArgumentParser(description=str_descrip)
+    parser.add_argument("entradas",
+                        type=str,
+                        nargs="+",
+                        help="lista de caminhos relativos das entradas")
+    parser.add_argument("--log",
+                        dest="log",
+                        type=str,
+                        default="INFO",
+                        help="nível de logging desejado ao executar")
+    parser.add_argument("--saida",
+                        dest="saida",
+                        type=str,
+                        default="results/",
+                        help="diretorio raiz dos arquivos de saída")
+    # Extrai os parâmetros fornecidos para a execução do programa
+    args = parser.parse_args()
+    if args.log not in ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]:
+        raise Exception("Nível de LOG fornecido inválido")
 
-    logger.critical("#### FIM DA EXECUÇÃO ####")
+    # Atualiza o nível de LOG desejado
+    global LOG_LEVEL
+    LOG_LEVEL = args.log
+    coloredlogs.install(logger=logger, level=args.log)
 
-
-def main_multi():
-    logger.critical("#### ESTUDO DE MODELOS DE PLANEJAMENTO ENERGÉTICO ####")
-    # Lê os arquivos de configuração de entrada
-    entradas = ["./tests/entrada_multi_pl.txt",
-                "./tests/entrada_multi_pdde.txt",
-                "./tests/entrada_multi_pdde_cvar.txt"]
+    # Inicia a execução
+    logger.info("#### ESTUDO DE MODELOS DE PLANEJAMENTO ENERGÉTICO ####")
     resultados: List[Resultado] = []
+    for entrada in args.entradas:
 
-    for entrada in entradas:
-        logger.critical("Arquivo de entrada selecionado: {}".format(entrada))
-        e = LeituraEntrada(entrada, logger)
+        e = LeituraEntrada(entrada, LOG_LEVEL)
         e.le_arquivo()
-
-        # Determina os método de solução
-        metodo = Metodo.obtem_metodo_pelo_valor(e.cfg.metodo)
-        resultados.append(metodo.resolve(e, logger))
+        # Determina o método de solução
+        metodo = Metodo.obtem_metodo_pelo_nome(e.cfg.metodo)
+        resultados.append(metodo.resolve(e, LOG_LEVEL))
 
     # Gera relatórios e gráficos de saída
-    caminho_saida = "results/multi/{}/".format(int(time.time()))
+    for resultado in resultados:
+        caminho_saida = os.path.join(args.saida,
+                                     "{}/{}/{}/".format(resultado.cfg.nome,
+                                                        resultado.cfg.metodo,
+                                                        int(time.time())))
+        relator = EscreveSaida(resultado,
+                               caminho_saida,
+                               LOG_LEVEL)
+        relator.escreve_relatorio()
+        visualizador = Visual(resultado,
+                              caminho_saida,
+                              LOG_LEVEL)
+        visualizador.visualiza()
+    caminho_saida = os.path.join(args.saida,
+                                 "multi/{}/".format(int(time.time())))
     visualizador = MultiVisual(resultados,
                                caminho_saida,
-                               logger)
+                               LOG_LEVEL)
     visualizador.visualiza()
-    logger.critical("#### FIM DA EXECUÇÃO ####")
+    logger.info("#### FIM DA EXECUÇÃO ####")
 
 
 if __name__ == "__main__":
     ti = time.time()
-    main_multi()
+    main()
     tf = time.time()
     logger.critical("Tempo total de execução: {} s".format(tf - ti))

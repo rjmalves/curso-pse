@@ -5,11 +5,13 @@ from modelos.resultado import Resultado
 from utils.leituraentrada import LeituraEntrada
 
 import logging
+import coloredlogs  # type: ignore
 from typing import List, Tuple
 import numpy as np  # type: ignore
 from statistics import pstdev, mean
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
+logger = logging.getLogger(__name__)
 
 
 class PDDE:
@@ -18,12 +20,13 @@ class PDDE:
     planejamento energético através de Programação
     Dinâmica Dual Estocástica.
     """
-    def __init__(self, e: LeituraEntrada, log: logging.Logger):
+    def __init__(self, e: LeituraEntrada, LOG_LEVEL: str):
         self.cfg = e.cfg
         self.uhes = e.uhes
         self.utes = e.utes
         self.demandas = e.demandas
-        self.log = log
+        self.log = logger
+        coloredlogs.install(logger=logger, level=LOG_LEVEL)
         self.pente = PenteAfluencias(e)
         self.pente.monta_pente_afluencias()
         self.cenarios: List[Cenario] = []
@@ -248,6 +251,7 @@ class PDDE:
         os limites inferior e superior, bem como o intervalo de
         confiança.
         """
+
         # Calcula o Z_inf
         z_inf = mean([d[0].custo_total for d in self.pente.dentes])
         self.z_inf.append(z_inf)
@@ -269,6 +273,15 @@ class PDDE:
         limite_inf = max([1e-3, z_sup - conf * desvio - tol])
         limite_sup = z_sup + conf * desvio + tol
         self.intervalo_conf.append((limite_inf, limite_sup))
+
+        # Mínimo de 3 iterações
+        its_relevantes = 3
+        n_it = len(self.z_inf)
+        if n_it < its_relevantes:
+            self.log.debug("Ainda não convergiu: {} de 3 iterações min."
+                           .format(n_it))
+            return False
+
         if not self.cfg.aversao_risco:
             self.log.debug("Z_SUP = {} - Z_INF = {}. INTERVALO = [{}, {}]".
                            format(z_sup, z_inf, limite_inf, limite_sup))
@@ -290,18 +303,10 @@ class PDDE:
                                          limite_sup))
                 return False
         else:
-            its_relevantes = 3
             self.log.debug("Z_INF = {} - MEDIA: {} - DESVIO: {}".
                            format(z_inf,
                                   mean(self.z_inf[-its_relevantes:]),
                                   pstdev(self.z_inf[-its_relevantes:])))
-            # Condições de convergência para PDDE com aversão a risco
-            # Mínimo de 3 iterações
-            n_it = len(self.z_inf)
-            if n_it < its_relevantes:
-                self.log.debug("Ainda não convergiu: {} de 3 iterações min."
-                               .format(n_it))
-                return False
             # Estabilidade do Z_inf por 3 iterações
             erros = [self.z_inf[i] for i in range(-its_relevantes, 0)]
             if max(erros) - min(erros) < self.cfg.intervalo_conf:

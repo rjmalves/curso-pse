@@ -6,10 +6,12 @@ from modelos.cortebenders import CorteBenders
 from modelos.resultado import Resultado
 
 import logging
+import coloredlogs  # type: ignore
 import numpy as np  # type: ignore
 from typing import List
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
+logger = logging.getLogger(__name__)
 
 
 class PDDD:
@@ -18,12 +20,13 @@ class PDDD:
     planejamento energético através de Programação
     Dinâmica Dual Determinística.
     """
-    def __init__(self, e: LeituraEntrada, log: logging.Logger):
+    def __init__(self, e: LeituraEntrada, LOG_LEVEL: str):
         self.cfg = e.cfg
         self.uhes = e.uhes
         self.utes = e.utes
         self.demandas = e.demandas
-        self.log = log
+        self.log = logger
+        coloredlogs.install(logger=logger, level=LOG_LEVEL)
         self.arvore = ArvoreAfluencias(e)
         self.arvore.monta_arvore_afluencias()
         self.cenarios: List[Cenario] = []
@@ -109,8 +112,6 @@ class PDDD:
         num_futuros = len(indices_futuros)
         no_futuro = self.arvore.arvore[periodo + 1][indices_futuros[0]]
         num_cortes = len(no_futuro.cortes)
-        self.log.debug("Cortes de benders para o nó {} do período {}: {}".
-                       format(indice_no + 1, periodo + 1, num_cortes))
 
         # Calcula os cortes médios para cada corte existente nos nós futuros
         cortes_medios: List[CorteBenders] = []
@@ -132,7 +133,6 @@ class PDDD:
         # Armazena os cortes médios como restrições
         for corte in cortes_medios:
             eq = 0.
-            self.log.debug("CORTE = {}".format(corte))
             for i_uhe in range(num_uhes):
                 eq += corte.custo_agua[i_uhe] * self.vf[i_uhe]
             eq += float(corte.offset)
@@ -152,15 +152,11 @@ class PDDD:
             self.log.info("# Iteração {} #".format(it + 1))
             self.z_sup[it] = 0.
             for j in range(self.cfg.n_periodos):
-                self.log.debug("Executando a FORWARD para o período {}...".
-                               format(j + 1))
                 nos_periodo = self.arvore.nos_por_periodo[j]
                 for k in range(nos_periodo):
                     # Monta e resolve o PL do nó (exceto a partir da
                     # segunda iteração, no período 1 - pois a backward é igual)
                     if it == 0 or j > 0:
-                        self.log.debug("Resolvendo o PL do nó {}...".
-                                       format(k + 1))
                         self.__monta_pl(j, k)
                         self.pl = op(self.func_objetivo, self.cons)
                         self.pl.solve("dense", "glpk")
@@ -168,13 +164,10 @@ class PDDD:
                         self.__armazena_saidas(j, k)
                     # Atualiza o z_sup e o z_inf
                     no = self.arvore.arvore[j][k]
-                    self.log.debug(no.resumo())
                     self.z_sup[it] += (1. / nos_periodo) * (no.custo_total -
                                                             no.custo_futuro)
                     if j == 0:
                         self.z_inf[it] = no.custo_total
-                    self.log.debug("Z_sup = {}".format(self.z_sup[it]))
-                    self.log.debug("Z_inf = {}".format(self.z_inf[it]))
             # Condição de saída por convergência
             if np.abs(self.z_sup[it] - self.z_inf[it]) <= tol:
                 self.log.info("Sup= {:12.6f} | Inf= {:12.6f} | {:12.6f} <= {}".
@@ -204,20 +197,15 @@ class PDDD:
                     break
             # Executa a backward para cada nó
             for j in range(self.cfg.n_periodos - 1, -1, -1):
-                self.log.debug("Executando a BACKWARD para o período {}...".
-                               format(j + 1))
                 for k in range(self.arvore.nos_por_periodo[j] - 1, -1, -1):
                     # Monta e resolve o PL do nó (não resolve o último período)
                     if j != self.cfg.n_periodos - 1:
-                        self.log.debug("Resolvendo o PL do nó {}...".
-                                       format(k + 1))
                         no = self.arvore.arvore[j][k]
                         self.__monta_pl(j, k)
                         self.pl = op(self.func_objetivo, self.cons)
                         self.pl.solve("dense", "glpk")
                         # Armazena as saídas obtidas no PL no objeto nó
                         self.__armazena_saidas(j, k)
-                        self.log.debug(no.resumo())
                     # Gera um novo corte para o nó
                     self.__cria_corte(j, k)
         # Terminando o loop do método, organiza e retorna os resultados
@@ -248,7 +236,6 @@ class PDDD:
                 vi = ant.volumes_finais[i]
             offset -= vi * custos_agua[i]
         corte = CorteBenders(custos_agua, offset, no.custo_total)
-        self.log.debug("NOVO CORTE {} - {} : {}".format(j + 1, k + 1, corte))
         no.adiciona_corte(corte, True)
 
     def __armazena_saidas(self, j: int, k: int):
@@ -291,7 +278,6 @@ class PDDD:
         n_cenarios = self.arvore.nos_por_periodo[-1]
         cenarios: List[Cenario] = []
         for c in range(n_cenarios):
-            self.log.debug("##### CENARIO " + str(c + 1) + " #####")
             nos_cenario: List[No] = []
             indice_no = c
             for p in range(self.cfg.n_periodos - 1, -1, -1):
@@ -299,7 +285,5 @@ class PDDD:
                 nos_cenario.insert(0, no)
                 indice_no = self.arvore.indice_no_anterior(p, indice_no)
             cen = Cenario.cenario_dos_nos(nos_cenario)
-            self.log.debug(cen)
-            self.log.debug("--------------------------------------")
             cenarios.append(cen)
         self.cenarios = cenarios

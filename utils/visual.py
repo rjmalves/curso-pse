@@ -1,4 +1,4 @@
-from modelos.metodo import Metodo
+from modelos.resultado import Resultado
 from modelos.cenario import Cenario
 from modelos.uhe import UHE
 from modelos.ute import UTE
@@ -6,9 +6,11 @@ from modelos.ute import UTE
 import os
 import csv
 import logging
+import coloredlogs  # type: ignore
 import numpy as np  # type: ignore
 from typing import List
 import matplotlib.pyplot as plt  # type: ignore
+logger = logging.getLogger(__name__)
 
 
 class Visual:
@@ -17,21 +19,21 @@ class Visual:
     às soluções dos problemas de otimização.
     """
     def __init__(self,
-                 metodo: Metodo,
-                 cenarios: List[Cenario],
+                 resultado: Resultado,
                  caminho: str,
-                 log: logging.Logger):
+                 LOG_LEVEL: str):
 
-        self.metodo = metodo
-        self.uhes: List[UHE] = metodo.uhes
-        self.utes: List[UTE] = metodo.utes
+        self.metodo = resultado.cfg.metodo
+        self.uhes: List[UHE] = resultado.uhes
+        self.utes: List[UTE] = resultado.utes
         # O caminho base já contém NOME_ESTUDO/MÉTODO/EPOCH/
         self.caminho = caminho
-        self.cenarios = cenarios
-        self.z_sup = metodo.z_sup
-        self.z_inf = metodo.z_inf
-        self.intervalo_conf = metodo.intervalo_confianca
-        self.log = log
+        self.cenarios = resultado.cenarios
+        self.z_sup = resultado.z_sup
+        self.z_inf = resultado.z_inf
+        self.intervalo_conf = resultado.intervalo_confianca
+        self.log = logger
+        coloredlogs.install(logger=logger, level=LOG_LEVEL)
 
     def visualiza(self):
         """
@@ -47,7 +49,7 @@ class Visual:
         self.visualiza_deficit()
         self.visualiza_cmo()
         self.visualiza_ci()
-        if self.metodo == Metodo.PL_UNICO:
+        if self.metodo == "PL_UNICO":
             return
         self.visualiza_alpha()
         self.visualiza_fobj()
@@ -573,13 +575,13 @@ class Visual:
         cmap = plt.get_cmap('viridis')
         # Configurações gerais do gráfico
         plt.figure(figsize=(12, 6))
-        plt.title("CONVERGÊNCIA DA {}".format(self.metodo.value))
+        plt.title("CONVERGÊNCIA DA {}".format(self.metodo))
         # Eixo x:
         plt.xlabel("Iteração")
         x = np.arange(1, n_iters + 1, 1)
         plt.xticks(x)
         # Eixo y:
-        plt.ylabel("Limites do custo ($/MWmed)")
+        plt.ylabel("Limites do custo ($)")
         plt.plot(x,
                  self.z_sup,
                  color=cmap(0.6),
@@ -594,7 +596,7 @@ class Visual:
                  linewidth=4,
                  alpha=0.8,
                  label="Z_inf")
-        if self.metodo == Metodo.PDDE:
+        if self.metodo == "PDDE":
             # Plota o intervalo de confiança
             limite_inf = [i[0] for i in self.intervalo_conf]
             limite_sup = [i[1] for i in self.intervalo_conf]

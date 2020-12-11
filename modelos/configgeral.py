@@ -6,6 +6,7 @@ class ConfigGeral:
     def __init__(self,
                  nome: str,
                  metodo: str,
+                 max_iter: int,
                  n_periodos: int,
                  aberturas_periodo: int,
                  n_cenarios: int,
@@ -20,6 +21,7 @@ class ConfigGeral:
                  n_utes: int):
         self.nome = nome
         self.metodo = metodo
+        self.max_iter = max_iter
         self.n_periodos = n_periodos
         self.aberturas_periodo = aberturas_periodo
         self.n_cenarios = n_cenarios
@@ -49,4 +51,4 @@ class ConfigGeral:
         """
         Retorna um objeto de configuração vazio.
         """
-        return cls("", "", 0, 0, 0, 0.0, 0.0, 0.0, 0, False, 0, 0.0, 0, 0)
+        return cls("", "", 0, 0, 0, 0, 0.0, 0.0, 0.0, 0, False, 0, 0.0, 0, 0)

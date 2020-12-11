@@ -19,7 +19,6 @@ class UHE:
         self.produtividade = produtividade
         self.engolimento = engolimento
 
-
     @classmethod
     def le_uhe_da_linha(cls, linha: str):
         """

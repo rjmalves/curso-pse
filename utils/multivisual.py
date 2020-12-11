@@ -6,9 +6,11 @@ from modelos.ute import UTE
 import os
 import csv
 import logging
+import coloredlogs  # type: ignore
 import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 from typing import List
+logger = logging.getLogger(__name__)
 
 
 class MultiVisual:
@@ -19,7 +21,7 @@ class MultiVisual:
     def __init__(self,
                  resultados: List[Resultado],
                  caminho: str,
-                 log: logging.Logger):
+                 LOG_LEVEL: str):
 
         self.uhes: List[UHE] = resultados[0].uhes
         self.utes: List[UTE] = resultados[0].utes
@@ -27,7 +29,8 @@ class MultiVisual:
         self.cenarios_medios = [Cenario.cenario_medio(r.cenarios)
                                 for r in resultados]
         self.caminho = caminho
-        self.log = log
+        self.log = logger
+        coloredlogs.install(logger=logger, level=LOG_LEVEL)
 
     def visualiza(self):
         """
@@ -572,9 +575,9 @@ class MultiVisual:
         plt.figure(figsize=(12, 6))
         plt.title("Convergência")
         # Eixo x:
-        plt.xlabel("Período de estudo")
+        plt.xlabel("Iteração")
         # Eixo y:
-        plt.ylabel("Limites do custo ($/MWmed)")
+        plt.ylabel("Limites do custo ($)")
         dados_cen: List[List[float]] = []
         cabs_metodos: List[str] = []
         eixos_x = [np.arange(1, len(r.z_sup) + 1, 1)

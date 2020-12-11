@@ -7,7 +7,6 @@ from plunico.plunico import PLUnico
 from pddd.pddd import PDDD
 from pdde.pdde import PDDE
 
-import logging
 from typing import List, Tuple
 from enum import Enum
 
@@ -29,7 +28,7 @@ class Metodo(Enum):
     PDDE = "PDDE"
 
     @classmethod
-    def obtem_metodo_pelo_valor(cls, valor: str):
+    def obtem_metodo_pelo_nome(cls, valor: str):
         for k in cls:
             if valor == k.value:
                 return k
@@ -38,25 +37,24 @@ class Metodo(Enum):
 
     def resolve(self,
                 e: LeituraEntrada,
-                log: logging.Logger) -> Resultado:
+                LOG_LEVEL: str) -> Resultado:
         """
         Resolve o problema de otimização para o problema descrito,
         segundo o método escolhido.
         """
-        log.info("Resolvendo o problema de {}".format(self.value))
         # Armazena as UHES e UTES existentes
         self.__uhes = e.uhes
         self.__utes = e.utes
         # Resolve o problema e retorna a lista de cenários avaliados
         r: Resultado = Resultado(e.cfg, [], [], [], [], [], [])
         if self == Metodo.PL_UNICO:
-            self.pl = PLUnico(e, log)
+            self.pl = PLUnico(e, LOG_LEVEL)
             r = self.pl.resolve_pl()
         elif self == Metodo.PDDD:
-            self.pddd = PDDD(e, log)
+            self.pddd = PDDD(e, LOG_LEVEL)
             r = self.pddd.resolve_pddd()
         elif self == Metodo.PDDE:
-            self.pdde = PDDE(e, log)
+            self.pdde = PDDE(e, LOG_LEVEL)
             r = self.pdde.resolve_pdde()
         else:
             raise Exception("Método de solução inválido")

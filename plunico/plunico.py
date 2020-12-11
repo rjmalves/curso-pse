@@ -5,9 +5,11 @@ from modelos.resultado import Resultado
 from plunico.modelos.arvoreafluencias import ArvoreAfluencias
 
 import logging
+import coloredlogs  # type: ignore
 from typing import List
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
+logger = logging.getLogger(__name__)
 
 
 class PLUnico:
@@ -15,12 +17,13 @@ class PLUnico:
     Coletânea de métodos para solução de um estudo de
     planejamento energético através de PL Único.
     """
-    def __init__(self, e: LeituraEntrada, log: logging.Logger):
+    def __init__(self, e: LeituraEntrada, LOG_LEVEL: str):
         self.cfg = e.cfg
         self.uhes = e.uhes
         self.utes = e.utes
         self.demandas = e.demandas
-        self.log = log
+        self.log = logger
+        coloredlogs.install(logger=logger, level=LOG_LEVEL)
         self.arvore = ArvoreAfluencias(e)
         self.arvore.monta_arvore_afluencias()
         self.cenarios: List[Cenario] = []

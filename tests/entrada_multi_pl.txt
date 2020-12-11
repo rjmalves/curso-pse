@@ -3,6 +3,7 @@ CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
  NOME DO ESTUDO                     PL_UNICO
  MÉTODO DE SOLUÇÃO                  PL_UNICO    # SÃO VÁLIDOS: PL_UNICO, PDDD E PDDE
+ MAX. ITERAÇÕES                            1
  NÚMERO DE PERÍODOS                        8
  ABERTURAS POR PERÍODO (BKD)               1
  NÚMERO DE CENARIOS FWD                   30    # SOMENTE USADA NA PDDE

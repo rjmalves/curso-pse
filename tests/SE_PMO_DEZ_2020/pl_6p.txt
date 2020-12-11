@@ -1,0 +1,68 @@
+
+CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
+X---------------------------X---------------X
+ NOME DO ESTUDO                     PL_UNICO
+ MÉTODO DE SOLUÇÃO                  PL_UNICO    # SÃO VÁLIDOS: PL_UNICO, PDDD E PDDE
+ MAX. ITERAÇÕES                           20    # USADO NA PDDD E PDDE
+ NÚMERO DE PERÍODOS                        6
+ ABERTURAS POR PERÍODO (BKD)               1
+ NÚMERO DE CENARIOS FWD                   30    # SOMENTE USADA NA PDDE
+ % ABERTURAS CAUDA (ALFA)                0.0    # SOMENTE USADA NA PDDE
+ PESO CAUDA (LAMBDA)                    0.00    # SOMENTE USADA NA PDDE
+ INTERVALO CONF (Nº DESVIOS)             1.0    # SOMENTE USADA NA PDDE
+ SEMENTE ALEATÓRIA                        42    # SOMENTE USADA NA PDDE
+ REAMOSTRAGEM                              0    # SOMENTE USADA NA PDDE
+ PERÍODOS PÓS ESTUDO                       0
+ CUSTO DE DÉFICIT ($/MWmed)          5249.34
+ NÚMERO DE HIDRELÉTRICAS                   1
+ NÚMERO DE TERMELÉTRICAS                   3
+X---------------------------X---------------X
+
+VALORES DE DEMANDA ESPERADAS NOS PERÍODOS
+X-------------X-------------------X
+    PERÍODO       DEMANDA (MWmed)
+             1             41430.0
+             2             41230.0
+             3             42156.0
+             4             39820.0
+             5             38468.0
+             6             37831.0
+             7             47758.0
+             8             38771.0
+             9             39602.0
+            10             40268.0
+            11             39591.0
+            12             39604.0
+X-------------X-------------------X
+
+PARÂMETROS DAS USINAS HIDRELÉTRICAS
+X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
+   ID         NOME         EARM. INI (MWmed)   EARM. MÍN (MWmed)   EARM. MÁX (MWmed)        REND. (%)        GER. MÁX (MWmed)
+      1             UHE_1             70000.0             40710.3            203552.0                1.00             56512.0
+X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
+
+PARÂMETROS DAS USINAS TERMELÉTRICAS
+X------X-----------------X-------------------X-------------------X
+   ID         NOME        CAPACIDADE (MWmed)    CUSTO ($/MWmed)
+      1             UTE_1              4000.0               100.0
+      2             UTE_2              3500.0               500.0 
+      3             UTE_3              1000.0              1000.0 
+X------X-----------------X-------------------X-------------------X
+
+CENÁRIOS DE AFLUÊNCIAS POR HIDRELÉTRICA POR PERÍODO DE ESTUDO
+X------X-------------X-------------------X-------------------X-------------------X-------------------X-------------------X
+  UHE      PERÍODO                                                ENA (MWmed)
+                            ENA 1                ENA 2               ENA 3               ENA 4               ENA 5 
+      1             1             50756.2             55756.2             65756.2             70756.2             71756.2
+                    2             50529.6             60529.6             70529.6             72529.6             74529.6
+                    3             53680.9             58680.9             68680.9             70680.9             71680.9
+                    4             45485.0             49485.0             54485.0             56485.0             57485.0
+                    5             30770.2             34770.2             39770.2             41770.2             44770.2
+                    6             26491.2             29491.2             32491.2             33491.2             36491.2
+                    7             20645.0             22645.0             25645.0             27645.0             28645.0
+                    8             14571.9             18571.9             20571.9             22571.9             25571.9
+                    9             12752.8             15752.8             19752.8             20752.8             21752.8
+                   10             22716.1             20716.1             23716.1             24716.1             26716.1
+                   11             23495.9             27495.9             31495.9             34495.9             37495.9
+                   12             38980.0             41980.0             47980.0             49980.0             52980.0
+X------X-------------X-------------------X-------------------X-------------------X-------------------X-------------------X
