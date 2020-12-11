@@ -15,8 +15,8 @@ class EscreveSaida:
     """
     def __init__(self,
                  metodo: Metodo,
-                 caminho: str,
                  cenarios: List[Cenario],
+                 caminho: str,
                  log: logging.Logger):
         self.cfg: ConfigGeral = metodo.cfg
         self.uhes: List[UHE] = metodo.uhes

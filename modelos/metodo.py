@@ -1,8 +1,8 @@
 from modelos.configgeral import ConfigGeral
 from utils.leituraentrada import LeituraEntrada
-from modelos.cenario import Cenario
 from modelos.uhe import UHE
 from modelos.ute import UTE
+from modelos.resultado import Resultado
 from plunico.plunico import PLUnico
 from pddd.pddd import PDDD
 from pdde.pdde import PDDE
@@ -38,7 +38,7 @@ class Metodo(Enum):
 
     def resolve(self,
                 e: LeituraEntrada,
-                log: logging.Logger) -> List[Cenario]:
+                log: logging.Logger) -> Resultado:
         """
         Resolve o problema de otimização para o problema descrito,
         segundo o método escolhido.
@@ -48,20 +48,20 @@ class Metodo(Enum):
         self.__uhes = e.uhes
         self.__utes = e.utes
         # Resolve o problema e retorna a lista de cenários avaliados
-        cen: List[Cenario] = []
+        r: Resultado = Resultado(e.cfg, [], [], [], [], [], [])
         if self == Metodo.PL_UNICO:
             self.pl = PLUnico(e, log)
-            cen = self.pl.resolve_pl()
+            r = self.pl.resolve_pl()
         elif self == Metodo.PDDD:
             self.pddd = PDDD(e, log)
-            cen = self.pddd.resolve_pddd()
+            r = self.pddd.resolve_pddd()
         elif self == Metodo.PDDE:
             self.pdde = PDDE(e, log)
-            cen = self.pdde.resolve_pdde()
+            r = self.pdde.resolve_pdde()
         else:
             raise Exception("Método de solução inválido")
 
-        return cen
+        return r
 
     @property
     def cfg(self) -> ConfigGeral:

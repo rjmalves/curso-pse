@@ -1,6 +1,7 @@
 from modelos.cortebenders import CorteBenders
 from pdde.modelos.penteafluencias import PenteAfluencias
 from modelos.cenario import Cenario
+from modelos.resultado import Resultado
 from utils.leituraentrada import LeituraEntrada
 
 import logging
@@ -118,7 +119,7 @@ class PDDE:
             eq += float(corte.offset)
             self.cons.append(self.alpha[0] >= eq)
 
-    def resolve_pdde(self) -> List[Cenario]:
+    def resolve_pdde(self) -> Resultado:
         """
         Resolve um problema de planejamento energético através da
         PDDE.
@@ -129,6 +130,9 @@ class PDDE:
         while True:
             self.log.info("# Iteração {} #".format(it + 1))
             # Realiza, para cada dente, a parte FORWARD
+            if self.cfg.reamostrar and it > 0:
+                self.log.debug("Reamostrando...")
+                self.pente.reamostrar()
             for p in range(self.cfg.n_periodos):
                 # self.log.debug("Executando a FORWARD no período {}...".
                 #                format(p + 1))
@@ -174,7 +178,13 @@ class PDDE:
                         self.pente.dentes[d][p].adiciona_corte(c)
         # Terminando o loop do método, organiza e retorna os resultados
         self.__organiza_cenarios()
-        return self.cenarios
+        return Resultado(self.cfg,
+                         self.uhes,
+                         self.utes,
+                         self.cenarios,
+                         self.z_sup,
+                         self.z_inf,
+                         self.intervalo_conf)
 
     def __obtem_corte(self, d: int, p: int) -> CorteBenders:
         """
@@ -289,12 +299,12 @@ class PDDE:
             # Mínimo de 3 iterações
             n_it = len(self.z_inf)
             if n_it < its_relevantes:
-                self.log.info("Ainda não convergiu: {} de 3 iterações min."
-                              .format(n_it))
+                self.log.debug("Ainda não convergiu: {} de 3 iterações min."
+                               .format(n_it))
                 return False
             # Estabilidade do Z_inf por 3 iterações
             erros = [self.z_inf[i] for i in range(-its_relevantes, 0)]
-            if max(erros) - min(erros) < 1e-3:
+            if max(erros) - min(erros) < self.cfg.intervalo_conf:
                 self.log.info("Estabilidade do Z_inf: {}".format(erros))
                 return True
 

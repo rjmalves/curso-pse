@@ -98,6 +98,8 @@ class LeituraEntrada:
             aberturas_cauda = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             peso_cauda = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             intervalo_conf = float(self.__le_linha_com_backup(arquivo)[ci:cf])
+            semente = int(self.__le_linha_com_backup(arquivo)[ci:cf])
+            reamostrar = bool(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_pos_est = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             custo_def = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_uhe = int(self.__le_linha_com_backup(arquivo)[ci:cf])
@@ -111,6 +113,8 @@ class LeituraEntrada:
                               aberturas_cauda,
                               peso_cauda,
                               intervalo_conf,
+                              semente,
+                              reamostrar,
                               n_pos_est,
                               custo_def,
                               n_uhe,

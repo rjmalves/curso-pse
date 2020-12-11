@@ -5,6 +5,7 @@ from modelos.ute import UTE
 
 import os
 import csv
+import logging
 import numpy as np  # type: ignore
 from typing import List
 import matplotlib.pyplot as plt  # type: ignore
@@ -17,8 +18,9 @@ class Visual:
     """
     def __init__(self,
                  metodo: Metodo,
+                 cenarios: List[Cenario],
                  caminho: str,
-                 cenarios: List[Cenario]):
+                 log: logging.Logger):
 
         self.metodo = metodo
         self.uhes: List[UHE] = metodo.uhes
@@ -29,6 +31,7 @@ class Visual:
         self.z_sup = metodo.z_sup
         self.z_inf = metodo.z_inf
         self.intervalo_conf = metodo.intervalo_confianca
+        self.log = log
 
     def visualiza(self):
         """
