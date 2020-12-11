@@ -3,12 +3,13 @@ CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
  NOME DO ESTUDO                    PDDE_CVAR
  MÉTODO DE SOLUÇÃO                      PDDE    # SÃO VÁLIDOS: PL_UNICO, PDDD E PDDE
- NÚMERO DE PERÍODOS                        3
+ NÚMERO DE PERÍODOS                        8
  ABERTURAS POR PERÍODO (BKD)               5
- NÚMERO DE CENARIOS FWD                   10    # SOMENTE USADA NA PDDE
+ NÚMERO DE CENARIOS FWD                   30    # SOMENTE USADA NA PDDE
  % ABERTURAS CAUDA (ALFA)                0.2    # SOMENTE USADA NA PDDE
  PESO CAUDA (LAMBDA)                    0.90    # SOMENTE USADA NA PDDE
  INTERVALO CONF (Nº DESVIOS)             0.5    # SOMENTE USADA NA PDDE
+ SEMENTE ALEATÓRIA                        42    # SOMENTE USADA NA PDDE
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)            500.0
  NÚMERO DE HIDRELÉTRICAS                   1

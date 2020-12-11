@@ -44,7 +44,7 @@ class MultiVisual:
         self.visualiza_ci()
         self.visualiza_alpha()
         self.visualiza_fobj()
-        # self.visualiza_convergencia()
+        self.visualiza_convergencia()
 
     def visualiza_volume_final(self):
         """
@@ -566,7 +566,6 @@ class MultiVisual:
         caminho = self.caminho
         if not os.path.exists(caminho):
             os.makedirs(caminho)
-        n_periodos = self.resultados[0].cfg.n_periodos
         n_resultados = len(self.resultados)
         cmap = plt.get_cmap('viridis')
         # Configurações gerais do gráfico
@@ -574,31 +573,34 @@ class MultiVisual:
         plt.title("Convergência")
         # Eixo x:
         plt.xlabel("Período de estudo")
-        x = np.arange(1, n_periodos + 1, 1)
-        plt.xticks(x)
         # Eixo y:
         plt.ylabel("Limites do custo ($/MWmed)")
         dados_cen: List[List[float]] = []
         cabs_metodos: List[str] = []
+        eixos_x = [np.arange(1, len(r.z_sup) + 1, 1)
+                   for r in self.resultados]
+        iteracoes_x = [len(e) for e in eixos_x]
+        ind_x_mais_longo = iteracoes_x.index(max(iteracoes_x))
         for j, resultado in enumerate(self.resultados):
-            label = str(resultado.cfg.nome)
+            label = "ZSUP " + str(resultado.cfg.nome)
             if resultado.cfg.metodo == "PL_UNICO":
                 continue
-
             cabs_metodos.append("ZSUP_" + label)
             dados_cen.append(resultado.z_sup)
-            plt.plot(x,
+
+            plt.plot(eixos_x[j],
                      resultado.z_sup,
-                     color=cmap(j / n_resultados),
+                     color=cmap(j / n_resultados + 0.1),
                      marker="o",
                      linewidth=12,
                      alpha=0.5,
                      label=label)
             cabs_metodos.append("ZINF_" + label)
             dados_cen.append(resultado.z_inf)
-            plt.plot(x,
+            label = "ZINF " + str(resultado.cfg.nome)
+            plt.plot(eixos_x[j],
                      resultado.z_inf,
-                     color=cmap(j / n_resultados),
+                     color=cmap(j / n_resultados + 0.15),
                      marker="o",
                      linewidth=12,
                      alpha=0.5,
@@ -612,18 +614,20 @@ class MultiVisual:
                 cabs_metodos.append("CONF_SUP" + label)
                 dados_cen.append(limite_inf)
                 dados_cen.append(limite_sup)
-                plt.fill_between(x,
+                label = "CONF" + str(resultado.cfg.nome)
+                plt.fill_between(eixos_x[j],
                                  limite_inf,
                                  limite_sup,
-                                 color=cmap(0.6),
+                                 color=cmap(j / n_resultados + 0.2),
                                  alpha=0.2,
-                                 label="Área de confiança")
+                                 label=label)
         plt.legend()
+        plt.xticks(eixos_x[ind_x_mais_longo])
         # Salva a imagem e exporta os dados
         caminho_saida = caminho + "convergencia"
         plt.savefig(caminho_saida + ".png")
         cabecalho = ["PERIODO", *cabs_metodos]
-        dados = [x, *dados_cen]
+        dados = [eixos_x[ind_x_mais_longo], *dados_cen]
         self.exporta_dados(caminho_saida, cabecalho, dados)
         plt.close()
 
@@ -636,7 +640,7 @@ class MultiVisual:
         para um formato CSV.
         """
         # Confere se o número de cabeçalhos é igual ao de dados
-        n_dados = len(dados[0])
+        n_dados = max([len(d) for d in dados])
         # Confere se a quantidade de entradas de cada dado é igual
         arq = caminho + ".csv"
         with open(arq, "w", newline="") as arqcsv:
@@ -646,4 +650,10 @@ class MultiVisual:
                                   quoting=csv.QUOTE_MINIMAL)
             escritor.writerow(cabecalhos)
             for i in range(n_dados):
-                escritor.writerow([d[i] for d in dados])
+                a_escrever = []
+                for d in dados:
+                    if i < len(d):
+                        a_escrever.append(d[i])
+                    else:
+                        a_escrever.append("")
+                escritor.writerow(a_escrever)

@@ -1,7 +1,7 @@
 from utils.leituraentrada import LeituraEntrada
 from modelos.no import No
 
-from random import choice, sample
+from random import choice, sample, seed
 from typing import List, Set, Tuple
 
 
@@ -16,6 +16,7 @@ class PenteAfluencias:
         self.n_pos_estudo = e.cfg.n_pos_estudo
         self.n_sequencias = e.cfg.n_cenarios
         self.n_uhes = e.cfg.n_uhes
+        self.semente = e.cfg.semente
         self.vis = [uh.vol_inicial for uh in e.uhes]
         self.afluencias = e.afluencias
         self.indices_nos_pente: List[List[int]] = []
@@ -28,6 +29,8 @@ class PenteAfluencias:
         do arquivo de configuração. O pente é um conjunto de séries
         de afluências extraídos a partir de uma árvore de possibilidades.
         """
+        # Fixa a semente na fornecida pelo usuário
+        seed(self.semente)
         # 1º Sorteio: índices das afluências que irão existir em cada
         # período
         nos_por_periodo = LeituraEntrada.afluencias_por_periodo

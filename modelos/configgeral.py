@@ -12,6 +12,7 @@ class ConfigGeral:
                  aberturas_cauda: float,
                  peso_cauda: float,
                  intervalo_conf: float,
+                 semente: int,
                  n_pos_estudo: int,
                  custo_deficit: float,
                  n_uhes: int,
@@ -24,6 +25,7 @@ class ConfigGeral:
         self.aberturas_cauda = aberturas_cauda
         self.peso_cauda = peso_cauda
         self.intervalo_conf = intervalo_conf
+        self.semente = semente
         self.n_pos_estudo = n_pos_estudo
         self.custo_deficit = custo_deficit
         self.n_uhes = n_uhes
@@ -45,4 +47,4 @@ class ConfigGeral:
         """
         Retorna um objeto de configuração vazio.
         """
-        return cls("", "", 0, 0, 0, 0.0, 0.0, 0.0, 0, 0.0, 0, 0)
+        return cls("", "", 0, 0, 0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0, 0)
