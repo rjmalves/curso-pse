@@ -77,3 +77,15 @@ class PenteAfluencias:
         for i in range(1, self.n_uhes + 1):
             afls.append(self.afluencias[i][p][abertura])
         return afls
+
+    def reamostrar(self):
+        """
+        Para cada nó em cada período do pente, substitui a afluência
+        anterior por alguma outras das possíveis de serem assumidas
+        naquele mesmo período.
+        """
+        for dente in self.dentes:
+            for p, no in enumerate(dente):
+                for i in range(self.n_uhes):
+                    s = choice(self.indices_nos_pente[p])
+                    no.afluencias[i] = self.afluencias[i + 1][p][s]

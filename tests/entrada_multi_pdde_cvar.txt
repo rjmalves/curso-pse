@@ -8,8 +8,9 @@ X---------------------------X---------------X
  NÚMERO DE CENARIOS FWD                   30    # SOMENTE USADA NA PDDE
  % ABERTURAS CAUDA (ALFA)                0.2    # SOMENTE USADA NA PDDE
  PESO CAUDA (LAMBDA)                    0.90    # SOMENTE USADA NA PDDE
- INTERVALO CONF (Nº DESVIOS)             0.5    # SOMENTE USADA NA PDDE
+ INTERVALO CONF (Nº DESVIOS)             0.2    # SOMENTE USADA NA PDDE
  SEMENTE ALEATÓRIA                        42    # SOMENTE USADA NA PDDE
+ REAMOSTRAGEM                              1    # SOMENTE USADA NA PDDE
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)            500.0
  NÚMERO DE HIDRELÉTRICAS                   1

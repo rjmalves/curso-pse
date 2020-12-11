@@ -130,6 +130,9 @@ class PDDE:
         while True:
             self.log.info("# Iteração {} #".format(it + 1))
             # Realiza, para cada dente, a parte FORWARD
+            if self.cfg.reamostrar and it > 0:
+                self.log.debug("Reamostrando...")
+                self.pente.reamostrar()
             for p in range(self.cfg.n_periodos):
                 # self.log.debug("Executando a FORWARD no período {}...".
                 #                format(p + 1))
@@ -296,12 +299,12 @@ class PDDE:
             # Mínimo de 3 iterações
             n_it = len(self.z_inf)
             if n_it < its_relevantes:
-                self.log.info("Ainda não convergiu: {} de 3 iterações min."
-                              .format(n_it))
+                self.log.debug("Ainda não convergiu: {} de 3 iterações min."
+                               .format(n_it))
                 return False
             # Estabilidade do Z_inf por 3 iterações
             erros = [self.z_inf[i] for i in range(-its_relevantes, 0)]
-            if max(erros) - min(erros) < 1e-3:
+            if max(erros) - min(erros) < self.cfg.intervalo_conf:
                 self.log.info("Estabilidade do Z_inf: {}".format(erros))
                 return True
 
