@@ -145,12 +145,11 @@ class PDDD:
         """
         # Erros e condição de parada
         it = 0
-        tol = 1e-3
-        self.z_sup = [np.inf]
-        self.z_inf = [0.]
-        while np.abs(self.z_sup[it] - self.z_inf[it]) > tol:
+        self.tol = 1e-3
+        self.z_sup = []
+        self.z_inf = []
+        while True:
             self.log.info("# Iteração {} #".format(it + 1))
-            self.z_sup[it] = 0.
             for j in range(self.cfg.n_periodos):
                 nos_periodo = self.arvore.nos_por_periodo[j]
                 for k in range(nos_periodo):
@@ -162,45 +161,19 @@ class PDDD:
                         self.pl.solve("dense", "glpk")
                         # Armazena as saídas obtidas no PL no objeto nó
                         self.__armazena_saidas(j, k)
-                    # Atualiza o z_sup e o z_inf
-                    no = self.arvore.arvore[j][k]
-                    self.z_sup[it] += (1. / nos_periodo) * (no.custo_total -
-                                                            no.custo_futuro)
-                    if j == 0:
-                        self.z_inf[it] = no.custo_total
             # Condição de saída por convergência
-            if np.abs(self.z_sup[it] - self.z_inf[it]) <= tol:
-                self.log.info("Sup= {:12.6f} | Inf= {:12.6f} | {:12.6f} <= {}".
-                              format(self.z_sup[it],
-                                     self.z_inf[it],
-                                     np.abs(self.z_sup[it] - self.z_inf[it]),
-                                     tol))
-                self.log.info("CONVERGIU!")
-                break
-            self.log.info("Sup= {:12.6f} | Inf= {:12.6f} | {:12.6f} > {}".
-                          format(self.z_sup[it],
-                                 self.z_inf[it],
-                                 np.abs(self.z_sup[it] - self.z_inf[it]),
-                                 tol))
-            self.z_inf.append(self.z_inf[it])
-            self.z_sup.append(self.z_sup[it])
             it += 1
+            if self.__verifica_convergencia():
+                break
             # Condição de saída por iterações
-            if it >= 50:
+            if it >= self.cfg.max_iter:
                 self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
                 break
-            if it >= 5:
-                erros = [self.z_sup[i] - self.z_inf[i]
-                         for i in range(-5, 0)]
-                if len(set(erros)) == 1:
-                    self.log.warning("NÃO CONVERGIU ABAIXO DA TOLERÂNCIA!")
-                    break
             # Executa a backward para cada nó
             for j in range(self.cfg.n_periodos - 1, -1, -1):
                 for k in range(self.arvore.nos_por_periodo[j] - 1, -1, -1):
                     # Monta e resolve o PL do nó (não resolve o último período)
                     if j != self.cfg.n_periodos - 1:
-                        no = self.arvore.arvore[j][k]
                         self.__monta_pl(j, k)
                         self.pl = op(self.func_objetivo, self.cons)
                         self.pl.solve("dense", "glpk")
@@ -237,6 +210,43 @@ class PDDD:
             offset -= vi * custos_agua[i]
         corte = CorteBenders(custos_agua, offset, no.custo_total)
         no.adiciona_corte(corte, True)
+
+    def __verifica_convergencia(self) -> bool:
+        """
+        Verifica se houve a convergência para a PDDD, conferindo
+        os limites inferior e superior e a tolerância.
+        """
+        z_sup = 0.0
+        z_inf = 0.0
+        print(self.arvore.nos_por_periodo)
+        for j in range(self.cfg.n_periodos):
+            nos_periodo = self.arvore.nos_por_periodo[j]
+            for k in range(nos_periodo):
+                no = self.arvore.arvore[j][k]
+                z_sup += (1. / nos_periodo) * no.ci
+                if j == 0:
+                    z_inf = no.custo_total
+        self.z_sup.append(z_sup)
+        self.z_inf.append(z_inf)
+
+        if np.abs(z_sup - z_inf) <= self.tol:
+            self.log.info("Sup= {:12.6f} | Inf= {:12.6f} | {:12.6f} <= {}".
+                          format(z_sup,
+                                 z_inf,
+                                 np.abs(z_sup - z_inf),
+                                 self.tol))
+            n_it = len(self.z_inf)
+            if n_it < self.cfg.min_iter:
+                return False
+            self.log.info("CONVERGIU!")
+            return True
+
+        self.log.info("Sup= {:12.6f} | Inf= {:12.6f} | {:12.6f} > {}".
+                      format(z_sup,
+                             z_inf,
+                             np.abs(z_sup - z_inf),
+                             self.tol))
+        return False
 
     def __armazena_saidas(self, j: int, k: int):
         """

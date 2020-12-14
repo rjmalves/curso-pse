@@ -27,25 +27,25 @@ def main():
                         type=str,
                         nargs="+",
                         help="lista de caminhos relativos das entradas")
-    parser.add_argument("--log",
-                        dest="log",
+    parser.add_argument("-l", "--log",
+                        dest="l",
                         type=str,
                         default="INFO",
                         help="nível de logging desejado ao executar")
-    parser.add_argument("--saida",
-                        dest="saida",
+    parser.add_argument("-s", "--saida",
+                        dest="s",
                         type=str,
                         default="results/",
                         help="diretorio raiz dos arquivos de saída")
     # Extrai os parâmetros fornecidos para a execução do programa
     args = parser.parse_args()
-    if args.log not in ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]:
+    if args.l not in ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]:
         raise Exception("Nível de LOG fornecido inválido")
 
     # Atualiza o nível de LOG desejado
     global LOG_LEVEL
-    LOG_LEVEL = args.log
-    coloredlogs.install(logger=logger, level=args.log)
+    LOG_LEVEL = args.l
+    coloredlogs.install(logger=logger, level=args.l)
 
     # Inicia a execução
     logger.info("#### ESTUDO DE MODELOS DE PLANEJAMENTO ENERGÉTICO ####")
@@ -60,7 +60,7 @@ def main():
 
     # Gera relatórios e gráficos de saída
     for resultado in resultados:
-        caminho_saida = os.path.join(args.saida,
+        caminho_saida = os.path.join(args.s,
                                      "{}/{}/{}/".format(resultado.cfg.nome,
                                                         resultado.cfg.metodo,
                                                         int(time.time())))
@@ -72,7 +72,7 @@ def main():
                               caminho_saida,
                               LOG_LEVEL)
         visualizador.visualiza()
-    caminho_saida = os.path.join(args.saida,
+    caminho_saida = os.path.join(args.s,
                                  "multi/{}/".format(int(time.time())))
     visualizador = MultiVisual(resultados,
                                caminho_saida,

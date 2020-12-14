@@ -95,6 +95,7 @@ class LeituraEntrada:
             cf = 44
             nome = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
             metodo = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
+            min_iters = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             max_iters = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_estagios = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_aberturas = int(self.__le_linha_com_backup(arquivo)[ci:cf])
@@ -111,6 +112,7 @@ class LeituraEntrada:
             # Constroi o objeto de configurações gerais
             cfg = ConfigGeral(nome,
                               metodo,
+                              min_iters,
                               max_iters,
                               n_estagios,
                               n_aberturas,

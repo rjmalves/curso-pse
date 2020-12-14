@@ -7,7 +7,16 @@ services:
       context: .
     volumes: 
       - ./results:/app/results
-    command: [python, main.py, "--log", "DEBUG", "./tests/SE_PMO_DEZ_2020/pddd_6p.txt", "./tests/SE_PMO_DEZ_2020/pl_6p.txt"]
+    command: [python, 
+              main.py,
+              "--log",
+              "DEBUG",
+              "./tests/PMO_DEZ_2020/SE/pdde_4p.txt",
+              "./tests/PMO_DEZ_2020/SE/pdde_cvar1_4p.txt",
+              "./tests/PMO_DEZ_2020/SE/pdde_cvar2_4p.txt",
+              "./tests/PMO_DEZ_2020/SE/pdde_cvar3_4p.txt",
+              "./tests/PMO_DEZ_2020/SE/pl_pior_4p.txt",
+              "./tests/PMO_DEZ_2020/SE/pl_4p.txt"]
     # command: [python, main.py, "./tests/entrada_multi_pl.txt", "./tests/entrada_multi_pdde.txt", "./tests/entrada_multi_pdde_cvar.txt"]
     environment: 
       - CONFIG_FILE=./configs/1uhe_tree.json

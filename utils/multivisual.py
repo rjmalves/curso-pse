@@ -585,12 +585,11 @@ class MultiVisual:
         iteracoes_x = [len(e) for e in eixos_x]
         ind_x_mais_longo = iteracoes_x.index(max(iteracoes_x))
         for j, resultado in enumerate(self.resultados):
-            label = "ZSUP " + str(resultado.cfg.nome)
             if resultado.cfg.metodo == "PL_UNICO":
                 continue
-            cabs_metodos.append("ZSUP_" + label)
+            label = "ZSUP " + str(resultado.cfg.nome)
+            cabs_metodos.append(label)
             dados_cen.append(resultado.z_sup)
-
             plt.plot(eixos_x[j],
                      resultado.z_sup,
                      color=cmap(j / n_resultados + 0.1),
@@ -598,9 +597,10 @@ class MultiVisual:
                      linewidth=12,
                      alpha=0.5,
                      label=label)
-            cabs_metodos.append("ZINF_" + label)
-            dados_cen.append(resultado.z_inf)
+
             label = "ZINF " + str(resultado.cfg.nome)
+            cabs_metodos.append(label)
+            dados_cen.append(resultado.z_inf)
             plt.plot(eixos_x[j],
                      resultado.z_inf,
                      color=cmap(j / n_resultados + 0.15),
@@ -613,11 +613,11 @@ class MultiVisual:
                               in resultado.intervalo_confianca]
                 limite_sup = [conf[1] for conf
                               in resultado.intervalo_confianca]
-                cabs_metodos.append("CONF_INF" + label)
-                cabs_metodos.append("CONF_SUP" + label)
+                cabs_metodos.append("CONF_INF " + str(resultado.cfg.nome))
+                cabs_metodos.append("CONF_SUP " + str(resultado.cfg.nome))
                 dados_cen.append(limite_inf)
                 dados_cen.append(limite_sup)
-                label = "CONF" + str(resultado.cfg.nome)
+                label = "CONF " + str(resultado.cfg.nome)
                 plt.fill_between(eixos_x[j],
                                  limite_inf,
                                  limite_sup,

@@ -151,7 +151,7 @@ class PDDE:
                 break
             it += 1
             # Condição de saída por iterações
-            if it >= 20:
+            if it >= self.cfg.max_iter:
                 self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
                 break
             # Realiza, para cada dente, a parte BACKWARD
@@ -274,17 +274,14 @@ class PDDE:
         limite_sup = z_sup + conf * desvio + tol
         self.intervalo_conf.append((limite_inf, limite_sup))
 
-        # Mínimo de 3 iterações
-        its_relevantes = 3
+        # Mínimo de iterações
         n_it = len(self.z_inf)
-        if n_it < its_relevantes:
-            self.log.debug("Ainda não convergiu: {} de 3 iterações min."
-                           .format(n_it))
+        self.log.debug("Z_SUP = {:12.4f} - Z_INF = {:12.4f}. I = [{}, {}]".
+                       format(z_sup, z_inf, limite_inf, limite_sup))
+        if n_it < self.cfg.min_iter:
             return False
 
         if not self.cfg.aversao_risco:
-            self.log.debug("Z_SUP = {} - Z_INF = {}. INTERVALO = [{}, {}]".
-                           format(z_sup, z_inf, limite_inf, limite_sup))
             # Condições de convergência para PDDE sem aversão a risco
             if limite_inf <= z_inf <= limite_sup:
                 self.log.info("{} <= {} <= {}".
@@ -305,10 +302,10 @@ class PDDE:
         else:
             self.log.debug("Z_INF = {} - MEDIA: {} - DESVIO: {}".
                            format(z_inf,
-                                  mean(self.z_inf[-its_relevantes:]),
-                                  pstdev(self.z_inf[-its_relevantes:])))
-            # Estabilidade do Z_inf por 3 iterações
-            erros = [self.z_inf[i] for i in range(-its_relevantes, 0)]
+                                  mean(self.z_inf[-self.cfg.min_iter:]),
+                                  pstdev(self.z_inf[-self.cfg.min_iter:])))
+            # Estabilidade do Z_inf por algumas iterações
+            erros = [self.z_inf[i] for i in range(-self.cfg.min_iter, 0)]
             if max(erros) - min(erros) < self.cfg.intervalo_conf:
                 self.log.info("Estabilidade do Z_inf: {}".format(erros))
                 return True

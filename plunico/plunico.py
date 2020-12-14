@@ -94,7 +94,7 @@ class PLUnico:
                                        self.cfg.custo_deficit)
                 # Custo pela energia não turbinada
                 for i, uh in enumerate(self.uhes):
-                    self.func_objetivo += c * 0.001 * self.vv[i][j][k]
+                    self.func_objetivo += c * 0.01 * self.vv[i][j][k]
 
         # ----- Restrições -----
         self.cons = []
@@ -215,7 +215,6 @@ class PLUnico:
         n_cenarios = self.arvore.nos_por_periodo[-1]
         cenarios: List[Cenario] = []
         for c in range(n_cenarios):
-            self.log.debug("##### CENARIO " + str(c + 1) + " #####")
             nos_cenario: List[No] = []
             indice_no = c
             for p in range(self.cfg.n_periodos - 1, -1, -1):
@@ -223,7 +222,5 @@ class PLUnico:
                 nos_cenario.insert(0, no)
                 indice_no = self.arvore.indice_no_anterior(p, indice_no)
             cen = Cenario.cenario_dos_nos(nos_cenario)
-            self.log.debug(cen)
-            self.log.debug("--------------------------------------")
             cenarios.append(cen)
         self.cenarios = cenarios
