@@ -30,7 +30,7 @@ X-------------X-------------------X
 
 PARÂMETROS DAS USINAS HIDRELÉTRICAS
 X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
-   ID         NOME         EARM. INI (MWmed)   EARM. MÍN (MWmed)   EARM. MÁX (MWmed)        REND. (%)        GER. MÁX (MWmed)
+   ID         NOME         VOL. INICIAL (hm3)  VOL. MÍNIMO (hm3)   VOL. MÁXIMO (hm3)   PROD. (MWmed/hm3)   ENGOL. MÁXIMO (hm3)
       1             UHE_1             50710.3             40710.3            203552.0                1.00             56512.0
 X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
 
@@ -44,8 +44,8 @@ X------X-----------------X-------------------X-------------------X
 
 CENÁRIOS DE AFLUÊNCIAS POR HIDRELÉTRICA POR PERÍODO DE ESTUDO
 X------X-------------X-------------------X-------------------X-------------------X-------------------X-------------------X
-  UHE      PERÍODO                                                ENA (MWmed)
-                            ENA 1                ENA 2               ENA 3               ENA 4               ENA 5 
+  UHE      PERÍODO                                              AFLUÊNCIAS (hm3)
+                            AFL 1                AFL 2               AFL 3               AFL 4               AFL 5 
       1             1             46862.9             48862.9             49862.9             50862.9             52862.9
                     2             29248.8             30248.8             31248.8             32248.8             34248.8
                     3             18989.9             19989.9             19989.9             20989.9             20989.9

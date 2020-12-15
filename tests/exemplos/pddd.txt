@@ -1,12 +1,12 @@
 
 CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
- NOME DO ESTUDO              PDDD_PIOR_SE_4P
+ NOME DO ESTUDO                      EX_PDDD
  MÉTODO DE SOLUÇÃO                      PDDD    # SÃO VÁLIDOS: PL_UNICO, PDDD E PDDE
  MIN. ITERAÇÕES                            5    # USADO NA PDDD E PDDE
  MAX. ITERAÇÕES                           20    # USADO NA PDDD E PDDE
  NÚMERO DE PERÍODOS                        4
- ABERTURAS POR PERÍODO (BKD)               1
+ ABERTURAS POR PERÍODO (BKD)               5
  NÚMERO DE CENARIOS FWD                   50    # SOMENTE USADA NA PDDE
  % ABERTURAS CAUDA (ALFA)                0.0    # SOMENTE USADA NA PDDE
  PESO CAUDA (LAMBDA)                    0.00    # SOMENTE USADA NA PDDE

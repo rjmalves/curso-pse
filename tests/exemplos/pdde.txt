@@ -1,17 +1,17 @@
 
 CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
- NOME DO ESTUDO              PDDD_PIOR_SE_4P
- MÉTODO DE SOLUÇÃO                      PDDD    # SÃO VÁLIDOS: PL_UNICO, PDDD E PDDE
+ NOME DO ESTUDO                      EX_PDDE
+ MÉTODO DE SOLUÇÃO                      PDDE    # SÃO VÁLIDOS: PL_UNICO, PDDD E PDDE
  MIN. ITERAÇÕES                            5    # USADO NA PDDD E PDDE
  MAX. ITERAÇÕES                           20    # USADO NA PDDD E PDDE
  NÚMERO DE PERÍODOS                        4
- ABERTURAS POR PERÍODO (BKD)               1
+ ABERTURAS POR PERÍODO (BKD)               5
  NÚMERO DE CENARIOS FWD                   50    # SOMENTE USADA NA PDDE
  % ABERTURAS CAUDA (ALFA)                0.0    # SOMENTE USADA NA PDDE
  PESO CAUDA (LAMBDA)                    0.00    # SOMENTE USADA NA PDDE
- INTERVALO CONF (Nº DESVIOS)             1.0    # SOMENTE USADA NA PDDE
- SEMENTE ALEATÓRIA                        42    # SOMENTE USADA NA PDDE
+ INTERVALO CONF (Nº DESVIOS)            0.05    # SOMENTE USADA NA PDDE
+ SEMENTE ALEATÓRIA                        43    # SOMENTE USADA NA PDDE
  REAMOSTRAGEM                              0    # SOMENTE USADA NA PDDE
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)          5249.34
@@ -30,7 +30,7 @@ X-------------X-------------------X
 
 PARÂMETROS DAS USINAS HIDRELÉTRICAS
 X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
-   ID         NOME         VOL. INICIAL (hm3)  VOL. MÍNIMO (hm3)   VOL. MÁXIMO (hm3)   PROD. (MWmed/hm3)   ENGOL. MÁXIMO (hm3)
+   ID         NOME         EARM. INI (MWmed)   EARM. MÍN (MWmed)   EARM. MÁX (MWmed)        REND. (%)        GER. MÁX (MWmed)
       1             UHE_1             50710.3             40710.3            203552.0                1.00             56512.0
 X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
 
@@ -44,8 +44,8 @@ X------X-----------------X-------------------X-------------------X
 
 CENÁRIOS DE AFLUÊNCIAS POR HIDRELÉTRICA POR PERÍODO DE ESTUDO
 X------X-------------X-------------------X-------------------X-------------------X-------------------X-------------------X
-  UHE      PERÍODO                                              AFLUÊNCIAS (hm3)
-                            AFL 1                AFL 2               AFL 3               AFL 4               AFL 5 
+  UHE      PERÍODO                                                ENA (MWmed)
+                            ENA 1                ENA 2               ENA 3               ENA 4               ENA 5 
       1             1             46862.9             48862.9             49862.9             50862.9             52862.9
                     2             29248.8             30248.8             31248.8             32248.8             34248.8
                     3             18989.9             19989.9             19989.9             20989.9             20989.9

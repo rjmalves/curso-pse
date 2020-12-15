@@ -1,13 +1,9 @@
-from modelos.configgeral import ConfigGeral
 from utils.leituraentrada import LeituraEntrada
-from modelos.uhe import UHE
-from modelos.ute import UTE
 from modelos.resultado import Resultado
 from plunico.plunico import PLUnico
 from pddd.pddd import PDDD
 from pdde.pdde import PDDE
 
-from typing import List, Tuple
 from enum import Enum
 
 
