@@ -1,11 +1,13 @@
-from typing import IO, List, Dict
-from traceback import print_exc
-import logging
-
 from modelos.configgeral import ConfigGeral
 from modelos.demanda import Demanda
 from modelos.uhe import UHE
 from modelos.ute import UTE
+
+from typing import IO, List, Dict
+from traceback import print_exc
+import logging
+import coloredlogs  # type: ignore
+logger = logging.getLogger(__name__)
 
 
 class LeituraEntrada:
@@ -23,10 +25,11 @@ class LeituraEntrada:
 
     def __init__(self,
                  caminho: str,
-                 log: logging.Logger):
+                 LOG_LEVEL: str):
         self.caminho = caminho
         self.metodo = ""
-        self.log = log
+        self.log = logger
+        coloredlogs.install(logger=logger, level=LOG_LEVEL)
         self.cfg: ConfigGeral = ConfigGeral.default_config()
         self.demandas: List[Demanda] = []
         self.uhes: List[UHE] = []
@@ -92,6 +95,8 @@ class LeituraEntrada:
             cf = 44
             nome = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
             metodo = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
+            min_iters = int(self.__le_linha_com_backup(arquivo)[ci:cf])
+            max_iters = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_estagios = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_aberturas = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_cenarios = int(self.__le_linha_com_backup(arquivo)[ci:cf])
@@ -99,7 +104,7 @@ class LeituraEntrada:
             peso_cauda = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             intervalo_conf = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             semente = int(self.__le_linha_com_backup(arquivo)[ci:cf])
-            reamostrar = bool(self.__le_linha_com_backup(arquivo)[ci:cf])
+            reamostrar = bool(int(self.__le_linha_com_backup(arquivo)[ci:cf]))
             n_pos_est = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             custo_def = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_uhe = int(self.__le_linha_com_backup(arquivo)[ci:cf])
@@ -107,6 +112,8 @@ class LeituraEntrada:
             # Constroi o objeto de configurações gerais
             cfg = ConfigGeral(nome,
                               metodo,
+                              min_iters,
+                              max_iters,
                               n_estagios,
                               n_aberturas,
                               n_cenarios,

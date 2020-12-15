@@ -1,15 +1,17 @@
 from modelos.cortebenders import CorteBenders
-from pdde.modelos.penteafluencias import PenteAfluencias
+from modelos.penteafluencias import PenteAfluencias
 from modelos.cenario import Cenario
 from modelos.resultado import Resultado
 from utils.leituraentrada import LeituraEntrada
 
 import logging
+import coloredlogs  # type: ignore
 from typing import List, Tuple
 import numpy as np  # type: ignore
 from statistics import pstdev, mean
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
+logger = logging.getLogger(__name__)
 
 
 class PDDE:
@@ -18,19 +20,22 @@ class PDDE:
     planejamento energético através de Programação
     Dinâmica Dual Estocástica.
     """
-    def __init__(self, e: LeituraEntrada, log: logging.Logger):
+    def __init__(self, e: LeituraEntrada, LOG_LEVEL: str):
         self.cfg = e.cfg
         self.uhes = e.uhes
         self.utes = e.utes
         self.demandas = e.demandas
-        self.log = log
+        self.log = logger
+        coloredlogs.install(logger=logger, level=LOG_LEVEL)
         self.pente = PenteAfluencias(e)
         self.pente.monta_pente_afluencias()
+        self.sim_final = PenteAfluencias(e)
         self.cenarios: List[Cenario] = []
         self.z_sup: List[float] = []
         self.z_inf: List[float] = []
 
     def __monta_pl(self,
+                   pente: PenteAfluencias,
                    dente: int,
                    periodo: int,
                    abertura: int = -1) -> op:
@@ -67,16 +72,16 @@ class PDDE:
                 vi = float(uh.vol_inicial)
             else:
                 # O volume inicial é o final do nó anterior
-                vi = float(self.pente.dentes[dente][periodo - 1]
+                vi = float(pente.dentes[dente][periodo - 1]
                            .volumes_finais[i])
             # Se está executando a FORWARD, a afluência é a do nó
             # anterior no mesmo dente. Caso contrário, é da abertura
             # passada à função de montar o PL.
             if abertura == -1:
-                afl = float(self.pente.dentes[dente][periodo]
+                afl = float(pente.dentes[dente][periodo]
                             .afluencias[i])
             else:
-                afl = float(self.pente
+                afl = float(pente
                             .afluencias_abertura(periodo, abertura)[i])
             self.cons.append(self.vf[i] == vi + afl - self.vt[i] - self.vv[i])
 
@@ -111,7 +116,7 @@ class PDDE:
             return
         num_uhes = len(self.uhes)
         # Adiciona os cortes do próximo nó, no mesmo dente
-        no_futuro = self.pente.dentes[dente][periodo + 1]
+        no_futuro = pente.dentes[dente][periodo + 1]
         for corte in no_futuro.cortes:
             eq = 0.
             for i_uhe in range(num_uhes):
@@ -137,36 +142,34 @@ class PDDE:
                 # self.log.debug("Executando a FORWARD no período {}...".
                 #                format(p + 1))
                 for d, dente in enumerate(self.pente.dentes):
-                    self.__monta_pl(d, p)
+                    self.__monta_pl(self.pente, d, p)
                     self.pl = op(self.func_objetivo, self.cons)
                     self.pl.solve("dense", "glpk")
                     # Armazena as saídas obtidas no PL no objeto nó
-                    self.__armazena_saidas(d, p)
+                    self.__armazena_saidas(self.pente, d, p)
             # Condição de saída por convergência
             if self.__verifica_convergencia():
                 self.log.info("CONVERGIU!")
                 break
             it += 1
             # Condição de saída por iterações
-            if it >= 20:
+            if it >= self.cfg.max_iter:
                 self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
                 break
             # Realiza, para cada dente, a parte BACKWARD
             for p in range(self.cfg.n_periodos - 1, -1, -1):
-                # self.log.debug("Executando a BACKWARD no período {}..."
-                #                .format(p + 1))
                 cortes_periodo: List[CorteBenders] = []
-                for d, dente in enumerate(self.pente.dentes):
+                for d, _ in enumerate(self.pente.dentes):
                     # A BACKWARD na PDDE, para obter um corte,
                     # na verdade é constituída de múltiplos problemas
                     # de despacho e o corte é o médio de todas.
                     cortes_no: List[CorteBenders] = []
                     for a in range(self.cfg.aberturas_periodo):
-                        self.__monta_pl(d, p, a)
+                        self.__monta_pl(self.pente, d, p, a)
                         self.pl = op(self.func_objetivo, self.cons)
                         self.pl.solve("dense", "glpk")
                         # Armazena as saídas obtidas no nó
-                        self.__armazena_saidas(d, p)
+                        self.__armazena_saidas(self.pente, d, p)
                         # Armazena o corte produzido pelo nó
                         cortes_no.append(self.__obtem_corte(d, p))
                     # Cria o corte médio para o nó, referente ao dente
@@ -176,15 +179,17 @@ class PDDE:
                 for d, dente in enumerate(self.pente.dentes):
                     for c in cortes_periodo:
                         self.pente.dentes[d][p].adiciona_corte(c)
-        # Terminando o loop do método, organiza e retorna os resultados
-        self.__organiza_cenarios()
+        # Terminando o loop do método, realiza a simulação final e
+        # organiza os cenários de saída
+        self.__simulacao_final()
         return Resultado(self.cfg,
                          self.uhes,
                          self.utes,
-                         self.cenarios,
+                         self.sim_final.organiza_cenarios(),
                          self.z_sup,
                          self.z_inf,
-                         self.intervalo_conf)
+                         self.intervalo_conf,
+                         self.__organiza_cortes())
 
     def __obtem_corte(self, d: int, p: int) -> CorteBenders:
         """
@@ -269,48 +274,27 @@ class PDDE:
         limite_inf = max([1e-3, z_sup - conf * desvio - tol])
         limite_sup = z_sup + conf * desvio + tol
         self.intervalo_conf.append((limite_inf, limite_sup))
-        if not self.cfg.aversao_risco:
-            self.log.debug("Z_SUP = {} - Z_INF = {}. INTERVALO = [{}, {}]".
-                           format(z_sup, z_inf, limite_inf, limite_sup))
-            # Condições de convergência para PDDE sem aversão a risco
-            if limite_inf <= z_inf <= limite_sup:
-                self.log.info("{} <= {} <= {}".
-                              format(limite_inf,
-                                     z_inf,
-                                     limite_sup))
-                return True
-            else:
-                if z_inf < limite_inf:
-                    self.log.info("Ainda não convergiu: {} < {}".
-                                  format(z_inf,
-                                         limite_inf))
-                elif z_inf > limite_sup:
-                    self.log.info("Ainda não convergiu: {} > {}".
-                                  format(z_inf,
-                                         limite_sup))
-                return False
-        else:
-            its_relevantes = 3
-            self.log.debug("Z_INF = {} - MEDIA: {} - DESVIO: {}".
-                           format(z_inf,
-                                  mean(self.z_inf[-its_relevantes:]),
-                                  pstdev(self.z_inf[-its_relevantes:])))
-            # Condições de convergência para PDDE com aversão a risco
-            # Mínimo de 3 iterações
-            n_it = len(self.z_inf)
-            if n_it < its_relevantes:
-                self.log.debug("Ainda não convergiu: {} de 3 iterações min."
-                               .format(n_it))
-                return False
-            # Estabilidade do Z_inf por 3 iterações
-            erros = [self.z_inf[i] for i in range(-its_relevantes, 0)]
-            if max(erros) - min(erros) < self.cfg.intervalo_conf:
-                self.log.info("Estabilidade do Z_inf: {}".format(erros))
-                return True
 
+        # Mínimo de iterações
+        n_it = len(self.z_inf)
+        self.log.debug("Z_SUP = {:12.4f} - Z_INF = {:12.4f}. I = [{}, {}]".
+                       format(z_sup, z_inf, limite_inf, limite_sup))
+        if n_it < self.cfg.min_iter:
             return False
 
-    def __armazena_saidas(self, d: int, p: int):
+        self.log.debug("Z_INF = {} - MEDIA: {} - DESVIO: {}".
+                       format(z_inf,
+                              mean(self.z_inf[-self.cfg.min_iter:]),
+                              pstdev(self.z_inf[-self.cfg.min_iter:])))
+        # Estabilidade do Z_inf por algumas iterações
+        erros = [self.z_inf[i] for i in range(-self.cfg.min_iter, 0)]
+        if max(erros) - min(erros) < self.cfg.intervalo_conf * z_inf:
+            self.log.info("Estabilidade do Z_inf: {}".format(erros))
+            return True
+
+        return False
+
+    def __armazena_saidas(self, pente: PenteAfluencias, d: int, p: int):
         """
         Processa as saídas do problema e armazena nos nós.
         """
@@ -331,28 +315,52 @@ class PDDE:
         cmo = abs(self.cons[c_cmo].multiplier.value[0])
         alpha = self.alpha[0].value()[0]
         f_obj = self.func_objetivo.value()[0]
-        self.pente.dentes[d][p].preenche_resultados(vol_finais,
-                                                    vol_turbinados,
-                                                    vol_vertidos,
-                                                    custo_agua,
-                                                    geracao_termica,
-                                                    deficit,
-                                                    cmo,
-                                                    f_obj - alpha,
-                                                    alpha,
-                                                    f_obj)
+        pente.dentes[d][p].preenche_resultados(vol_finais,
+                                               vol_turbinados,
+                                               vol_vertidos,
+                                               custo_agua,
+                                               geracao_termica,
+                                               deficit,
+                                               cmo,
+                                               f_obj - alpha,
+                                               alpha,
+                                               f_obj)
 
-    def __organiza_cenarios(self):
+    def __simulacao_final(self):
         """
-        Para cada dente do pente, monta as séries históricas de cada
-        variável de interesse no estudo realizado.
         """
-        n_dentes = len(self.pente.dentes)
-        cenarios: List[Cenario] = []
-        for c in range(n_dentes):
-            # self.log.debug("##### CENARIO " + str(c + 1) + " #####")
-            cen = Cenario.cenario_dos_nos(self.pente.dentes[c])
-            # self.log.debug(cen)
-            # self.log.debug("--------------------------------------")
-            cenarios.append(cen)
-        self.cenarios = cenarios
+        self.sim_final.monta_simulacao_final_de_pente(self.pente)
+        # Realiza uma "forward"
+        for p in range(self.cfg.n_periodos):
+            for d, _ in enumerate(self.sim_final.dentes):
+                self.__monta_pl(self.sim_final, d, p)
+                self.pl = op(self.func_objetivo, self.cons)
+                self.pl.solve("dense", "glpk")
+                # Armazena as saídas obtidas no PL no objeto nó
+                self.__armazena_saidas(self.sim_final, d, p)
+
+        # Calcula o Z_inf
+        z_inf = mean([d[0].custo_total for d in self.sim_final.dentes])
+        self.z_inf.append(z_inf)
+        # Obtém os custos imediatos para cada nó de cada dente
+        custos_imediatos: List[List[float]] = []
+        for dente in self.sim_final.dentes:
+            custos_imediatos_dente = [n.custo_total - n.custo_futuro
+                                      for n in dente]
+            custos_imediatos.append(custos_imediatos_dente)
+        # Calcula o Z_sup
+        custos_dente = [sum(custo_dente)
+                        for custo_dente in custos_imediatos]
+        z_sup = mean(custos_dente)
+        self.z_sup.append(z_sup)
+        self.log.info("# SIMULAÇÂO FINAL #")
+        self.log.info("Z_SUP = {:12.4f} - Z_INF = {:12.4f}".format(z_sup,
+                                                                   z_inf))
+
+    def __organiza_cortes(self) -> List[List[List[CorteBenders]]]:
+        """
+        """
+        cortes: List[List[List[CorteBenders]]] = []
+        for p in range(self.cfg.n_periodos):
+            cortes.append([self.pente.dentes[0][p].cortes])
+        return cortes

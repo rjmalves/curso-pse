@@ -6,9 +6,11 @@ from modelos.ute import UTE
 import os
 import csv
 import logging
+import coloredlogs  # type: ignore
 import numpy as np  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 from typing import List
+logger = logging.getLogger(__name__)
 
 
 class MultiVisual:
@@ -19,7 +21,7 @@ class MultiVisual:
     def __init__(self,
                  resultados: List[Resultado],
                  caminho: str,
-                 log: logging.Logger):
+                 LOG_LEVEL: str):
 
         self.uhes: List[UHE] = resultados[0].uhes
         self.utes: List[UTE] = resultados[0].utes
@@ -27,7 +29,8 @@ class MultiVisual:
         self.cenarios_medios = [Cenario.cenario_medio(r.cenarios)
                                 for r in resultados]
         self.caminho = caminho
-        self.log = log
+        self.log = logger
+        coloredlogs.install(logger=logger, level=LOG_LEVEL)
 
     def visualiza(self):
         """
@@ -572,34 +575,34 @@ class MultiVisual:
         plt.figure(figsize=(12, 6))
         plt.title("Convergência")
         # Eixo x:
-        plt.xlabel("Período de estudo")
+        plt.xlabel("Iteração")
         # Eixo y:
-        plt.ylabel("Limites do custo ($/MWmed)")
+        plt.ylabel("Limites do custo ($)")
         dados_cen: List[List[float]] = []
         cabs_metodos: List[str] = []
-        eixos_x = [np.arange(1, len(r.z_sup) + 1, 1)
+        eixos_x = [np.arange(1, len(r.z_sup), 1)
                    for r in self.resultados]
         iteracoes_x = [len(e) for e in eixos_x]
         ind_x_mais_longo = iteracoes_x.index(max(iteracoes_x))
         for j, resultado in enumerate(self.resultados):
-            label = "ZSUP " + str(resultado.cfg.nome)
             if resultado.cfg.metodo == "PL_UNICO":
                 continue
-            cabs_metodos.append("ZSUP_" + label)
+            label = "ZSUP " + str(resultado.cfg.nome)
+            cabs_metodos.append(label)
             dados_cen.append(resultado.z_sup)
-
             plt.plot(eixos_x[j],
-                     resultado.z_sup,
+                     resultado.z_sup[:len(resultado.z_sup)-1],
                      color=cmap(j / n_resultados + 0.1),
                      marker="o",
                      linewidth=12,
                      alpha=0.5,
                      label=label)
-            cabs_metodos.append("ZINF_" + label)
-            dados_cen.append(resultado.z_inf)
+
             label = "ZINF " + str(resultado.cfg.nome)
+            cabs_metodos.append(label)
+            dados_cen.append(resultado.z_inf)
             plt.plot(eixos_x[j],
-                     resultado.z_inf,
+                     resultado.z_inf[:len(resultado.z_inf)-1],
                      color=cmap(j / n_resultados + 0.15),
                      marker="o",
                      linewidth=12,
@@ -610,11 +613,11 @@ class MultiVisual:
                               in resultado.intervalo_confianca]
                 limite_sup = [conf[1] for conf
                               in resultado.intervalo_confianca]
-                cabs_metodos.append("CONF_INF" + label)
-                cabs_metodos.append("CONF_SUP" + label)
+                cabs_metodos.append("CONF_INF " + str(resultado.cfg.nome))
+                cabs_metodos.append("CONF_SUP " + str(resultado.cfg.nome))
                 dados_cen.append(limite_inf)
                 dados_cen.append(limite_sup)
-                label = "CONF" + str(resultado.cfg.nome)
+                label = "CONF " + str(resultado.cfg.nome)
                 plt.fill_between(eixos_x[j],
                                  limite_inf,
                                  limite_sup,

@@ -1,33 +1,34 @@
 from modelos.cenario import Cenario
-from modelos.metodo import Metodo
+from modelos.resultado import Resultado
 from modelos.uhe import UHE
 from modelos.ute import UTE
-from modelos.configgeral import ConfigGeral
 
 import os
 import logging
+import coloredlogs  # type: ignore
 from traceback import print_exc
 from typing import List, IO
+logger = logging.getLogger(__name__)
 
 
 class EscreveSaida:
     """
     """
     def __init__(self,
-                 metodo: Metodo,
-                 cenarios: List[Cenario],
+                 resultado: Resultado,
                  caminho: str,
-                 log: logging.Logger):
-        self.cfg: ConfigGeral = metodo.cfg
-        self.uhes: List[UHE] = metodo.uhes
-        self.utes: List[UTE] = metodo.utes
-        self.metodo: str = metodo.value
+                 LOG_LEVEL: str):
+        self.cfg = resultado.cfg
+        self.uhes: List[UHE] = resultado.uhes
+        self.utes: List[UTE] = resultado.utes
+        self.metodo: str = resultado.cfg.metodo
         self.caminho = caminho
-        self.cenarios = cenarios
-        self.z_sup = metodo.z_sup
-        self.z_inf = metodo.z_inf
-        self.intervalo_conf = metodo.intervalo_confianca
-        self.log = log
+        self.cenarios = resultado.cenarios
+        self.z_sup = resultado.z_sup
+        self.z_inf = resultado.z_inf
+        self.intervalo_conf = resultado.intervalo_confianca
+        self.log = logger
+        coloredlogs.install(logger=logger, level=LOG_LEVEL)
 
     def escreve_relatorio(self):
         """
@@ -43,6 +44,9 @@ class EscreveSaida:
                 self.__escreve_configs(arquivo)
                 metodo = "{}".format(self.metodo).rjust(18)
                 arquivo.write("MÉTODO UTILIZADO: {}\n\n".format(metodo))
+                if self.metodo == "PL_UNICO":
+                    arquivo.write("VALOR DA FUNC. OBJ:      {:12.4f}\n\n"
+                                  .format(self.cenarios[0].fobj[0]))
                 if self.metodo == "PDDD" or self.metodo == "PDDE":
                     # Escreve o relatório de convegência
                     self.__escreve_convergencia(arquivo)
@@ -139,9 +143,8 @@ class EscreveSaida:
             linha += ind_iter + " "
             linha += "{:19.8f}".format(self.z_sup[i]) + " "
             linha += "{:19.8f}".format(self.z_inf[i]) + " "
-            if self.metodo == "PDDE":
-                linha += "{:19.8f}".format(self.intervalo_conf[i][0]) + " "
-                linha += "{:19.8f}".format(self.intervalo_conf[i][1]) + " "
+            if i == n_iters - 1:
+                linha += "    # RESULTADO DA SIMULAÇÃO FINAL"
             linha += "\n"
             arquivo.write(linha)
         self.__escreve_borda_tabela(arquivo, campos)

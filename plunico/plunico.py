@@ -1,13 +1,14 @@
 from utils.leituraentrada import LeituraEntrada
-from modelos.no import No
 from modelos.cenario import Cenario
 from modelos.resultado import Resultado
-from plunico.modelos.arvoreafluencias import ArvoreAfluencias
+from modelos.arvoreafluencias import ArvoreAfluencias
 
 import logging
+import coloredlogs  # type: ignore
 from typing import List
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
+logger = logging.getLogger(__name__)
 
 
 class PLUnico:
@@ -15,12 +16,13 @@ class PLUnico:
     Coletânea de métodos para solução de um estudo de
     planejamento energético através de PL Único.
     """
-    def __init__(self, e: LeituraEntrada, log: logging.Logger):
+    def __init__(self, e: LeituraEntrada, LOG_LEVEL: str):
         self.cfg = e.cfg
         self.uhes = e.uhes
         self.utes = e.utes
         self.demandas = e.demandas
-        self.log = log
+        self.log = logger
+        coloredlogs.install(logger=logger, level=LOG_LEVEL)
         self.arvore = ArvoreAfluencias(e)
         self.arvore.monta_arvore_afluencias()
         self.cenarios: List[Cenario] = []
@@ -91,7 +93,7 @@ class PLUnico:
                                        self.cfg.custo_deficit)
                 # Custo pela energia não turbinada
                 for i, uh in enumerate(self.uhes):
-                    self.func_objetivo += c * 0.001 * self.vv[i][j][k]
+                    self.func_objetivo += c * 0.01 * self.vv[i][j][k]
 
         # ----- Restrições -----
         self.cons = []
@@ -158,12 +160,11 @@ class PLUnico:
         self.log.info("Função objetivo final: {}".
                       format(self.func_objetivo.value()[0]))
         self.armazena_saidas()
-        self.organiza_cenarios()
         return Resultado(self.cfg,
                          self.uhes,
                          self.utes,
-                         self.cenarios,
-                         [], [], [])
+                         self.arvore.organiza_cenarios(),
+                         [], [], [], [])
 
     def armazena_saidas(self):
         """
@@ -194,6 +195,7 @@ class PLUnico:
                 ci += self.cfg.custo_deficit * deficit
                 c_cmo = len(self.uhes) * nos_totais + nos_considerados + k
                 cmo = abs(self.cons[c_cmo].multiplier.value[0])
+                f_obj = float(self.func_objetivo.value()[0])
                 self.arvore.arvore[j][k].preenche_resultados(vol_finais,
                                                              vol_turbinados,
                                                              vol_vertidos,
@@ -202,25 +204,5 @@ class PLUnico:
                                                              deficit,
                                                              cmo,
                                                              ci,
-                                                             0.0, 0.0)
-
-    def organiza_cenarios(self):
-        """
-        Parte das folhas e reconstroi as séries históricas de cada variável de
-        interesse para cada cenário que aconteceu no estudo realizado.
-        """
-        n_cenarios = self.arvore.nos_por_periodo[-1]
-        cenarios: List[Cenario] = []
-        for c in range(n_cenarios):
-            self.log.debug("##### CENARIO " + str(c + 1) + " #####")
-            nos_cenario: List[No] = []
-            indice_no = c
-            for p in range(self.cfg.n_periodos - 1, -1, -1):
-                no = self.arvore.arvore[p][indice_no]
-                nos_cenario.insert(0, no)
-                indice_no = self.arvore.indice_no_anterior(p, indice_no)
-            cen = Cenario.cenario_dos_nos(nos_cenario)
-            self.log.debug(cen)
-            self.log.debug("--------------------------------------")
-            cenarios.append(cen)
-        self.cenarios = cenarios
+                                                             0.0,
+                                                             f_obj)
