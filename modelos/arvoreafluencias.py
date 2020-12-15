@@ -1,4 +1,5 @@
 from modelos.cortebenders import CorteBenders
+from modelos.cenario import Cenario
 from utils.leituraentrada import LeituraEntrada
 from modelos.no import No
 
@@ -135,3 +136,21 @@ class ArvoreAfluencias:
             indice_inicial = n_aberturas_periodo * indice_no
             indice_final = indice_inicial + n_aberturas_periodo
             return list(range(indice_inicial, indice_final))
+
+    def organiza_cenarios(self) -> List[Cenario]:
+        """
+        Parte das folhas e reconstroi as séries históricas de cada variável de
+        interesse para cada cenário que aconteceu no estudo realizado.
+        """
+        n_cenarios = self.nos_por_periodo[-1]
+        cenarios: List[Cenario] = []
+        for c in range(n_cenarios):
+            nos_cenario: List[No] = []
+            indice_no = c
+            for p in range(self.n_periodos - 1, -1, -1):
+                no = self.arvore[p][indice_no]
+                nos_cenario.insert(0, no)
+                indice_no = self.indice_no_anterior(p, indice_no)
+            cen = Cenario.cenario_dos_nos(nos_cenario)
+            cenarios.append(cen)
+        return cenarios

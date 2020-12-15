@@ -1,5 +1,4 @@
 from utils.leituraentrada import LeituraEntrada
-from modelos.no import No
 from modelos.cenario import Cenario
 from modelos.resultado import Resultado
 from modelos.arvoreafluencias import ArvoreAfluencias
@@ -161,11 +160,10 @@ class PLUnico:
         self.log.info("Função objetivo final: {}".
                       format(self.func_objetivo.value()[0]))
         self.armazena_saidas()
-        self.organiza_cenarios()
         return Resultado(self.cfg,
                          self.uhes,
                          self.utes,
-                         self.cenarios,
+                         self.arvore.organiza_cenarios(),
                          [], [], [], [])
 
     def armazena_saidas(self):
@@ -208,21 +206,3 @@ class PLUnico:
                                                              ci,
                                                              0.0,
                                                              f_obj)
-
-    def organiza_cenarios(self):
-        """
-        Parte das folhas e reconstroi as séries históricas de cada variável de
-        interesse para cada cenário que aconteceu no estudo realizado.
-        """
-        n_cenarios = self.arvore.nos_por_periodo[-1]
-        cenarios: List[Cenario] = []
-        for c in range(n_cenarios):
-            nos_cenario: List[No] = []
-            indice_no = c
-            for p in range(self.cfg.n_periodos - 1, -1, -1):
-                no = self.arvore.arvore[p][indice_no]
-                nos_cenario.insert(0, no)
-                indice_no = self.arvore.indice_no_anterior(p, indice_no)
-            cen = Cenario.cenario_dos_nos(nos_cenario)
-            cenarios.append(cen)
-        self.cenarios = cenarios

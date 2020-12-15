@@ -61,9 +61,8 @@ def main():
     # Gera relatórios e gráficos de saída
     for resultado in resultados:
         caminho_saida = os.path.join(args.s,
-                                     "{}/{}/{}/".format(resultado.cfg.nome,
-                                                        resultado.cfg.metodo,
-                                                        int(time.time())))
+                                     "{}/{}/".format(resultado.cfg.nome,
+                                                     int(time.time())))
         relator = EscreveSaida(resultado,
                                caminho_saida,
                                LOG_LEVEL)
