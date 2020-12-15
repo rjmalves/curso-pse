@@ -54,7 +54,7 @@ class Cenario:
         geracao_termica = Cenario.organiza_ger_termica(nos)
         deficit: List[float] = [n.deficit for n in nos]
         cmo: List[float] = [n.cmo for n in nos]
-        ci: List[float] = [n.ci for n in nos]
+        ci: List[float] = [n.custo_imediato for n in nos]
         alpha: List[float] = [n.custo_futuro for n in nos]
         fobj: List[float] = [n.custo_total for n in nos]
 

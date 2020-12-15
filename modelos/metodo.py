@@ -46,7 +46,7 @@ class Metodo(Enum):
         self.__uhes = e.uhes
         self.__utes = e.utes
         # Resolve o problema e retorna a lista de cenários avaliados
-        r: Resultado = Resultado(e.cfg, [], [], [], [], [], [])
+        r: Resultado = Resultado(e.cfg, [], [], [], [], [], [], [])
         if self == Metodo.PL_UNICO:
             self.pl = PLUnico(e, LOG_LEVEL)
             r = self.pl.resolve_pl()

@@ -1,7 +1,7 @@
 
 CONFIGURAÇÕES GERAIS DE EXECUÇÃO DO ESTUDO DE PLANEJAMENTO ENERGÉTICO
 X---------------------------X---------------X
- NOME DO ESTUDO               PDDE_CVAR_SE_2
+ NOME DO ESTUDO               PDDE_CVAR_SE_4
  MÉTODO DE SOLUÇÃO                      PDDE    # SÃO VÁLIDOS: PL_UNICO, PDDD E PDDE
  MIN. ITERAÇÕES                            5    # USADO NA PDDD E PDDE
  MAX. ITERAÇÕES                           50    # USADO NA PDDD E PDDE
@@ -9,7 +9,7 @@ X---------------------------X---------------X
  ABERTURAS POR PERÍODO (BKD)               5
  NÚMERO DE CENARIOS FWD                   50    # SOMENTE USADA NA PDDE
  % ABERTURAS CAUDA (ALFA)               0.20    # SOMENTE USADA NA PDDE
- PESO CAUDA (LAMBDA)                    0.40    # SOMENTE USADA NA PDDE
+ PESO CAUDA (LAMBDA)                    0.80    # SOMENTE USADA NA PDDE
  INTERVALO CONF (Nº DESVIOS)            0.05    # SOMENTE USADA NA PDDE
  SEMENTE ALEATÓRIA                        43    # SOMENTE USADA NA PDDE
  REAMOSTRAGEM                              1    # SOMENTE USADA NA PDDE

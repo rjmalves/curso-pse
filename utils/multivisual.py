@@ -580,7 +580,7 @@ class MultiVisual:
         plt.ylabel("Limites do custo ($)")
         dados_cen: List[List[float]] = []
         cabs_metodos: List[str] = []
-        eixos_x = [np.arange(1, len(r.z_sup) + 1, 1)
+        eixos_x = [np.arange(1, len(r.z_sup), 1)
                    for r in self.resultados]
         iteracoes_x = [len(e) for e in eixos_x]
         ind_x_mais_longo = iteracoes_x.index(max(iteracoes_x))
@@ -591,7 +591,7 @@ class MultiVisual:
             cabs_metodos.append(label)
             dados_cen.append(resultado.z_sup)
             plt.plot(eixos_x[j],
-                     resultado.z_sup,
+                     resultado.z_sup[:len(resultado.z_sup)-1],
                      color=cmap(j / n_resultados + 0.1),
                      marker="o",
                      linewidth=12,
@@ -602,7 +602,7 @@ class MultiVisual:
             cabs_metodos.append(label)
             dados_cen.append(resultado.z_inf)
             plt.plot(eixos_x[j],
-                     resultado.z_inf,
+                     resultado.z_inf[:len(resultado.z_inf)-1],
                      color=cmap(j / n_resultados + 0.15),
                      marker="o",
                      linewidth=12,

@@ -44,6 +44,9 @@ class EscreveSaida:
                 self.__escreve_configs(arquivo)
                 metodo = "{}".format(self.metodo).rjust(18)
                 arquivo.write("MÉTODO UTILIZADO: {}\n\n".format(metodo))
+                if self.metodo == "PL_UNICO":
+                    arquivo.write("VALOR DA FUNC. OBJ:      {:12.4f}\n\n"
+                                  .format(self.cenarios[0].fobj[0]))
                 if self.metodo == "PDDD" or self.metodo == "PDDE":
                     # Escreve o relatório de convegência
                     self.__escreve_convergencia(arquivo)
@@ -140,9 +143,8 @@ class EscreveSaida:
             linha += ind_iter + " "
             linha += "{:19.8f}".format(self.z_sup[i]) + " "
             linha += "{:19.8f}".format(self.z_inf[i]) + " "
-            if self.metodo == "PDDE":
-                linha += "{:19.8f}".format(self.intervalo_conf[i][0]) + " "
-                linha += "{:19.8f}".format(self.intervalo_conf[i][1]) + " "
+            if i == n_iters - 1:
+                linha += "    # RESULTADO DA SIMULAÇÃO FINAL"
             linha += "\n"
             arquivo.write(linha)
         self.__escreve_borda_tabela(arquivo, campos)

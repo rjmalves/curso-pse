@@ -2,7 +2,7 @@ from utils.leituraentrada import LeituraEntrada
 from modelos.no import No
 from modelos.cenario import Cenario
 from modelos.resultado import Resultado
-from plunico.modelos.arvoreafluencias import ArvoreAfluencias
+from modelos.arvoreafluencias import ArvoreAfluencias
 
 import logging
 import coloredlogs  # type: ignore
@@ -166,7 +166,7 @@ class PLUnico:
                          self.uhes,
                          self.utes,
                          self.cenarios,
-                         [], [], [])
+                         [], [], [], [])
 
     def armazena_saidas(self):
         """
@@ -197,6 +197,7 @@ class PLUnico:
                 ci += self.cfg.custo_deficit * deficit
                 c_cmo = len(self.uhes) * nos_totais + nos_considerados + k
                 cmo = abs(self.cons[c_cmo].multiplier.value[0])
+                f_obj = float(self.func_objetivo.value()[0])
                 self.arvore.arvore[j][k].preenche_resultados(vol_finais,
                                                              vol_turbinados,
                                                              vol_vertidos,
@@ -205,7 +206,8 @@ class PLUnico:
                                                              deficit,
                                                              cmo,
                                                              ci,
-                                                             0.0, 0.0)
+                                                             0.0,
+                                                             f_obj)
 
     def organiza_cenarios(self):
         """

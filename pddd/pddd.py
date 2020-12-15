@@ -1,6 +1,6 @@
 from utils.leituraentrada import LeituraEntrada
-from pddd.modelos.arvoreafluencias import ArvoreAfluencias
-from modelos.no import No
+from modelos.arvoreafluencias import ArvoreAfluencias
+from modelos.penteafluencias import PenteAfluencias
 from modelos.cenario import Cenario
 from modelos.cortebenders import CorteBenders
 from modelos.resultado import Resultado
@@ -8,6 +8,7 @@ from modelos.resultado import Resultado
 import logging
 import coloredlogs  # type: ignore
 import numpy as np  # type: ignore
+from statistics import mean
 from typing import List
 from cvxopt.modeling import variable, op, solvers, _function  # type: ignore
 solvers.options['glpk'] = {'msg_lev': 'GLP_MSG_OFF'}
@@ -29,11 +30,13 @@ class PDDD:
         coloredlogs.install(logger=logger, level=LOG_LEVEL)
         self.arvore = ArvoreAfluencias(e)
         self.arvore.monta_arvore_afluencias()
+        self.sim_final = PenteAfluencias(e)
         self.cenarios: List[Cenario] = []
         self.z_sup: List[float] = []
         self.z_inf: List[float] = []
 
     def __monta_pl(self,
+                   arvore: ArvoreAfluencias,
                    periodo: int,
                    indice_no: int) -> op:
         """
@@ -69,10 +72,10 @@ class PDDD:
                 vi = float(uh.vol_inicial)
             else:
                 # O volume inicial é o final do nó anterior
-                ant = self.arvore.indice_no_anterior(periodo, indice_no)
-                vi = float(self.arvore.arvore[periodo - 1][ant]
+                ant = arvore.indice_no_anterior(periodo, indice_no)
+                vi = float(arvore.arvore[periodo - 1][ant]
                            .volumes_finais[i])
-            afl = float(self.arvore.arvore[periodo][indice_no]
+            afl = float(arvore.arvore[periodo][indice_no]
                         .afluencias[i])
             self.cons.append(self.vf[i] == vi + afl - self.vt[i] - self.vv[i])
 
@@ -107,10 +110,10 @@ class PDDD:
             return
         num_uhes = len(self.uhes)
         # Obtém o corte médio dos prováveis nós futuros
-        indices_futuros = self.arvore.indices_proximos_nos(periodo,
-                                                           indice_no)
+        indices_futuros = arvore.indices_proximos_nos(periodo,
+                                                      indice_no)
         num_futuros = len(indices_futuros)
-        no_futuro = self.arvore.arvore[periodo + 1][indices_futuros[0]]
+        no_futuro = arvore.arvore[periodo + 1][indices_futuros[0]]
         num_cortes = len(no_futuro.cortes)
 
         # Calcula os cortes médios para cada corte existente nos nós futuros
@@ -119,7 +122,7 @@ class PDDD:
             cma_medios = [0.] * num_uhes
             offset_medio = 0.
             for i_futuro in indices_futuros:
-                no_futuro = self.arvore.arvore[periodo + 1][i_futuro]
+                no_futuro = arvore.arvore[periodo + 1][i_futuro]
                 corte = no_futuro.cortes[i_corte]
                 # Calcula o custo médio da água
                 for i_uhe in range(num_uhes):
@@ -135,6 +138,96 @@ class PDDD:
             eq = 0.
             for i_uhe in range(num_uhes):
                 eq += corte.custo_agua[i_uhe] * self.vf[i_uhe]
+            eq += float(corte.offset)
+            self.cons.append(self.alpha[0] >= eq)
+
+    def __monta_pl_pente(self,
+                         pente: PenteAfluencias,
+                         dente: int,
+                         periodo: int,
+                         abertura: int = -1) -> op:
+        """
+        Realiza a configuração das variáveis e restrições de um
+        problema de otimização a ser realizado no problema de PDDD.
+        """
+        # ----- Variáveis -----
+        self.vf = variable(len(self.uhes), "Volume final (hm3)")
+        self.vt = variable(len(self.uhes), "Volume turbinado (hm3)")
+        self.vv = variable(len(self.uhes), "Volume vertido (hm3)")
+        self.gt = variable(len(self.utes), "Geração térmica (MWmed)")
+        self.deficit = variable(1, "Déficit (MWmed)")
+        self.alpha = variable(1, "Custo futuro ($)")
+
+        # ----- Função objetivo -----
+        self.func_objetivo = 0
+        for i, ut in enumerate(self.utes):
+            self.func_objetivo += ut.custo * self.gt[i]
+
+        self.func_objetivo += self.cfg.custo_deficit * self.deficit[0]
+
+        for i in range(len(self.uhes)):
+            self.func_objetivo += 0.01 * self.vv[i]
+
+        self.func_objetivo += 1.0 * self.alpha[0]
+
+        # ----- Restrições -----
+        self.cons = []
+        # Balanço hídrico
+        for i, uh in enumerate(self.uhes):
+            if periodo == 0:
+                # O volume inicial é dado no problema
+                vi = float(uh.vol_inicial)
+            else:
+                # O volume inicial é o final do nó anterior
+                vi = float(pente.dentes[dente][periodo - 1]
+                           .volumes_finais[i])
+            # Se está executando a FORWARD, a afluência é a do nó
+            # anterior no mesmo dente. Caso contrário, é da abertura
+            # passada à função de montar o PL.
+            if abertura == -1:
+                afl = float(pente.dentes[dente][periodo]
+                            .afluencias[i])
+            else:
+                afl = float(pente
+                            .afluencias_abertura(periodo, abertura)[i])
+            self.cons.append(self.vf[i] == vi + afl - self.vt[i] - self.vv[i])
+
+        # Atendimento à demanda
+        gerado = 0
+        for i, uh in enumerate(self.uhes):
+            gerado += float(uh.produtividade) * self.vt[i]
+        for i, ut in enumerate(self.utes):
+            gerado += self.gt[i]
+        gerado += self.deficit[0]
+        self.cons.append(gerado == float(self.demandas[periodo].demanda))
+        # Restrições operacionais
+        for i, uh in enumerate(self.uhes):
+            # Volume útil do reservatório
+            self.cons.append(self.vf[i] <= uh.vol_maximo)
+            self.cons.append(self.vf[i] >= uh.vol_minimo)
+            # Engolimento máximo
+            self.cons.append(self.vt[i] <= uh.engolimento)
+            # Factibilidade do problema
+            self.cons.append(self.vt[i] >= 0)
+            self.cons.append(self.vv[i] >= 0)
+        for i, ut in enumerate(self.utes):
+            # Geração mínima e máxima de térmica
+            self.cons.append(self.gt[i] >= 0)
+            self.cons.append(self.gt[i] <= ut.capacidade)
+        # Factibilidade do problema
+        self.cons.append(self.deficit[0] >= 0)
+
+        # Cortes de Benders - exceto se estiver no último período
+        self.cons.append(self.alpha[0] >= 0)
+        if periodo == self.cfg.n_periodos - 1:
+            return
+        num_uhes = len(self.uhes)
+        # Adiciona os cortes do próximo nó, no mesmo dente
+        no_futuro = pente.dentes[dente][periodo + 1]
+        for corte in no_futuro.cortes:
+            eq = 0.
+            for i_uhe in range(num_uhes):
+                eq += float(corte.custo_agua[i_uhe]) * self.vf[i_uhe]
             eq += float(corte.offset)
             self.cons.append(self.alpha[0] >= eq)
 
@@ -156,11 +249,11 @@ class PDDD:
                     # Monta e resolve o PL do nó (exceto a partir da
                     # segunda iteração, no período 1 - pois a backward é igual)
                     if it == 0 or j > 0:
-                        self.__monta_pl(j, k)
+                        self.__monta_pl(self.arvore, j, k)
                         self.pl = op(self.func_objetivo, self.cons)
                         self.pl.solve("dense", "glpk")
                         # Armazena as saídas obtidas no PL no objeto nó
-                        self.__armazena_saidas(j, k)
+                        self.__armazena_saidas(self.arvore, j, k)
             # Condição de saída por convergência
             it += 1
             if self.__verifica_convergencia():
@@ -174,22 +267,34 @@ class PDDD:
                 for k in range(self.arvore.nos_por_periodo[j] - 1, -1, -1):
                     # Monta e resolve o PL do nó (não resolve o último período)
                     if j != self.cfg.n_periodos - 1:
-                        self.__monta_pl(j, k)
+                        self.__monta_pl(self.arvore, j, k)
                         self.pl = op(self.func_objetivo, self.cons)
                         self.pl.solve("dense", "glpk")
                         # Armazena as saídas obtidas no PL no objeto nó
-                        self.__armazena_saidas(j, k)
+                        self.__armazena_saidas(self.arvore, j, k)
                     # Gera um novo corte para o nó
                     self.__cria_corte(j, k)
         # Terminando o loop do método, organiza e retorna os resultados
-        self.__organiza_cenarios()
+        self.__simulacao_final()
         return Resultado(self.cfg,
                          self.uhes,
                          self.utes,
-                         self.cenarios,
+                         self.sim_final.organiza_cenarios(),
                          self.z_sup,
                          self.z_inf,
-                         [])
+                         [],
+                         self.__organiza_cortes())
+
+    def __organiza_cortes(self) -> List[List[List[CorteBenders]]]:
+        """
+        """
+        cortes: List[List[List[CorteBenders]]] = []
+        for p in range(self.cfg.n_periodos):
+            cortes.append([])
+            for n in range(self.arvore.nos_por_periodo[p]):
+                no = self.arvore.arvore[p][n]
+                cortes[-1].append(no.cortes)
+        return cortes
 
     def __cria_corte(self, j: int, k: int):
         """
@@ -218,12 +323,11 @@ class PDDD:
         """
         z_sup = 0.0
         z_inf = 0.0
-        print(self.arvore.nos_por_periodo)
         for j in range(self.cfg.n_periodos):
             nos_periodo = self.arvore.nos_por_periodo[j]
             for k in range(nos_periodo):
                 no = self.arvore.arvore[j][k]
-                z_sup += (1. / nos_periodo) * no.ci
+                z_sup += (1. / nos_periodo) * no.custo_imediato
                 if j == 0:
                     z_inf = no.custo_total
         self.z_sup.append(z_sup)
@@ -248,7 +352,7 @@ class PDDD:
                              self.tol))
         return False
 
-    def __armazena_saidas(self, j: int, k: int):
+    def __armazena_saidas(self, arvore: ArvoreAfluencias, j: int, k: int):
         """
         Processa as saídas do problema e armazena nos nós.
         """
@@ -269,31 +373,75 @@ class PDDD:
         cmo = abs(self.cons[c_cmo].multiplier.value[0])
         alpha = self.alpha[0].value()[0]
         func_objetivo = self.func_objetivo.value()[0]
-        self.arvore.arvore[j][k].preenche_resultados(vol_finais,
-                                                     vol_turbinados,
-                                                     vol_vertidos,
-                                                     custo_agua,
-                                                     geracao_termica,
-                                                     deficit,
-                                                     cmo,
-                                                     func_objetivo - alpha,
-                                                     alpha,
-                                                     func_objetivo)
+        arvore.arvore[j][k].preenche_resultados(vol_finais,
+                                                vol_turbinados,
+                                                vol_vertidos,
+                                                custo_agua,
+                                                geracao_termica,
+                                                deficit,
+                                                cmo,
+                                                func_objetivo - alpha,
+                                                alpha,
+                                                func_objetivo)
 
-    def __organiza_cenarios(self):
+    def __armazena_saidas_pente(self, pente: PenteAfluencias, d: int, p: int):
         """
-        Parte das folhas e reconstroi as séries históricas de cada variável de
-        interesse para cada cenário que aconteceu no estudo realizado.
+        Processa as saídas do problema e armazena nos nós.
         """
-        n_cenarios = self.arvore.nos_por_periodo[-1]
-        cenarios: List[Cenario] = []
-        for c in range(n_cenarios):
-            nos_cenario: List[No] = []
-            indice_no = c
-            for p in range(self.cfg.n_periodos - 1, -1, -1):
-                no = self.arvore.arvore[p][indice_no]
-                nos_cenario.insert(0, no)
-                indice_no = self.arvore.indice_no_anterior(p, indice_no)
-            cen = Cenario.cenario_dos_nos(nos_cenario)
-            cenarios.append(cen)
-        self.cenarios = cenarios
+        vol_finais: List[float] = []
+        vol_turbinados: List[float] = []
+        vol_vertidos: List[float] = []
+        custo_agua: List[float] = []
+        geracao_termica: List[float] = []
+        for i, uh in enumerate(self.uhes):
+            vol_finais.append(self.vf[i].value()[0])
+            vol_turbinados.append(self.vt[i].value()[0])
+            vol_vertidos.append(self.vv[i].value()[0])
+            custo_agua.append(self.cons[i].multiplier.value[0])
+        for i, ut in enumerate(self.utes):
+            geracao_termica.append(self.gt[i].value()[0])
+        deficit = self.deficit[0].value()[0]
+        c_cmo = len(self.uhes)
+        cmo = abs(self.cons[c_cmo].multiplier.value[0])
+        alpha = self.alpha[0].value()[0]
+        f_obj = self.func_objetivo.value()[0]
+        pente.dentes[d][p].preenche_resultados(vol_finais,
+                                               vol_turbinados,
+                                               vol_vertidos,
+                                               custo_agua,
+                                               geracao_termica,
+                                               deficit,
+                                               cmo,
+                                               f_obj - alpha,
+                                               alpha,
+                                               f_obj)
+
+    def __simulacao_final(self):
+        """
+        """
+        self.sim_final.monta_simulacao_final_de_arvore(self.arvore)
+        # Realiza uma "forward"
+        for p in range(self.cfg.n_periodos):
+            for d, dente in enumerate(self.sim_final.dentes):
+                self.__monta_pl_pente(self.sim_final, d, p)
+                self.pl = op(self.func_objetivo, self.cons)
+                self.pl.solve("dense", "glpk")
+                # Armazena as saídas obtidas no PL no objeto nó
+                self.__armazena_saidas_pente(self.sim_final, d, p)
+        # Calcula o Z_inf
+        z_inf = mean([d[0].custo_total for d in self.sim_final.dentes])
+        self.z_inf.append(z_inf)
+        # Obtém os custos imediatos para cada nó de cada dente
+        custos_imediatos: List[List[float]] = []
+        for dente in self.sim_final.dentes:
+            custos_imediatos_dente = [n.custo_total - n.custo_futuro
+                                      for n in dente]
+            custos_imediatos.append(custos_imediatos_dente)
+        # Calcula o Z_sup
+        custos_dente = [sum(custo_dente)
+                        for custo_dente in custos_imediatos]
+        z_sup = mean(custos_dente)
+        self.z_sup.append(z_sup)
+        self.log.info("# SIMULAÇÂO FINAL #")
+        self.log.info("Z_SUP = {:12.4f} - Z_INF = {:12.4f}".format(z_sup,
+                                                                   z_inf))

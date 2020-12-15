@@ -32,6 +32,7 @@ class Visual:
         self.z_sup = resultado.z_sup
         self.z_inf = resultado.z_inf
         self.intervalo_conf = resultado.intervalo_confianca
+        self.cortes = resultado.cortes
         self.log = logger
         coloredlogs.install(logger=logger, level=LOG_LEVEL)
 
@@ -54,6 +55,7 @@ class Visual:
         self.visualiza_alpha()
         self.visualiza_fobj()
         self.visualiza_convergencia()
+        self.visualiza_cortes()
 
     def visualiza_volume_final(self):
         """
@@ -578,19 +580,19 @@ class Visual:
         plt.title("CONVERGÊNCIA DA {}".format(self.metodo))
         # Eixo x:
         plt.xlabel("Iteração")
-        x = np.arange(1, n_iters + 1, 1)
+        x = np.arange(1, n_iters, 1)
         plt.xticks(x)
         # Eixo y:
         plt.ylabel("Limites do custo ($)")
         plt.plot(x,
-                 self.z_sup,
+                 self.z_sup[:n_iters-1],
                  color=cmap(0.6),
                  marker="o",
                  linewidth=4,
                  alpha=0.8,
                  label="Z_sup")
         plt.plot(x,
-                 self.z_inf,
+                 self.z_inf[:n_iters-1],
                  color=cmap(0.3),
                  marker="o",
                  linewidth=4,
@@ -610,6 +612,46 @@ class Visual:
         # Salva a imagem
         plt.savefig(self.caminho + "convergencia.png")
         plt.close()
+
+    def visualiza_cortes(self):
+        """
+        """
+        caminho = self.caminho + "cortes/"
+        if not os.path.exists(caminho):
+            os.makedirs(caminho)
+        for p, cortes_p in enumerate(self.cortes):
+            if self.metodo == "PDDE":
+                plt.figure(figsize=(12, 6))
+                plt.title("CORTES PARA O PERÍODO {}".format(p + 1))
+                # Calcula sempre para a UHE 1
+                x = np.arange(self.uhes[0].vol_minimo,
+                              self.uhes[0].vol_maximo,
+                              1000)
+                max_y = 0
+                cortes = cortes_p[0]
+                for c in cortes:
+                    y = c.custo_agua[0] * x + c.offset
+                    max_y = max([max_y, np.max(y)])
+                    plt.plot(x, y)
+                plt.ylim(0, max_y)
+                plt.savefig(caminho + "p{}.png".format(p + 1))
+                plt.close()
+            if self.metodo == "PDDD":
+                plt.figure(figsize=(12, 6))
+                plt.title("CORTES PARA O PERÍODO {}".format(p + 1))
+                # Calcula sempre para a UHE 1
+                x = np.arange(self.uhes[0].vol_minimo,
+                              self.uhes[0].vol_maximo,
+                              1000)
+                max_y = 0
+                for cortes in cortes_p:
+                    for c in cortes:
+                        y = c.custo_agua[0] * x + c.offset
+                        max_y = max([max_y, np.max(y)])
+                        plt.plot(x, y)
+                plt.ylim(0, max_y)
+                plt.savefig(caminho + "p{}.png".format(p + 1))
+                plt.close()
 
     def exporta_dados(self,
                       caminho: str,

@@ -1,5 +1,6 @@
 from modelos.cenario import Cenario
 from modelos.configgeral import ConfigGeral
+from modelos.cortebenders import CorteBenders
 from modelos.uhe import UHE
 from modelos.ute import UTE
 
@@ -19,7 +20,8 @@ class Resultado:
                  cenarios: List[Cenario],
                  z_sup: List[float],
                  z_inf: List[float],
-                 intervalo_conf: List[Tuple[float, float]]):
+                 intervalo_conf: List[Tuple[float, float]],
+                 cortes: List[List[List[CorteBenders]]]):
 
         self.cfg = cfg
         self.uhes = uhes
@@ -28,3 +30,4 @@ class Resultado:
         self.z_sup = z_sup
         self.z_inf = z_inf
         self.intervalo_confianca = intervalo_conf
+        self.cortes = cortes

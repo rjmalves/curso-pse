@@ -66,7 +66,7 @@ class No:
         self.geracao_termica = geracao_termica
         self.deficit = deficit
         self.cmo = cmo
-        self.ci = ci
+        self.custo_imediato = ci
         self.custo_futuro = alpha
         self.custo_total = func_objetivo
 
