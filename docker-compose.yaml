@@ -8,18 +8,31 @@ services:
     volumes: 
       - ./results:/app/results
     command: [
-              python, 
-              main.py,
-              "--log",
-              "DEBUG",
-              "./tests/PMO_DEZ_2020/SE/pddd_4p.txt",
-              "./tests/PMO_DEZ_2020/SE/pdde_4p.txt",
-              "./tests/PMO_DEZ_2020/SE/pdde_cvar1_4p.txt",
-              "./tests/PMO_DEZ_2020/SE/pdde_cvar2_4p.txt",
-              "./tests/PMO_DEZ_2020/SE/pdde_cvar3_4p.txt",
-              "./tests/PMO_DEZ_2020/SE/pdde_cvar4_4p.txt",
-              "./tests/PMO_DEZ_2020/SE/pdde_cvar5_4p.txt",
-              "./tests/PMO_DEZ_2020/SE/pddd_pior_4p.txt"
-              ]
+          python, 
+          main.py,
+          "--log",
+          "DEBUG",
+          # "./tests/exemplos/pddd.txt",
+          # "./tests/exemplos/pdde.txt",
+          "./tests/exemplos/pdde_cvar1.txt",
+          "./tests/exemplos/pdde_cvar2.txt",
+          "./tests/exemplos/pdde_cvar3.txt",
+          "./tests/exemplos/pdde_cvar4.txt"
+    ]
+    # command: [
+    #           python, 
+    #           main.py,
+    #           "--log",
+    #           "DEBUG",
+    #           "./tests/PMO_DEZ_2020/SE/pl_4p.txt",
+    #           "./tests/PMO_DEZ_2020/SE/pddd_4p.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/pdde_4p.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/pdde_cvar1_4p.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/pdde_cvar2_4p.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/pdde_cvar3_4p.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/pdde_cvar4_4p.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/pdde_cvar5_4p.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/pddd_pior_4p.txt"
+    #           ]
     environment: 
       - CONFIG_FILE=./configs/1uhe_tree.json
