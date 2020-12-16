@@ -11,7 +11,7 @@ X---------------------------X---------------X
  % ABERTURAS CAUDA (ALFA)                0.0    # SOMENTE USADA NA PDDE
  PESO CAUDA (LAMBDA)                    0.00    # SOMENTE USADA NA PDDE
  INTERVALO CONF (Nº DESVIOS)             1.0    # SOMENTE USADA NA PDDE
- SEMENTE ALEATÓRIA                        42    # SOMENTE USADA NA PDDE
+ SEMENTE ALEATÓRIA                        43    # SOMENTE USADA NA PDDE
  REAMOSTRAGEM                              0    # SOMENTE USADA NA PDDE
  PERÍODOS PÓS ESTUDO                       0
  CUSTO DE DÉFICIT ($/MWmed)          5249.34

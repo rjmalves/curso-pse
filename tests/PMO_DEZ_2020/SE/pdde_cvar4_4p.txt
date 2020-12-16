@@ -8,8 +8,8 @@ X---------------------------X---------------X
  NÚMERO DE PERÍODOS                        4
  ABERTURAS POR PERÍODO (BKD)               5
  NÚMERO DE CENARIOS FWD                   50    # SOMENTE USADA NA PDDE
- % ABERTURAS CAUDA (ALFA)               0.20    # SOMENTE USADA NA PDDE
- PESO CAUDA (LAMBDA)                    0.80    # SOMENTE USADA NA PDDE
+ % ABERTURAS CAUDA (ALFA)               0.80    # SOMENTE USADA NA PDDE
+ PESO CAUDA (LAMBDA)                    0.50    # SOMENTE USADA NA PDDE
  INTERVALO CONF (Nº DESVIOS)            0.05    # SOMENTE USADA NA PDDE
  SEMENTE ALEATÓRIA                        43    # SOMENTE USADA NA PDDE
  REAMOSTRAGEM                              1    # SOMENTE USADA NA PDDE

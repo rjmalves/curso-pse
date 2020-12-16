@@ -112,7 +112,7 @@ class PDDD:
         # Obtém o corte médio dos prováveis nós futuros
         indices_futuros = arvore.indices_proximos_nos(periodo,
                                                       indice_no)
-        num_futuros = len(indices_futuros)
+        n_futuros = len(indices_futuros)
         no_futuro = arvore.arvore[periodo + 1][indices_futuros[0]]
         num_cortes = len(no_futuro.cortes)
 
@@ -120,25 +120,25 @@ class PDDD:
         cortes_medios: List[CorteBenders] = []
         for i_corte in range(num_cortes):
             cma_medios = [0.] * num_uhes
-            offset_medio = 0.
+            termo_indep_medio = 0.
             for i_futuro in indices_futuros:
                 no_futuro = arvore.arvore[periodo + 1][i_futuro]
                 corte = no_futuro.cortes[i_corte]
-                # Calcula o custo médio da água
+                # Calcula o PI médio
                 for i_uhe in range(num_uhes):
-                    cma_medios[i_uhe] += corte.custo_agua[i_uhe] / num_futuros
-                # Calcula o offset médio
-                offset_medio += corte.offset / num_futuros
+                    cma_medios[i_uhe] += corte.coef_angular[i_uhe] / n_futuros
+                # Calcula o termo independente médio
+                termo_indep_medio += corte.termo_indep / n_futuros
             # Caso contrário, se não houver corte igual já no nó, adiciona
-            corte_medio = CorteBenders(cma_medios, offset_medio, 0.0)
+            corte_medio = CorteBenders(cma_medios, termo_indep_medio, 0.0)
             cortes_medios.append(corte_medio)
 
         # Armazena os cortes médios como restrições
         for corte in cortes_medios:
             eq = 0.
             for i_uhe in range(num_uhes):
-                eq += corte.custo_agua[i_uhe] * self.vf[i_uhe]
-            eq += float(corte.offset)
+                eq += corte.coef_angular[i_uhe] * self.vf[i_uhe]
+            eq += float(corte.termo_indep)
             self.cons.append(self.alpha[0] >= eq)
 
     def __monta_pl_pente(self,
@@ -227,8 +227,8 @@ class PDDD:
         for corte in no_futuro.cortes:
             eq = 0.
             for i_uhe in range(num_uhes):
-                eq += float(corte.custo_agua[i_uhe]) * self.vf[i_uhe]
-            eq += float(corte.offset)
+                eq += float(corte.coef_angular[i_uhe]) * self.vf[i_uhe]
+            eq += float(corte.termo_indep)
             self.cons.append(self.alpha[0] >= eq)
 
     def resolve_pddd(self) -> Resultado:
@@ -302,18 +302,18 @@ class PDDD:
         dos cortes dos nós futuros (exceto no último período).
         """
         no = self.arvore.arvore[j][k]
-        custos_agua: List[float] = []
-        offset = no.custo_total
+        coefs_angulares: List[float] = []
+        termo_indep = no.custo_total
         for i, uh in enumerate(self.uhes):
-            custos_agua.append(-no.custo_agua[i])
+            coefs_angulares.append(-no.custo_agua[i])
             if j == 0:
                 vi = uh.vol_inicial
             else:
                 indice_ant = self.arvore.indice_no_anterior(j, k)
                 ant = self.arvore.arvore[j - 1][indice_ant]
                 vi = ant.volumes_finais[i]
-            offset -= vi * custos_agua[i]
-        corte = CorteBenders(custos_agua, offset, no.custo_total)
+            termo_indep -= vi * coefs_angulares[i]
+        corte = CorteBenders(coefs_angulares, termo_indep, no.custo_total)
         no.adiciona_corte(corte, True)
 
     def __verifica_convergencia(self) -> bool:

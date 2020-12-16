@@ -7,11 +7,11 @@ class CorteBenders:
     Benders nos métodos de PDDx.
     """
     def __init__(self,
-                 custo_agua: List[float],
-                 offset: float,
+                 coef_angular: List[float],
+                 termo_indep: float,
                  fobj: float):
-        self.custo_agua = custo_agua
-        self.offset = offset
+        self.coef_angular = coef_angular
+        self.termo_indep = termo_indep
         self.fobj = fobj
 
     def __str__(self):
@@ -21,18 +21,18 @@ class CorteBenders:
         return to_str
 
     def __hash__(self):
-        custos = tuple(self.custo_agua)
-        return hash((custos, self.offset))
+        custos = tuple(self.coef_angular)
+        return hash((custos, self.termo_indep))
 
     def __eq__(self, obj):
         if not isinstance(obj, CorteBenders):
             return False
         tol = 1e-18
-        for c1, c2 in zip(self.custo_agua, obj.custo_agua):
+        for c1, c2 in zip(self.coef_angular, obj.coef_angular):
             if abs(c1 - c2) > tol:
                 return False
-        offset_igual = abs(self.offset - obj.offset) < tol
-        return offset_igual
+        termo_indep_igual = abs(self.termo_indep - obj.termo_indep) < tol
+        return termo_indep_igual
 
     def __lt__(self, obj):
         if not isinstance(obj, CorteBenders):

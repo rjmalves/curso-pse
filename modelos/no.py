@@ -100,9 +100,9 @@ class No:
         n_uhes = len(self.volumes_finais)
         for corte in self.cortes:
             linha = "               "
-            linha += "{:19.8f}".format(corte.offset) + " "
+            linha += "{:19.8f}".format(corte.termo_indep) + " "
             for i in range(n_uhes):
-                linha += "{:19.8f}".format(corte.custo_agua[i]) + " "
+                linha += "{:19.8f}".format(corte.coef_angular[i]) + " "
             linha += "\n"
             linhas.append(linha)
         return linhas

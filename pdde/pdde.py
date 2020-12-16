@@ -120,8 +120,8 @@ class PDDE:
         for corte in no_futuro.cortes:
             eq = 0.
             for i_uhe in range(num_uhes):
-                eq += float(corte.custo_agua[i_uhe]) * self.vf[i_uhe]
-            eq += float(corte.offset)
+                eq += float(corte.coef_angular[i_uhe]) * self.vf[i_uhe]
+            eq += float(corte.termo_indep)
             self.cons.append(self.alpha[0] >= eq)
 
     def resolve_pdde(self) -> Resultado:
@@ -197,17 +197,17 @@ class PDDE:
         backward da PDDE.
         """
         no = self.pente.dentes[d][p]
-        custos_agua: List[float] = []
-        offset = no.custo_total
+        coef_angular: List[float] = []
+        termo_indep = no.custo_total
         for i, uh in enumerate(self.uhes):
-            custos_agua.append(-no.custo_agua[i])
+            coef_angular.append(-no.custo_agua[i])
             if p == 0:
                 vi = uh.vol_inicial
             else:
                 ant = self.pente.dentes[d][p - 1]
                 vi = ant.volumes_finais[i]
-            offset -= vi * custos_agua[i]
-        corte = CorteBenders(custos_agua, offset, no.custo_total)
+            termo_indep -= vi * coef_angular[i]
+        corte = CorteBenders(coef_angular, termo_indep, no.custo_total)
         return corte
 
     def __cria_corte(self,
@@ -217,34 +217,41 @@ class PDDE:
         """
         num_uhes = len(self.uhes)
         num_cortes = self.cfg.aberturas_periodo
+
         # Calcula o corte médio, considerando cauda e não-cauda
-        cma_medios = np.zeros((num_uhes,))
-        offset_medio = 0.
+        coef_ang_medio = np.zeros((num_uhes,))
+        termo_indep_medio = 0.
         for i, corte in enumerate(cortes):
-            # Calcula o custo médio da água
+            # Calcula o coeficente angular médio
             for i_uhe in range(num_uhes):
-                cma_medios[i_uhe] += corte.custo_agua[i_uhe] / num_cortes
-            # Calcula o offset médio
-            offset_medio += corte.offset / num_cortes
+                coef_ang_medio[i_uhe] += corte.coef_angular[i_uhe] / num_cortes
+            # Calcula o termo independente médio
+            termo_indep_medio += corte.termo_indep / num_cortes
+
         # Obtém o número de cortes na cauda
         num_cauda = int(self.cfg.aberturas_cauda * self.cfg.aberturas_periodo)
         # Ordena os cortes e extrai os cortes da cauda
         cortes_ordenados = sorted(cortes, reverse=True)
         cortes_cauda = cortes_ordenados[:num_cauda]
         # Calcula o corte médio da cauda
-        cma_cauda = np.zeros((num_uhes,))
-        offset_cauda = 0.
+        coef_ang_cauda = np.zeros((num_uhes,))
+        termo_indep_cauda = 0.
         for i, corte in enumerate(cortes_cauda):
-            # Calcula o custo médio da água
+            # Calcula o coeficiente angular médio
             for i_uhe in range(num_uhes):
-                cma_cauda[i_uhe] += corte.custo_agua[i_uhe] / num_cauda
-            # Calcula o offset médio
-            offset_cauda += corte.offset / num_cauda
+                coef_ang_cauda[i_uhe] += corte.coef_angular[i_uhe] / num_cauda
+            # Calcula o termo independente médio
+            termo_indep_cauda += corte.termo_indep / num_cauda
+
         # Pondera os cortes médios da cauda e não-cauda
         lmbda = self.cfg.peso_cauda
-        cma_ponderado = list((1 - lmbda) * cma_medios + lmbda * cma_cauda)
-        offset_ponderado = (1 - lmbda) * offset_medio + lmbda * offset_cauda
-        corte_ponderado = CorteBenders(cma_ponderado, offset_ponderado, 0.0)
+        coef_ang_ponderado = list((1 - lmbda) * coef_ang_medio
+                                  + lmbda * coef_ang_cauda)
+        termo_indep_ponderado = ((1 - lmbda) * termo_indep_medio
+                                 + lmbda * termo_indep_cauda)
+        corte_ponderado = CorteBenders(coef_ang_ponderado,
+                                       termo_indep_ponderado,
+                                       0.0)
         return corte_ponderado
 
     def __verifica_convergencia(self) -> bool:

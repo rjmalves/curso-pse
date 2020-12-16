@@ -630,7 +630,7 @@ class Visual:
                 max_y = 0
                 cortes = cortes_p[0]
                 for c in cortes:
-                    y = c.custo_agua[0] * x + c.offset
+                    y = c.coef_angular[0] * x + c.termo_indep
                     max_y = max([max_y, np.max(y)])
                     plt.plot(x, y)
                 plt.ylim(0, max_y)
@@ -646,7 +646,7 @@ class Visual:
                 max_y = 0
                 for cortes in cortes_p:
                     for c in cortes:
-                        y = c.custo_agua[0] * x + c.offset
+                        y = c.coef_angular[0] * x + c.termo_indep
                         max_y = max([max_y, np.max(y)])
                         plt.plot(x, y)
                 plt.ylim(0, max_y)
