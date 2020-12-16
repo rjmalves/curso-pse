@@ -168,6 +168,7 @@ class PLUnico:
                     format(self.func_objetivo.value()[0]))
         logger.info("-----------------------------------")
         logger.info("# FIM DA SOLUÇÃO #")
+        logger.info("----------------------------------------")
         self.armazena_saidas()
         return Resultado(self.cfg,
                          self.uhes,

@@ -26,7 +26,6 @@ class PDDD:
         self.uhes = e.uhes
         self.utes = e.utes
         self.demandas = e.demandas
-        self.log = logger
         coloredlogs.install(logger=logger, level=LOG_LEVEL)
         self.arvore = ArvoreAfluencias(e)
         self.arvore.monta_arvore_afluencias()
@@ -241,8 +240,10 @@ class PDDD:
         self.tol = 1e-3
         self.z_sup = []
         self.z_inf = []
+        logger.info("# RESOLVENDO PROBLEMA DE PDDD #")
+        logger.info("X----X-------------------X-------------------X")
+        logger.info("  IT        Z_SUP                 Z_INF       ")
         while True:
-            self.log.info("# Iteração {} #".format(it + 1))
             for j in range(self.cfg.n_periodos):
                 nos_periodo = self.arvore.nos_por_periodo[j]
                 for k in range(nos_periodo):
@@ -256,11 +257,11 @@ class PDDD:
                         self.__armazena_saidas(self.arvore, j, k)
             # Condição de saída por convergência
             it += 1
-            if self.__verifica_convergencia():
+            if self.__verifica_convergencia(it):
                 break
             # Condição de saída por iterações
             if it >= self.cfg.max_iter:
-                self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
+                logger.warning("   LIMITE DE ITERAÇÕES ATINGIDO!")
                 break
             # Executa a backward para cada nó
             for j in range(self.cfg.n_periodos - 1, -1, -1):
@@ -275,7 +276,10 @@ class PDDD:
                     # Gera um novo corte para o nó
                     self.__cria_corte(j, k)
         # Terminando o loop do método, organiza e retorna os resultados
+        logger.info("X----X-------------------X-------------------X")
         self.__simulacao_final()
+        logger.info("# FIM DA SOLUÇÃO #")
+        logger.info("----------------------------------------")
         return Resultado(self.cfg,
                          self.uhes,
                          self.utes,
@@ -316,7 +320,7 @@ class PDDD:
         corte = CorteBenders(coefs_angulares, termo_indep, no.custo_total)
         no.adiciona_corte(corte, True)
 
-    def __verifica_convergencia(self) -> bool:
+    def __verifica_convergencia(self, it: int) -> bool:
         """
         Verifica se houve a convergência para a PDDD, conferindo
         os limites inferior e superior e a tolerância.
@@ -333,23 +337,16 @@ class PDDD:
         self.z_sup.append(z_sup)
         self.z_inf.append(z_inf)
 
+        logger.info(" {:4}    {:16.6f}    {:16.6f}".
+                    format(it + 1, z_sup, z_inf))
+
         if np.abs(z_sup - z_inf) <= self.tol:
-            self.log.info("Sup= {:12.6f} | Inf= {:12.6f} | {:12.6f} <= {}".
-                          format(z_sup,
-                                 z_inf,
-                                 np.abs(z_sup - z_inf),
-                                 self.tol))
             n_it = len(self.z_inf)
             if n_it < self.cfg.min_iter:
                 return False
-            self.log.info("CONVERGIU!")
+            logger.info("   >> CONVERGIU <<: Z_SUP e Z_INF na tolerância!!")
             return True
 
-        self.log.info("Sup= {:12.6f} | Inf= {:12.6f} | {:12.6f} > {}".
-                      format(z_sup,
-                             z_inf,
-                             np.abs(z_sup - z_inf),
-                             self.tol))
         return False
 
     def __armazena_saidas(self, arvore: ArvoreAfluencias, j: int, k: int):
@@ -419,6 +416,9 @@ class PDDD:
     def __simulacao_final(self):
         """
         """
+        logger.info("            # SIMULAÇÂO FINAL #")
+        logger.info("X-------------------X-------------------X")
+        logger.info("       Z_SUP                Z_INF       ")
         self.sim_final.monta_simulacao_final_de_arvore(self.arvore)
         # Realiza uma "forward"
         for p in range(self.cfg.n_periodos):
@@ -442,6 +442,5 @@ class PDDD:
                         for custo_dente in custos_imediatos]
         z_sup = mean(custos_dente)
         self.z_sup.append(z_sup)
-        self.log.info("# SIMULAÇÂO FINAL #")
-        self.log.info("Z_SUP = {:12.4f} - Z_INF = {:12.4f}".format(z_sup,
-                                                                   z_inf))
+        logger.info(" {:19.6f} {:19.6f}".format(z_sup, z_inf))
+        logger.info("X-------------------X-------------------X")

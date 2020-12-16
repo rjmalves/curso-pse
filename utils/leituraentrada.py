@@ -65,6 +65,7 @@ class LeituraEntrada:
                 self.afluencias = self.__le_afluencias(arquivo)
             logger.info("---------------------------------------")
             logger.info("# FIM DA LEITURA #")
+            logger.info("----------------------------------------")
         except Exception as e:
             logger.error("Erro na leitura do arquivo: {}".format(e))
             print_exc()
