@@ -49,6 +49,7 @@ def main():
 
     # Inicia a execução
     logger.info("#### ESTUDO DE MODELOS DE PLANEJAMENTO ENERGÉTICO ####")
+    logger.info("------------------------------------------------------")
     resultados: List[Resultado] = []
     for entrada in args.entradas:
 
@@ -77,6 +78,7 @@ def main():
                                caminho_saida,
                                LOG_LEVEL)
     visualizador.visualiza()
+    logger.info("------------------------------------------------------")
     logger.info("#### FIM DA EXECUÇÃO ####")
 
 
@@ -84,4 +86,4 @@ if __name__ == "__main__":
     ti = time.time()
     main()
     tf = time.time()
-    logger.critical("Tempo total de execução: {} s".format(tf - ti))
+    logger.info("Tempo total de execução: {} s".format(tf - ti))

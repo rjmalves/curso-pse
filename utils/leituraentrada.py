@@ -28,7 +28,6 @@ class LeituraEntrada:
                  LOG_LEVEL: str):
         self.caminho = caminho
         self.metodo = ""
-        self.log = logger
         coloredlogs.install(logger=logger, level=LOG_LEVEL)
         self.cfg: ConfigGeral = ConfigGeral.default_config()
         self.demandas: List[Demanda] = []
@@ -49,30 +48,25 @@ class LeituraEntrada:
         Varre o arquivo de entrada (.txt), buscando os parâmetros
         que descrevem o estudo a ser realizado.
         """
-        self.log.info("# INICIANDO A LEITURA DO ARQUIVO: {} #".
-                      format(self.caminho))
-        self.log.info("---------------------------------------")
+        logger.info("# INICIANDO A LEITURA DO ARQUIVO: {} #".
+                    format(self.caminho))
+        logger.info("---------------------------------------")
         try:
             with open(self.caminho, "r") as arquivo:
                 # Lê as configurações gerais
                 self.cfg = self.__le_configs_gerais(arquivo)
-                self.log.debug(self.cfg)
                 # Lê as demandas esperadas
                 self.demandas = self.__le_demandas(arquivo)
-                self.log.debug([str(d) for d in self.demandas])
                 # Lê os parâmetros das hidrelétricas
                 self.uhes = self.__le_parametros_hidreletricas(arquivo)
-                self.log.debug([str(u) for u in self.uhes])
                 # Lê os parâmetros das termelétricas
                 self.utes = self.__le_parametros_termeletricas(arquivo)
-                self.log.debug([str(u) for u in self.utes])
                 # Lê os cenários de afluências por período
                 self.afluencias = self.__le_afluencias(arquivo)
-                self.log.debug(self.afluencias)
-            self.log.info("---------------------------------------")
-            self.log.info("# FIM DA LEITURA #")
+            logger.info("---------------------------------------")
+            logger.info("# FIM DA LEITURA #")
         except Exception as e:
-            self.log.error("Erro na leitura do arquivo: {}".format(e))
+            logger.error("Erro na leitura do arquivo: {}".format(e))
             print_exc()
 
     def __le_configs_gerais(self, arquivo: IO) -> ConfigGeral:
@@ -93,6 +87,8 @@ class LeituraEntrada:
             # Lê o arquivo linha a linha
             ci = 29
             cf = 44
+            logger.info("Lendo Configurações Gerais....")
+            logger.debug("X---------------------------X--------------X")
             nome = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
             metodo = self.__le_linha_com_backup(arquivo)[ci:cf].strip()
             min_iters = int(self.__le_linha_com_backup(arquivo)[ci:cf])
@@ -109,6 +105,32 @@ class LeituraEntrada:
             custo_def = float(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_uhe = int(self.__le_linha_com_backup(arquivo)[ci:cf])
             n_ute = int(self.__le_linha_com_backup(arquivo)[ci:cf])
+            # Realiza o logging dos atributos lidos
+            logger.debug(" NOME DO ESTUDO".ljust(27) + nome.rjust(15))
+            logger.debug(" MÉTODO DE SOLUÇÃO".ljust(27) + metodo.rjust(15))
+            if metodo != "PL_UNICO":
+                logger.debug(" MIN. ITERAÇÕES".ljust(27) +
+                             str(min_iters).rjust(15))
+                logger.debug(" MAX. ITERAÇÕES".ljust(27) +
+                             str(max_iters).rjust(15))
+            logger.debug(" NÚMERO DE PERÍODOS".ljust(27) +
+                         str(n_estagios).rjust(15))
+            logger.debug(" ABERTURAS POR PERÍODO".ljust(27)
+                         + str(n_aberturas).rjust(15))
+            if metodo == "PDDE":
+                logger.debug(" NÚMERO DE CENARIOS FWD".ljust(27) +
+                             str(n_cenarios).rjust(15))
+                if aberturas_cauda > 0 or peso_cauda > 0:
+                    logger.debug(" --- AVERSÃO A RISCO >> HABILITADA << ---")
+                    logger.debug("ALFA = {:4.2f}    LAMBDA = {:4.2f}".
+                                 format(aberturas_cauda, peso_cauda))
+                if reamostrar:
+                    logger.debug("  --- REAMOSTRAGEM >> HABILITADA << ---")
+            logger.debug(" NÚMERO DE HIDRELÉTRICAS".ljust(27) +
+                         str(n_uhe).rjust(15))
+            logger.debug(" NÚMERO DE TERMELÉTRICAS".ljust(27) +
+                         str(n_ute).rjust(15))
+            logger.debug("X---------------------------X--------------X")
             # Constroi o objeto de configurações gerais
             cfg = ConfigGeral(nome,
                               metodo,
@@ -145,11 +167,16 @@ class LeituraEntrada:
             self.__le_linha_com_backup(arquivo)
             self.__le_linha_com_backup(arquivo)
             # Lê o arquivo linha a linha
+            logger.info("Lendo Demandas....")
+            logger.debug("X-------------X-------------------X")
             demandas: List[Demanda] = []
             for i in range(self.cfg.n_periodos):
                 linha = self.__le_linha_com_backup(arquivo)
                 d = Demanda.obtem_demanda_de_linha(linha)
+                logger.debug(str(d.periodo).rjust(13)
+                             + "  " + str(d.demanda).rjust(19))
                 demandas.append(d)
+            logger.debug("X-------------X-------------------X")
             return demandas
 
     def __le_parametros_hidreletricas(self, arquivo: IO) -> List[UHE]:
@@ -169,10 +196,26 @@ class LeituraEntrada:
             self.__le_linha_com_backup(arquivo)
             self.__le_linha_com_backup(arquivo)
             # Lê o arquivo linha a linha
+            logger.info("Lendo Parâmetros das UHEs....")
             uhes: List[UHE] = []
             for i in range(self.cfg.n_uhes):
                 linha = self.__le_linha_com_backup(arquivo)
                 uhe = UHE.le_uhe_da_linha(linha)
+                logger.debug("                 UHE {}".format(uhe.id))
+                logger.debug("X-------------------X-----------------X")
+                logger.debug(" NOME              "
+                             + str(uhe.nome).rjust(19))
+                logger.debug(" VOL. INICIAL (hm3)"
+                             + str(uhe.vol_inicial).rjust(19))
+                logger.debug(" VOL. MÍNIMO (hm3) "
+                             + str(uhe.vol_minimo).rjust(19))
+                logger.debug(" VOL. MÁXIMO (hm3) "
+                             + str(uhe.vol_maximo).rjust(19))
+                logger.debug(" PROD. (MWmed/hm3) "
+                             + str(uhe.produtividade).rjust(19))
+                logger.debug(" ENGOL. MÁXIMO (hm3)"
+                             + str(uhe.engolimento).rjust(18))
+                logger.debug("X-------------------X-----------------X")
                 uhes.append(uhe)
             return uhes
 
@@ -193,10 +236,20 @@ class LeituraEntrada:
             self.__le_linha_com_backup(arquivo)
             self.__le_linha_com_backup(arquivo)
             # Lê o arquivo linha a linha
+            logger.info("Lendo Parâmetros das UTEs....")
             utes: List[UTE] = []
             for i in range(self.cfg.n_utes):
                 linha = self.__le_linha_com_backup(arquivo)
                 ute = UTE.le_ute_da_linha(linha)
+                logger.debug("                 UTE {}".format(ute.id))
+                logger.debug("X-------------------X-----------------X")
+                logger.debug(" NOME              "
+                             + str(ute.nome).rjust(19))
+                logger.debug(" CAPACIDADE (MWmed)"
+                             + str(ute.capacidade).rjust(19))
+                logger.debug(" CUSTO ($/MWmed)   "
+                             + str(ute.custo).rjust(19))
+                logger.debug("X-------------------X-----------------X")
                 utes.append(ute)
             return utes
 
@@ -218,6 +271,7 @@ class LeituraEntrada:
             self.__le_linha_com_backup(arquivo)
             self.__le_linha_com_backup(arquivo)
             # Lê o arquivo linha a linha
+            logger.info("Lendo Afluências....")
             afluencias: Dict[int, List[List[float]]] = {}
             for i in range(self.cfg.n_uhes):
                 # Procura pelo começo das afluências da UHE
