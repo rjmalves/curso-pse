@@ -27,7 +27,6 @@ class EscreveSaida:
         self.z_sup = resultado.z_sup
         self.z_inf = resultado.z_inf
         self.intervalo_conf = resultado.intervalo_confianca
-        self.log = logger
         coloredlogs.install(logger=logger, level=LOG_LEVEL)
 
     def escreve_relatorio(self):
@@ -39,6 +38,9 @@ class EscreveSaida:
             os.makedirs(self.caminho)
         try:
             with open(self.caminho + "saida.txt", "w") as arquivo:
+                logger.info("# EXPORTANDO RELATÓRIO DE EXECUÇÃO PARA {} #"
+                            .format(self.caminho + "saida.txt"))
+                logger.info("---------------------------------------")
                 titulo = "RELATÓRIO DE ESTUDO DE PLANEJAMENTO ENERGÉTICO"
                 arquivo.write(titulo + "\n\n")
                 self.__escreve_configs(arquivo)
@@ -53,13 +55,17 @@ class EscreveSaida:
                 # Escreve o relatório do cenário médio avaliado
                 self.__escreve_cenario_medio(arquivo)
                 # Escreve o relatório detalhado por cenário
+                logger.info("Escrevendo cenários detalhados...")
                 arquivo.write("RELATÓRIO DE CENÁRIOS DETALHADOS\n\n")
                 for i, cen in enumerate(self.cenarios):
                     str_cen = str(i + 1).rjust(4)
                     arquivo.write("CENÁRIO " + str_cen + "\n")
                     self.__escreve_cenario(arquivo, cen)
+                logger.info("---------------------------------------")
+                logger.info("# FIM DA ESCRITA #")
+                logger.info("-----------------------------------------")
         except Exception as e:
-            self.log.error("Falha na escrita do arquivo: {}".format(e))
+            logger.error("Falha na escrita do arquivo: {}".format(e))
             print_exc()
 
     def __escreve_configs(self, arquivo: IO):
@@ -123,6 +129,7 @@ class EscreveSaida:
         Escreve os valores assumidos pelos Z_sup e Z_inf a cada iteração,
         bem como o erro (diferença).
         """
+        logger.info("Escrevendo relatório de convergência...")
         arquivo.write("RELATÓRIO DE CONVERGÊNCIA\n\n")
         campos = [13, 19, 19]
         # Escreve o cabeçalho
@@ -135,6 +142,11 @@ class EscreveSaida:
             cab_tabela += " LIMITE SUP. CONF.  "
         self.__escreve_borda_tabela(arquivo, campos)
         arquivo.write(cab_tabela + "\n")
+        # Realiza o logging da convergência
+        logger.debug("     ITER.     " +
+                     "       Z_SUP        " +
+                     "       Z_INF        ")
+        logger.debug("X-------------X-------------------X-------------------X")
         # Escreve as linhas com as entradas para cada iteração
         n_iters = len(self.z_sup)
         for i in range(n_iters):
@@ -145,9 +157,11 @@ class EscreveSaida:
             linha += "{:19.8f}".format(self.z_inf[i]) + " "
             if i == n_iters - 1:
                 linha += "    # RESULTADO DA SIMULAÇÃO FINAL"
+            logger.debug(linha)
             linha += "\n"
             arquivo.write(linha)
         self.__escreve_borda_tabela(arquivo, campos)
+        logger.debug("X-------------X-------------------X-------------------X")
         arquivo.write("\n")
 
     def __escreve_cenario(self, arquivo: IO, cenario: Cenario):
@@ -185,10 +199,12 @@ class EscreveSaida:
         """
         Escreve informações sobre os cenários médios no relatório de saída.
         """
+        logger.info("Escrevendo cenário médio...")
         arquivo.write("RELATÓRIO DE CENÁRIOS MÉDIOS\n\n")
         # Calcula os campos existentes com base no número de UHE e UTE
         campos = [13] + [19] * (5 * len(self.uhes) + len(self.utes) + 5)
         self.__escreve_borda_tabela(arquivo, campos)
+        logger.debug("X-------------X-------------------X-------------------X")
         # Escreve o cabeçalho da tabela
         cab_tabela = "    PERÍODO    "
         for i in range(len(self.uhes)):
@@ -206,6 +222,7 @@ class EscreveSaida:
         cab_tabela += "   CUSTO IMEDIATO   "
         cab_tabela += "    CUSTO FUTURO    "
         cab_tabela += "    CUSTO TOTAL     "
+        logger.debug("    PERÍODO       CUSTO IMEDIATO       CUSTO FUTURO    ")
         arquivo.write(cab_tabela + "\n")
         # Constroi o cenário médio
         cenario_medio = Cenario.cenario_medio(self.cenarios)
@@ -213,7 +230,13 @@ class EscreveSaida:
         linhas_cenario = cenario_medio.linhas_tabela()
         for linha in linhas_cenario:
             arquivo.write(linha)
+        # Faz o logging das linhas na saída padrão
+        for i in range(len(linhas_cenario)):
+            logger.debug(" " + str(i + 1).rjust(13) +
+                         "{:19.4f}".format(cenario_medio.ci[i]) + " " +
+                         "{:19.4f}".format(cenario_medio.alpha[i]))
         self.__escreve_borda_tabela(arquivo, campos)
+        logger.debug("X-------------X-------------------X-------------------X")
         arquivo.write("\n")
 
     def __escreve_borda_tabela(self, arquivo: IO, campos: List[int]):

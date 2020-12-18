@@ -33,7 +33,6 @@ class Visual:
         self.z_inf = resultado.z_inf
         self.intervalo_conf = resultado.intervalo_confianca
         self.cortes = resultado.cortes
-        self.log = logger
         coloredlogs.install(logger=logger, level=LOG_LEVEL)
 
     def visualiza(self):
@@ -41,6 +40,9 @@ class Visual:
         Exporta os gráficos para visualização das saídas do problema
         de otimização.
         """
+        logger.info("# GERANDO VISUALIZAÇÕES EM {} #".
+                    format(self.caminho))
+        logger.info("---------------------------------------")
         self.visualiza_volume_final()
         self.visualiza_volume_turbinado()
         self.visualiza_volume_vertido()
@@ -50,17 +52,20 @@ class Visual:
         self.visualiza_deficit()
         self.visualiza_cmo()
         self.visualiza_ci()
-        if self.metodo == "PL_UNICO":
-            return
-        self.visualiza_alpha()
-        self.visualiza_fobj()
-        self.visualiza_convergencia()
-        self.visualiza_cortes()
+        if self.metodo != "PL_UNICO":
+            self.visualiza_alpha()
+            self.visualiza_fobj()
+            self.visualiza_convergencia()
+            self.visualiza_cortes()
+        logger.info("---------------------------------------")
+        logger.info("# FIM DAS VISUALIZAÇÕES PARA O ESTUDO")
+        logger.info("-----------------------------------------")
 
     def visualiza_volume_final(self):
         """
         Gera os gráficos para acompanhamento dos volumes finais.
         """
+        logger.debug("Visualizações de volume final...")
         # Se o diretório para os volumes finais não existe, cria
         caminho = self.caminho + "volume_final/"
         if not os.path.exists(caminho):
@@ -108,6 +113,7 @@ class Visual:
         """
         Gera os gráficos para acompanhamento dos volumes turbinados.
         """
+        logger.debug("Visualizações de volume turbinado...")
         # Se o diretório para os volumes turbinados não existe, cria
         caminho = self.caminho + "volume_turbinado/"
         if not os.path.exists(caminho):
@@ -155,6 +161,7 @@ class Visual:
         """
         Gera os gráficos para acompanhamento dos volumes vertidos.
         """
+        logger.debug("Visualizações de volume vertido...")
         # Se o diretório para os volumes vertidos não existe, cria
         caminho = self.caminho + "volume_vertido/"
         if not os.path.exists(caminho):
@@ -202,6 +209,7 @@ class Visual:
         """
         Gera os gráficos para acompanhamento das afluências.
         """
+        logger.debug("Visualizações de afluências...")
         # Se o diretório para as afluências não existe, cria
         caminho = self.caminho + "afluencias/"
         if not os.path.exists(caminho):
@@ -249,6 +257,7 @@ class Visual:
         """
         Gera os gráficos para acompanhamento do CMA.
         """
+        logger.debug("Visualizações de CMA...")
         # Se o diretório para o CMA não existe, cria
         caminho = self.caminho + "CMA/"
         if not os.path.exists(caminho):
@@ -296,6 +305,7 @@ class Visual:
         """
         Gera os gráficos para acompanhamento da geração das térmicas.
         """
+        logger.debug("Visualizações de geração das térmicas...")
         # Se o diretório para as térmicas não existe, cria
         caminho = self.caminho + "geracao_termica/"
         if not os.path.exists(caminho):
@@ -343,6 +353,7 @@ class Visual:
         """
         Gera os gráficos para acompanhamento do déficit.
         """
+        logger.debug("Visualizações de déficit...")
         # Se o diretório para os déficits não existe, cria
         caminho = self.caminho + "deficit/"
         if not os.path.exists(caminho):
@@ -389,6 +400,7 @@ class Visual:
         """
         Gera os gráficos para acompanhamento do CMO.
         """
+        logger.debug("Visualização de CMO...")
         # Se o diretório para o CMO não existe, cria
         caminho = self.caminho + "CMO/"
         if not os.path.exists(caminho):
@@ -435,6 +447,7 @@ class Visual:
         """
         Gera os gráficos para acompanhamento do Custo Imediato.
         """
+        logger.debug("Visualização de custos imediatos...")
         # Se o diretório para o CMO não existe, cria
         caminho = self.caminho + "custo_imediato/"
         if not os.path.exists(caminho):
@@ -481,6 +494,7 @@ class Visual:
         """
         Gera os gráficos para acompanhamento do Custo Futuro.
         """
+        logger.debug("Visualização de custos futuros...")
         # Se o diretório para o CMO não existe, cria
         caminho = self.caminho + "custo_futuro/"
         if not os.path.exists(caminho):
@@ -527,6 +541,7 @@ class Visual:
         """
         Gera os gráficos para acompanhamento do Custo Total.
         """
+        logger.debug("Visualização de custos totais...")
         # Se o diretório para o CMO não existe, cria
         caminho = self.caminho + "custo_total/"
         if not os.path.exists(caminho):
@@ -573,6 +588,7 @@ class Visual:
         """
         Gera gráficos para visualização da convergência do método.
         """
+        logger.debug("Visualização de convergência...")
         n_iters = len(self.z_sup)
         cmap = plt.get_cmap('viridis')
         # Configurações gerais do gráfico
@@ -616,6 +632,7 @@ class Visual:
     def visualiza_cortes(self):
         """
         """
+        logger.debug("Visualização dos Cortes de Benders...")
         caminho = self.caminho + "cortes/"
         if not os.path.exists(caminho):
             os.makedirs(caminho)
