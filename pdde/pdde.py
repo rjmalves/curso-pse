@@ -25,7 +25,6 @@ class PDDE:
         self.uhes = e.uhes
         self.utes = e.utes
         self.demandas = e.demandas
-        self.log = logger
         coloredlogs.install(logger=logger, level=LOG_LEVEL)
         self.pente = PenteAfluencias(e)
         self.pente.monta_pente_afluencias()
@@ -130,17 +129,16 @@ class PDDE:
         PDDE.
         """
         # Erros e condição de parada
+        logger.info("# RESOLVENDO PROBLEMA DE PDDE #")
+        logger.info("X----X-------------------X-------------------X")
+        logger.info("  IT        Z_SUP                 Z_INF       ")
         it = 0
         self.intervalo_conf: List[Tuple[float, float]] = []
         while True:
-            self.log.info("# Iteração {} #".format(it + 1))
             # Realiza, para cada dente, a parte FORWARD
             if self.cfg.reamostrar and it > 0:
-                self.log.debug("Reamostrando...")
                 self.pente.reamostrar()
             for p in range(self.cfg.n_periodos):
-                # self.log.debug("Executando a FORWARD no período {}...".
-                #                format(p + 1))
                 for d, dente in enumerate(self.pente.dentes):
                     self.__monta_pl(self.pente, d, p)
                     self.pl = op(self.func_objetivo, self.cons)
@@ -148,13 +146,12 @@ class PDDE:
                     # Armazena as saídas obtidas no PL no objeto nó
                     self.__armazena_saidas(self.pente, d, p)
             # Condição de saída por convergência
-            if self.__verifica_convergencia():
-                self.log.info("CONVERGIU!")
+            if self.__verifica_convergencia(it):
                 break
             it += 1
             # Condição de saída por iterações
             if it >= self.cfg.max_iter:
-                self.log.warning("LIMITE DE ITERAÇÕES ATINGIDO!")
+                logger.warning("   LIMITE DE ITERAÇÕES ATINGIDO!")
                 break
             # Realiza, para cada dente, a parte BACKWARD
             for p in range(self.cfg.n_periodos - 1, -1, -1):
@@ -181,7 +178,10 @@ class PDDE:
                         self.pente.dentes[d][p].adiciona_corte(c)
         # Terminando o loop do método, realiza a simulação final e
         # organiza os cenários de saída
+        logger.info("X----X-------------------X-------------------X")
         self.__simulacao_final()
+        logger.info("# FIM DA SOLUÇÃO #")
+        logger.info("----------------------------------------")
         return Resultado(self.cfg,
                          self.uhes,
                          self.utes,
@@ -254,7 +254,7 @@ class PDDE:
                                        0.0)
         return corte_ponderado
 
-    def __verifica_convergencia(self) -> bool:
+    def __verifica_convergencia(self, it: int) -> bool:
         """
         Verifica se houve a convergência para a PDDE, conferindo
         os limites inferior e superior, bem como o intervalo de
@@ -284,19 +284,15 @@ class PDDE:
 
         # Mínimo de iterações
         n_it = len(self.z_inf)
-        self.log.debug("Z_SUP = {:12.4f} - Z_INF = {:12.4f}. I = [{}, {}]".
-                       format(z_sup, z_inf, limite_inf, limite_sup))
+        logger.info(" {:4}    {:16.6f}    {:16.6f}".
+                    format(it + 1, z_sup, z_inf))
         if n_it < self.cfg.min_iter:
             return False
 
-        self.log.debug("Z_INF = {} - MEDIA: {} - DESVIO: {}".
-                       format(z_inf,
-                              mean(self.z_inf[-self.cfg.min_iter:]),
-                              pstdev(self.z_inf[-self.cfg.min_iter:])))
         # Estabilidade do Z_inf por algumas iterações
         erros = [self.z_inf[i] for i in range(-self.cfg.min_iter, 0)]
         if max(erros) - min(erros) < self.cfg.intervalo_conf * z_inf:
-            self.log.info("Estabilidade do Z_inf: {}".format(erros))
+            logger.info("   >> CONVERGIU <<: Estabilidade do Z_INF!!")
             return True
 
         return False
@@ -336,7 +332,10 @@ class PDDE:
     def __simulacao_final(self):
         """
         """
-        self.sim_final.monta_simulacao_final_de_pente(self.pente)
+        logger.info("            # SIMULAÇÂO FINAL #")
+        logger.info("X-------------------X-------------------X")
+        logger.info("       Z_SUP                Z_INF       ")
+        self.sim_final.monta_simulacao_final(self.pente)
         # Realiza uma "forward"
         for p in range(self.cfg.n_periodos):
             for d, _ in enumerate(self.sim_final.dentes):
@@ -360,9 +359,9 @@ class PDDE:
                         for custo_dente in custos_imediatos]
         z_sup = mean(custos_dente)
         self.z_sup.append(z_sup)
-        self.log.info("# SIMULAÇÂO FINAL #")
-        self.log.info("Z_SUP = {:12.4f} - Z_INF = {:12.4f}".format(z_sup,
-                                                                   z_inf))
+
+        logger.info(" {:19.6f} {:19.6f}".format(z_sup, z_inf))
+        logger.info("X-------------------X-------------------X")
 
     def __organiza_cortes(self) -> List[List[List[CorteBenders]]]:
         """

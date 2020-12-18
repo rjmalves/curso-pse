@@ -14,7 +14,6 @@ from typing import List
 import coloredlogs  # type: ignore
 
 logger = logging.getLogger(__name__)
-LOG_LEVEL = "CRITICAL"
 
 
 def main():
@@ -30,7 +29,7 @@ def main():
     parser.add_argument("-l", "--log",
                         dest="l",
                         type=str,
-                        default="INFO",
+                        default="WARNING",
                         help="nível de logging desejado ao executar")
     parser.add_argument("-s", "--saida",
                         dest="s",
@@ -43,12 +42,12 @@ def main():
         raise Exception("Nível de LOG fornecido inválido")
 
     # Atualiza o nível de LOG desejado
-    global LOG_LEVEL
     LOG_LEVEL = args.l
     coloredlogs.install(logger=logger, level=args.l)
 
     # Inicia a execução
     logger.info("#### ESTUDO DE MODELOS DE PLANEJAMENTO ENERGÉTICO ####")
+    logger.info("------------------------------------------------------")
     resultados: List[Resultado] = []
     for entrada in args.entradas:
 
@@ -84,4 +83,4 @@ if __name__ == "__main__":
     ti = time.time()
     main()
     tf = time.time()
-    logger.critical("Tempo total de execução: {} s".format(tf - ti))
+    logger.info("Tempo total de execução: {} s".format(tf - ti))

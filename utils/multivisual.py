@@ -29,13 +29,15 @@ class MultiVisual:
         self.cenarios_medios = [Cenario.cenario_medio(r.cenarios)
                                 for r in resultados]
         self.caminho = caminho
-        self.log = logger
         coloredlogs.install(logger=logger, level=LOG_LEVEL)
 
     def visualiza(self):
         """
         Exporta os gráficos para comparação das saídas dos métodos.
         """
+        logger.info("# GERANDO VISUALIZAÇÕES DE COMPARAÇÃO EM {} #".
+                    format(self.caminho))
+        logger.info("---------------------------------------")
         self.visualiza_volume_final()
         self.visualiza_volume_turbinado()
         self.visualiza_volume_vertido()
@@ -48,11 +50,15 @@ class MultiVisual:
         self.visualiza_alpha()
         self.visualiza_fobj()
         self.visualiza_convergencia()
+        logger.info("---------------------------------------")
+        logger.info("# FIM DAS VISUALIZAÇÕES DE COMPARAÇÃO")
+        logger.info("-----------------------------------------")
 
     def visualiza_volume_final(self):
         """
         Gera as comparações dos volumes finais médios para cada método.
         """
+        logger.debug("Visualizações de volume final...")
         # Se o diretório para os volumes finais não existe, cria
         caminho = self.caminho + "volume_final/"
         if not os.path.exists(caminho):
@@ -100,6 +106,7 @@ class MultiVisual:
         """
         Gera as comparações dos volumes turbinados médios para cada método.
         """
+        logger.debug("Visualizações de volume turbinado...")
         # Se o diretório para os volumes turbinados não existe, cria
         caminho = self.caminho + "volume_turbinado/"
         if not os.path.exists(caminho):
@@ -147,6 +154,7 @@ class MultiVisual:
         """
         Gera as comparações dos volumes vertidos médios para cada método.
         """
+        logger.debug("Visualizações de volume vertido...")
         # Se o diretório para os volumes vertidos não existe, cria
         caminho = self.caminho + "volume_vertido/"
         if not os.path.exists(caminho):
@@ -194,6 +202,7 @@ class MultiVisual:
         """
         Gera as comparações das afluências médias para cada método.
         """
+        logger.debug("Visualizações de afluências...")
         # Se o diretório para as afluências não existe, cria
         caminho = self.caminho + "afluencias/"
         if not os.path.exists(caminho):
@@ -241,6 +250,7 @@ class MultiVisual:
         """
         Gera as comparações dos CMA médios para cada método.
         """
+        logger.debug("Visualizações de CMA...")
         # Se o diretório para os CMA não existe, cria
         caminho = self.caminho + "CMA/"
         if not os.path.exists(caminho):
@@ -289,6 +299,7 @@ class MultiVisual:
         Gera as comparações das gerações médias
         das térmicas para cada método.
         """
+        logger.debug("Visualizações de geração das térmicas...")
         # Se o diretório para as térmicas não existe, cria
         caminho = self.caminho + "geracao_termica/"
         if not os.path.exists(caminho):
@@ -336,6 +347,7 @@ class MultiVisual:
         """
         Gera as comparações dos déficits para cada método.
         """
+        logger.debug("Visualizações de déficit...")
         # Se o diretório para os déficits não existe, cria
         caminho = self.caminho + "deficits/"
         if not os.path.exists(caminho):
@@ -381,6 +393,7 @@ class MultiVisual:
         """
         Gera as comparações do CMO para cada método.
         """
+        logger.debug("Visualização de CMO...")
         # Se o diretório para o CMO não existe, cria
         caminho = self.caminho + "CMO/"
         if not os.path.exists(caminho):
@@ -426,6 +439,7 @@ class MultiVisual:
         """
         Gera as comparações dos custos imediatos para cada método.
         """
+        logger.debug("Visualização de custos imediatos...")
         # Se o diretório para os custos imediatos não existe, cria
         caminho = self.caminho + "custo_imediato/"
         if not os.path.exists(caminho):
@@ -471,6 +485,7 @@ class MultiVisual:
         """
         Gera as comparações dos custos futuros para cada método.
         """
+        logger.debug("Visualização de custos futuros...")
         # Se o diretório para os custos futuros não existe, cria
         caminho = self.caminho + "custo_futuro/"
         if not os.path.exists(caminho):
@@ -518,6 +533,7 @@ class MultiVisual:
         """
         Gera as comparações dos custos totais para cada método.
         """
+        logger.debug("Visualização de custos totais...")
         # Se o diretório para os custos totais não existe, cria
         caminho = self.caminho + "custo_total/"
         if not os.path.exists(caminho):
@@ -565,6 +581,7 @@ class MultiVisual:
         """
         Gera as comparações da convergência para cada método.
         """
+        logger.debug("Visualização de convergência...")
         # Se o diretório para a convergência não existe, cria
         caminho = self.caminho
         if not os.path.exists(caminho):

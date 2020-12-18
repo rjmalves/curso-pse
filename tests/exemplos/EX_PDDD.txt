@@ -4,7 +4,7 @@ X---------------------------X---------------X
  NOME DO ESTUDO                      EX_PDDD
  MÉTODO DE SOLUÇÃO                      PDDD    # SÃO VÁLIDOS: PL_UNICO, PDDD E PDDE
  MIN. ITERAÇÕES                            5    # USADO NA PDDD E PDDE
- MAX. ITERAÇÕES                           20    # USADO NA PDDD E PDDE
+ MAX. ITERAÇÕES                           25    # USADO NA PDDD E PDDE
  NÚMERO DE PERÍODOS                        4
  ABERTURAS POR PERÍODO (BKD)               5
  NÚMERO DE CENARIOS FWD                   50    # SOMENTE USADA NA PDDE
@@ -30,7 +30,7 @@ X-------------X-------------------X
 
 PARÂMETROS DAS USINAS HIDRELÉTRICAS
 X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
-   ID         NOME         VOL. INICIAL (hm3)  VOL. MÍNIMO (hm3)   VOL. MÁXIMO (hm3)   PROD. (MWmed/hm3)   ENGOL. MÁXIMO (hm3)
+   ID         NOME         VOL. INICIAL (hm3)  VOL. MÍNIMO (hm3)   VOL. MÁXIMO (hm3)   PROD. (MWmed/hm3)  ENGOL. MÁXIMO (hm3)
       1             UHE_1             50710.3             40710.3            203552.0                1.00             56512.0
 X------X-----------------X-------------------X-------------------X-------------------X-------------------X-------------------X
 

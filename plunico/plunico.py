@@ -21,7 +21,6 @@ class PLUnico:
         self.uhes = e.uhes
         self.utes = e.utes
         self.demandas = e.demandas
-        self.log = logger
         coloredlogs.install(logger=logger, level=LOG_LEVEL)
         self.arvore = ArvoreAfluencias(e)
         self.arvore.monta_arvore_afluencias()
@@ -149,16 +148,27 @@ class PLUnico:
             self.cons.append(self.deficit[j] >= 0)
 
         prob = op(self.func_objetivo, self.cons)
-        self.log.info("Problema de otimização: {}".format(prob))
         return prob
 
     def resolve_pl(self) -> Resultado:
         """
         Resolve um PL montado anteriormente.
         """
+        logger.info("# RESOLVENDO PROBLEMA DE PL ÚNICO #")
+        logger.info("-----------------------------------")
+        n_variaveis = sum([v._size for v in self.pl.variables()])
+        n_variaveis = sum(map(len, self.pl.variables()))
+        n_igual = sum(map(len, self.pl.equalities()))
+        n_desigual = sum(map(len, self.pl.inequalities()))
+        logger.info(" NÚM. VARIÁVEIS: {:6}".format(n_variaveis))
+        logger.info(" NÚM. RESTR.  =: {:6}".format(n_igual))
+        logger.info(" NÚM. RESTR.  <: {:6}".format(n_desigual))
         self.pl.solve("dense", "glpk")
-        self.log.info("Função objetivo final: {}".
-                      format(self.func_objetivo.value()[0]))
+        logger.info("Função objetivo final: {}".
+                    format(self.func_objetivo.value()[0]))
+        logger.info("-----------------------------------")
+        logger.info("# FIM DA SOLUÇÃO #")
+        logger.info("----------------------------------------")
         self.armazena_saidas()
         return Resultado(self.cfg,
                          self.uhes,
