@@ -7,32 +7,32 @@ services:
       context: .
     volumes: 
       - ./results:/app/results
-    # command: [
-    #       python, 
-    #       main.py,
-    #       "--log",
-    #       "DEBUG",
-    #       # "./tests/exemplos/pddd.txt",
-    #       # "./tests/exemplos/pdde.txt",
-    #       "./tests/exemplos/pdde_cvar1.txt",
-    #       # "./tests/exemplos/pdde_cvar2.txt",
-    #       # "./tests/exemplos/pdde_cvar3.txt",
-    #       # "./tests/exemplos/pdde_cvar4.txt"
-    # ]
     command: [
-              python, 
-              main.py,
-              "--log",
-              "DEBUG",
-              # "./tests/PMO_DEZ_2020/SE/pl_4p.txt",
-              "./tests/PMO_DEZ_2020/SE/pddd_4p.txt",
-              "./tests/PMO_DEZ_2020/SE/pdde_4p.txt",
-              "./tests/PMO_DEZ_2020/SE/pdde_cvar1_4p.txt",
-              # "./tests/PMO_DEZ_2020/SE/pdde_cvar2_4p.txt",
-              # "./tests/PMO_DEZ_2020/SE/pdde_cvar3_4p.txt",
-              # "./tests/PMO_DEZ_2020/SE/pdde_cvar4_4p.txt",
-              # "./tests/PMO_DEZ_2020/SE/pdde_cvar5_4p.txt",
-              # "./tests/PMO_DEZ_2020/SE/pddd_pior_4p.txt"
-              ]
-    environment: 
-      - CONFIG_FILE=./configs/1uhe_tree.json
+          python, 
+          main.py,
+          "--log",
+          "INFO",
+          "./tests/exemplos/EX_PDDD.txt",
+          "./tests/exemplos/EX_PDDE.txt",
+          "./tests/exemplos/EX_PDDE_CVAR1.txt",
+          "./tests/exemplos/EX_PDDE_CVAR2.txt",
+          "./tests/exemplos/EX_PDDE_CVAR3.txt",
+          "./tests/exemplos/EX_PDDE_CVAR4.txt",
+          "./tests/exemplos/EX_PDDE_CVAR5.txt",
+          "./tests/exemplos/EX_PL_PIOR.txt"
+    ]
+    # command: [
+    #           python, 
+    #           main.py,
+    #           "--log",
+    #           "INFO",
+    #           # "./tests/PMO_DEZ_2020/SE/PL_SE_4P.txt",
+    #           "./tests/PMO_DEZ_2020/SE/PDDD_SE_4P.txt",
+    #           "./tests/PMO_DEZ_2020/SE/PDDE_SE_4P.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/PDDE_CVAR_SE_1.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/PDDE_CVAR_SE_2.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/PDDE_CVAR_SE_3.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/PDDE_CVAR_SE_4.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/PDDE_CVAR_SE_5.txt",
+    #           # "./tests/PMO_DEZ_2020/SE/PDDD_PIOR_SE_4P.txt"
+    #           ]
