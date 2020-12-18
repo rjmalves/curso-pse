@@ -335,7 +335,7 @@ class PDDE:
         logger.info("            # SIMULAÇÂO FINAL #")
         logger.info("X-------------------X-------------------X")
         logger.info("       Z_SUP                Z_INF       ")
-        self.sim_final.monta_simulacao_final_de_pente(self.pente)
+        self.sim_final.monta_simulacao_final(self.pente)
         # Realiza uma "forward"
         for p in range(self.cfg.n_periodos):
             for d, _ in enumerate(self.sim_final.dentes):

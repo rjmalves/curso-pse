@@ -1,6 +1,5 @@
 from utils.leituraentrada import LeituraEntrada
 from modelos.cenario import Cenario
-from modelos.arvoreafluencias import ArvoreAfluencias
 from modelos.no import No
 
 from itertools import product
@@ -25,6 +24,8 @@ class PenteAfluencias:
         self.indices_nos_pente: List[List[int]] = []
         self.indices_sequencias: Set[Tuple[int]] = set()
         self.dentes: List[List[No]] = []
+        # Fixa a semente na fornecida pelo usuário
+        seed(self.semente)
 
     def monta_pente_afluencias(self):
         """
@@ -32,8 +33,6 @@ class PenteAfluencias:
         do arquivo de configuração. O pente é um conjunto de séries
         de afluências extraídos a partir de uma árvore de possibilidades.
         """
-        # Fixa a semente na fornecida pelo usuário
-        seed(self.semente)
         # 1º Sorteio: índices das afluências que irão existir em cada
         # período
         nos_por_periodo = LeituraEntrada.afluencias_por_periodo
@@ -41,10 +40,6 @@ class PenteAfluencias:
             self.indices_nos_pente.append(sample(range(nos_por_periodo),
                                           self.aberturas_periodo))
         # 2º Sorteio: sequências forward dentro das afluências escolhidas
-
-        # Força o pior cenário a estar dentro das sequências
-        self.indices_sequencias.add(tuple([0] * self.n_periodos))
-
         tentativas = 0
         while len(self.indices_sequencias) < self.n_sequencias:
             if tentativas >= 1e4:
@@ -73,14 +68,14 @@ class PenteAfluencias:
         for dente in self.dentes:
             dente[0].volumes_iniciais = self.vis
 
-    def monta_simulacao_final_de_pente(self, pente):
+    def monta_simulacao_final(self, pente):
         """
         """
         pente_atual: PenteAfluencias = pente
         afl_periodo = LeituraEntrada.afluencias_por_periodo
         # Monta a árvore completa de cenários
-        arvore_do_pente = [list(range(afl_periodo))
-                           for _ in range(self.n_periodos)]
+        arvore_do_pente = [[0]] + [list(range(afl_periodo))
+                                   for _ in range(self.n_periodos - 1)]
         combinacoes = product(*arvore_do_pente)
         self.indices_sequencias = set(combinacoes)
         # Monta todos os dentes possíveis
@@ -99,35 +94,6 @@ class PenteAfluencias:
         for dente in self.dentes:
             for p in range(self.n_periodos):
                 dente[p].cortes = pente_atual.dentes[0][p].cortes
-
-    def monta_simulacao_final_de_arvore(self, arvore):
-        """
-        """
-        arvore_atual: ArvoreAfluencias = arvore
-        afl_periodo = LeituraEntrada.afluencias_por_periodo
-        # Monta a árvore completa de cenários
-        arvore_do_pente = [list(range(afl_periodo))
-                           for _ in range(self.n_periodos)]
-        combinacoes = product(*arvore_do_pente)
-        self.indices_sequencias = set(combinacoes)
-        # Monta todos os dentes possíveis
-        for seq in self.indices_sequencias:
-            nos_seq: List[No] = []
-            for p, indice_no in enumerate(seq):
-                afls: List[float] = []
-                for i in range(1, self.n_uhes + 1):
-                    afls.append(self.afluencias[i][p][indice_no])
-                nos_seq.append(No(afls))
-            self.dentes.append(nos_seq)
-        # Força os volumes iniciais nos nós do primeiro período
-        for dente in self.dentes:
-            dente[0].volumes_iniciais = self.vis
-        # Adiciona aos nós de cada período os cortes de cada nó da
-        # árvore existente
-        for dente in self.dentes:
-            for p in range(self.n_periodos):
-                for no in arvore_atual.arvore[p]:
-                    dente[p].cortes += no.cortes
 
     def afluencias_abertura(self,
                             periodo: int,
